@@ -1,0 +1,619 @@
+
+'use client';
+
+import React from 'react';
+import { Navbar } from '../components/layout/Navbar';
+import { Footer } from '../components/layout/Footer';
+import { HeroCarousel } from '../features/landing/components/HeroCarousel';
+import { UnitCardCircular } from '../features/unit/components/UnitCardCircular';
+import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { BookOpen, Users, Award, Globe, Heart, Star, ArrowRight, Sparkles, Trophy, GraduationCap, Target, TrendingUp, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
+import { useNavigationMenu } from '../hooks/useNavigationMenu';
+
+export default function Home() {
+  const { onNavigate, menuItems } = useNavigationMenu();
+
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    { loop: true, align: 'center', skipSnaps: false, dragFree: false, containScroll: 'trimSnaps' },
+    [Autoplay({ delay: 4000, stopOnInteraction: false })]
+  );
+
+  const [selectedAchievementIndex, setSelectedAchievementIndex] = React.useState(0);
+
+  const achievements = [
+    {
+      studentName: "M. Husein Haekal",
+      studentImage: "/uploads/achievement/achievement_1769996411538_dig650xbr3b.webp",
+      achievement: "Peserta Olimpiade Terbaik",
+      competition: '"SAHABAYA CUP 2025" Tingkat Perwakilan Lampung',
+      rank: "JUARA 1",
+      category: "Cerdas Cermat",
+      accentColor: "#1E4AB8"
+    },
+    {
+      studentName: "Zalika Tsabita Az - Zahra",
+      studentImage: "/uploads/achievement/achievement_1770259138348_pcj36zz54xh.webp",
+      achievement: "Pencak Silat Tunggal",
+      competition: '"SAHABAYA CUP 2025" Tingkat Perwakilan Lampung',
+      rank: "JUARA 3",
+      category: "Perwakilan • Tinggi 2 • Tinggi 1",
+      accentColor: "#F97316"
+    },
+    {
+      studentName: "Dhoffa Adzellia Khaerani",
+      studentImage: "/uploads/achievement/achievement_1770259163513_vakbjibn58j.webp",
+      achievement: "Pidato Bahasa Inggris",
+      competition: '"SAHABAYA CUP 2025" Tingkat Perwakilan Lampung',
+      rank: "JUARA 2",
+      category: "Perwakilan • Tinggi 2 • Tinggi 3",
+      accentColor: "#10B981"
+    },
+    {
+      studentName: "Ahmad Fadhil Rahman",
+      studentImage: "/uploads/achievement/achievement_1770259176223_998ib4a3t76.webp",
+      achievement: "Matematika Olimpiade",
+      competition: '"Kompetisi Sains Nasional 2025" Tingkat Nasional',
+      rank: "JUARA 1",
+      category: "Matematika • SMP",
+      accentColor: "#8B5CF6"
+    },
+    {
+      studentName: "Aisha Zahra Putri",
+      studentImage: "/uploads/achievement/achievement_1770259190080_iu7u3uoup9.webp",
+      achievement: "Tahfidz Al-Qur'an",
+      competition: '"Musabaqah Tilawatil Quran 2025" Tingkat Provinsi',
+      rank: "JUARA 1",
+      category: "Tahfidz 10 Juz",
+      accentColor: "#10B981"
+    },
+    {
+      studentName: "Muhammad Rizki Alfarizi",
+      studentImage: "/uploads/achievement/achievement_1770259204289_7zh4ifi6pca.webp",
+      achievement: "Robotika",
+      competition: '"Indonesia Robot Olympiad 2025" Tingkat Nasional',
+      rank: "JUARA 2",
+      category: "Line Follower",
+      accentColor: "#F97316"
+    },
+    {
+      studentName: "Siti Nurhaliza",
+      studentImage: "/uploads/achievement/achievement_1770259218100_4znqxdhqfjq.webp",
+      achievement: "Juara Umum",
+      competition: '"Lomba Cerdas Cermat 2025" Tingkat Kota',
+      rank: "JUARA 1",
+      category: "Akademik",
+      accentColor: "#3B82F6"
+    },
+    {
+      studentName: "Budi Santoso",
+      studentImage: "/uploads/achievement/achievement_1770259234557_sdnixtxzwr.webp",
+      achievement: "Lari Marathon",
+      competition: '"Pekan Olahraga Pelajar 2025" Tingkat Provinsi',
+      rank: "JUARA 2",
+      category: "Olahraga",
+      accentColor: "#EF4444"
+    },
+    {
+      studentName: "Rina Wati",
+      studentImage: "/uploads/achievement/achievement_1770601549377_5saxw8xrr2i.webp",
+      achievement: "Seni Lukis",
+      competition: '"Festival Seni Siswa Nasional 2025"',
+      rank: "JUARA 1",
+      category: "Seni",
+      accentColor: "#8B5CF6"
+    },
+    {
+      studentName: "Joko Susilo",
+      studentImage: "/uploads/achievement/achievement_1770601631186_pq0yr3wit0b.webp",
+      achievement: "Pidato Bahasa Arab",
+      competition: '"Musabaqah Bahasa Arab 2025" Tingkat Nasional',
+      rank: "JUARA 3",
+      category: "Bahasa",
+      accentColor: "#10B981"
+    },
+    {
+      studentName: "Dewi Sartika",
+      studentImage: "/uploads/achievement/achievement_1770601645303_qumz9y74jk.webp",
+      achievement: "Olimpiade Biologi",
+      competition: '"Olimpiade Sains Nasional 2025"',
+      rank: "JUARA 2",
+      category: "Sains",
+      accentColor: "#F59E0B"
+    },
+    {
+      studentName: "Andi Wijaya",
+      studentImage: "/uploads/achievement/achievement_1770601668743_4hdkv8zve2a.webp",
+      achievement: "Karate",
+      competition: '"Kejuaraan Karate Pelajar 2025" Tingkat Nasional',
+      rank: "JUARA 1",
+      category: "Olahraga",
+      accentColor: "#DC2626"
+    }
+  ];
+
+  React.useEffect(() => {
+    if (!emblaApi) return;
+
+    const onSelect = () => {
+      setSelectedAchievementIndex(emblaApi.selectedScrollSnap());
+    };
+
+    onSelect();
+    emblaApi.on('select', onSelect);
+    emblaApi.on('reInit', onSelect);
+
+    return () => {
+      emblaApi.off('select', onSelect);
+      emblaApi.off('reInit', onSelect);
+    };
+  }, [emblaApi]);
+
+  const scrollAchievementPrev = React.useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+  const scrollAchievementNext = React.useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+
+  const getLoopDistance = React.useCallback((index: number, selected: number, count: number) => {
+    if (count <= 0) return 0;
+    const direct = Math.abs(index - selected);
+    return Math.min(direct, count - direct);
+  }, []);
+
+  const getAchievementScale = React.useCallback((index: number) => {
+    const count = achievements.length;
+    const distance = getLoopDistance(index, selectedAchievementIndex, count);
+
+    if (distance === 0) return 1;
+    if (distance === 1) return 0.92;
+    if (distance === 2) return 0.86;
+    return 0.82;
+  }, [achievements.length, getLoopDistance, selectedAchievementIndex]);
+
+
+  const heroSlides = [
+    {
+      image: '/uploads/hero/hero_1769592571870_m7ehtcua18j.webp',
+      title: 'Yayasan Baituljannah',
+      description: 'Membentuk Generasi Qur\'ani yang Cerdas, Berakhlak Mulia, dan Berprestasi Global',
+      badge: '🕌 Pendidikan Islam Terpadu'
+    },
+    {
+      image: '/uploads/hero/hero_1769592838236_ttv2yfpxyb.webp',
+      title: 'Pendidikan Berkualitas',
+      description: 'Mengintegrasikan kurikulum nasional dengan nilai-nilai Al-Quran dan As-Sunnah',
+      badge: '📚 Kurikulum Terpadu'
+    },
+    {
+      image: '/uploads/hero/hero_1769592938397_uasnfj29w1q.webp',
+      title: 'Prestasi Gemilang',
+      description: 'Ratusan prestasi di tingkat lokal, nasional, dan internasional',
+      badge: '🏆 Berprestasi'
+    },
+    {
+      image: '/uploads/hero/hero_1769593124943_do23x9kv1ge.webp',
+      title: 'Fasilitas Modern',
+      description: 'Dilengkapi dengan fasilitas pembelajaran yang modern dan mendukung',
+      badge: '🏫 Fasilitas Lengkap'
+    },
+    {
+      image: '/uploads/hero/hero_1769593247476_0fgygpdcpabt.webp',
+      title: 'Guru Profesional',
+      description: 'Tenaga pendidik yang kompeten, berpengalaman, dan berdedikasi tinggi',
+      badge: '👨‍🏫 Pendidik Berpengalaman'
+    },
+    {
+      image: '/uploads/hero/hero_1769656548631_nnkh2yt4ix.webp',
+      title: 'Lingkungan Islami',
+      description: 'Membangun karakter dan akhlak mulia dalam suasana pembelajaran yang kondusif',
+      badge: '🕋 Akhlak & Adab'
+    }
+  ];
+
+  const programs = [
+    {
+      title: 'Tahfidz Al-Qur\'an',
+      description: 'Program unggulan menghafal Al-Qur\'an dengan metode mudah, menyenangkan, dan terbukti efektif.',
+      icon: BookOpen,
+      color: '#10B981',
+      gradient: 'from-green-500 to-emerald-500'
+    },
+    {
+      title: 'Bilingual Program',
+      description: 'Pembelajaran dua bahasa (Arab & Inggris) untuk mempersiapkan generasi global yang Islami.',
+      icon: Globe,
+      color: '#3B82F6',
+      gradient: 'from-blue-500 to-cyan-500'
+    },
+    {
+      title: 'Character Building',
+      description: 'Pembentukan karakter Islami melalui pembiasaan akhlak mulia dalam kehidupan sehari-hari.',
+      icon: Heart,
+      color: '#F97316',
+      gradient: 'from-orange-500 to-amber-500'
+    },
+    {
+      title: 'Academic Excellence',
+      description: 'Program akselerasi akademik dengan metode pembelajaran inovatif dan guru berpengalaman.',
+      icon: Star,
+      color: '#8B5CF6',
+      gradient: 'from-purple-500 to-indigo-500'
+    }
+  ];
+
+  const news = [
+    {
+      image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=900&q=75',
+      title: 'SMAIT Juara Olimpiade Matematika Nasional 2024',
+      date: '15 November 2024',
+      category: 'Prestasi',
+      excerpt: 'Tim olimpiade SMAIT Baituljannah berhasil meraih medali emas pada kompetisi Olimpiade Matematika tingkat nasional...',
+      color: '#8B5CF6'
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=600&q=75',
+      title: 'Launching Program Tahfidz Intensif 2025',
+      date: '10 November 2024',
+      category: 'Program',
+      excerpt: 'Yayasan Baituljannah meluncurkan program tahfidz intensif dengan target hafalan 30 juz untuk siswa berprestasi...',
+      color: '#10B981'
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&w=600&q=75',
+      title: 'Workshop Parenting untuk Orang Tua Siswa',
+      date: '5 November 2024',
+      category: 'Kegiatan',
+      excerpt: 'Kegiatan workshop parenting Islami dengan tema "Mendidik Anak di Era Digital" dihadiri 200+ orang tua...',
+      color: '#F97316'
+    }
+  ];
+
+  const whyChooseUs = [
+    {
+      icon: Target,
+      title: 'Visi yang Jelas',
+      description: 'Membentuk generasi Qurani dengan target hafalan dan prestasi akademik yang terukur'
+    },
+    {
+      icon: Users,
+      title: 'Guru Berkualitas',
+      description: 'Tim pendidik profesional, bersertifikat, dan berpengalaman di bidangnya'
+    },
+    {
+      icon: Award,
+      title: 'Prestasi Membanggakan',
+      description: 'Ratusan prestasi lokal, nasional, dan internasional di berbagai bidang'
+    },
+    {
+      icon: Heart,
+      title: 'Lingkungan Islami',
+      description: 'Suasana pembelajaran yang kondusif dengan nilai-nilai Islam yang kuat'
+    },
+    {
+      icon: TrendingUp,
+      title: 'Fasilitas Modern',
+      description: 'Lab komputer, perpustakaan digital, dan sarana olahraga yang lengkap'
+    },
+    {
+      icon: Globe,
+      title: 'Kurikulum Global',
+      description: 'Integrasi kurikulum nasional dengan standar internasional dan nilai Islam'
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-white">
+      <Navbar
+        siteName="Baitul Jannah Islamic School"
+        siteTagline="Sekolahnya Para Juara"
+        accentColor="#1E4AB8"
+        menuItems={menuItems}
+      />
+
+      <HeroCarousel slides={heroSlides} accentColor="var(--color-secondary)" />
+
+      <section className="py-12 md:py-20 px-4 md:px-8 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #5B4DB5 0%, #7C6FCC 100%)' }}>
+        <div className="absolute inset-0 islamic-pattern opacity-10"></div>
+        
+        <div className="container-custom relative z-10 max-w-7xl mx-auto">
+          <div className="text-center mb-12 md:mb-20">
+            <div className="inline-flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 bg-white/20 backdrop-blur-sm rounded-full text-white text-xs md:text-sm mb-4 md:mb-6">
+              <Sparkles className="w-4 h-4" />
+              <span>Jenjang Pendidikan</span>
+            </div>
+            <h2 className="text-white mb-3 md:mb-4">Program Unggulan</h2>
+            <p className="text-white/90 text-base md:text-xl lg:text-2xl max-w-3xl mx-auto px-4">
+              Lima unit pendidikan terintegrasi dari PAUD hingga SMA untuk perjalanan pendidikan yang berkesinambungan
+            </p>
+            <div className="w-16 md:w-24 h-1 bg-white/50 mx-auto mt-4 md:mt-6"></div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6 lg:gap-8 max-w-6xl mx-auto mb-8 md:mb-12">
+            <UnitCardCircular
+              name="PGIT - TKIT"
+              icon="/uploads/logos/TK.webp"
+              color="#10B981"
+              onClick={() => onNavigate('tkit')}
+            />
+            <UnitCardCircular
+              name="SDIT"
+              icon="/uploads/logos/SD.webp"
+              color="#3B82F6"
+              onClick={() => onNavigate('sdit')}
+            />
+            <UnitCardCircular
+              name="SMPIT"
+              icon="/uploads/logos/SMP.webp"
+              color="#F97316"
+              onClick={() => onNavigate('smpit')}
+            />
+            <UnitCardCircular
+              name="SMAIT"
+              icon="/uploads/logos/SMA.webp"
+              color="#8B5CF6"
+              onClick={() => onNavigate('smait')}
+            />
+            <UnitCardCircular
+              name="SLBIT"
+              icon="/uploads/logos/SLB.webp"
+              color="#14B8A6"
+              onClick={() => onNavigate('slbit')}
+            />
+            <UnitCardCircular
+              name="Asrama"
+              icon="/uploads/logos/ASRAMA.webp"
+              color="#D4AF37"
+              onClick={() => onNavigate('about')}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="section-padding bg-gray-50">
+        <div className="container-custom">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-6 py-3 bg-[#1E4AB8]/10 rounded-full text-[#1E4AB8] text-sm mb-6">
+              <Star className="w-4 h-4" />
+              <span>Keunggulan Kami</span>
+            </div>
+            <h2 className="text-4xl lg:text-5xl mb-4">Mengapa Memilih Baituljannah?</h2>
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              Pendidikan Islam terpadu dengan standar berkualitas tinggi
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {whyChooseUs.map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <div key={index} className="group">
+                  <div className="bg-white p-8 rounded-2xl shadow-soft hover:shadow-strong transition-all duration-300 h-full border border-gray-100 hover:border-[#1E4AB8]/20">
+                    <div className="w-16 h-16 bg-gradient-to-br from-[#1E4AB8] to-[#8B5CF6] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                      <Icon className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-xl mb-3">{item.title}</h3>
+                    <p className="text-gray-600 leading-relaxed">{item.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="section-padding bg-white">
+        <div className="container-custom">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-6 py-3 bg-green-100 text-green-700 rounded-full text-sm mb-4">
+              <BookOpen className="w-4 h-4" />
+              <span>Program Unggulan</span>
+            </div>
+            <h2 className="mb-4">Program Pendidikan Kami</h2>
+            <p className="text-gray-600 text-lg max-w-3xl mx-auto">
+              Berbagai program unggulan yang dirancang khusus untuk membentuk generasi Qurani yang cerdas dan berkarakter
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {programs.map((program, index) => {
+              const Icon = program.icon;
+              return (
+                <div 
+                  key={index}
+                  className="group relative bg-gradient-to-br from-white to-gray-50 rounded-2xl p-8 shadow-soft hover:shadow-strong transition-all duration-300 transform hover:-translate-y-2 overflow-hidden"
+                >
+                  <div 
+                    className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${program.gradient} rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500`}
+                  ></div>
+                  
+                  <div className="relative z-10">
+                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${program.gradient} flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg`}>
+                      <Icon className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-xl mb-3">{program.title}</h3>
+                    <p className="text-gray-600 leading-relaxed">{program.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="text-center mt-12">
+            <button 
+              onClick={() => onNavigate('programs')}
+              className="btn-primary inline-flex items-center gap-2 group"
+            >
+              <span>Lihat Semua Program</span>
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="section-padding bg-white">
+        <div className="container-custom">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-12">
+            <h2 className="text-3xl lg:text-4xl">Berita Dan Kegiatan Sekolah</h2>
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search..."
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:border-[#1E4AB8] transition-colors"
+              />
+              <button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black text-white p-2 rounded-full hover:bg-gray-800 transition-colors">
+                <Search className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-5">
+              {news.length > 0 && (
+                <div className="group cursor-pointer" onClick={() => onNavigate('news')}>
+                  <div className="relative overflow-hidden rounded-2xl mb-4 aspect-[4/3]">
+                    <img 
+                      src={news[0].image} 
+                      alt={news[0].title}
+                      loading="lazy"
+                      className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                    />
+                    <div className="absolute top-4 left-4">
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/90 text-[#1E4AB8] shadow-sm">
+                        {news[0].category}
+                      </span>
+                    </div>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2 group-hover:text-[#1E4AB8] transition-colors line-clamp-2">
+                    {news[0].title}
+                  </h3>
+                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
+                    <span>{news[0].date}</span>
+                  </div>
+                  <p className="text-gray-600 line-clamp-3 mb-4">
+                    {news[0].excerpt}
+                  </p>
+                  <span className="inline-flex items-center gap-2 text-[#1E4AB8] font-semibold group-hover:translate-x-2 transition-transform">
+                    Baca Selengkapnya <ArrowRight className="w-4 h-4" />
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="lg:col-span-7 space-y-6">
+              {news.slice(1).map((item, index) => (
+                <div 
+                  key={index} 
+                  className="group flex flex-col sm:flex-row gap-6 p-4 rounded-2xl hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => onNavigate('news')}
+                >
+                  <div className="w-full sm:w-48 aspect-video rounded-xl overflow-hidden shrink-0">
+                    <img 
+                      src={item.image} 
+                      alt={item.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                    />
+                  </div>
+                  <div>
+                    <div className="mb-2">
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 group-hover:bg-[#1E4AB8] group-hover:text-white transition-colors">
+                        {item.category}
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-bold mb-2 group-hover:text-[#1E4AB8] transition-colors">
+                      {item.title}
+                    </h3>
+                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
+                      <span>{item.date}</span>
+                    </div>
+                    <p className="text-gray-600 line-clamp-2">
+                      {item.excerpt}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 bg-gradient-to-br from-gray-900 to-blue-900 text-white overflow-hidden relative">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+        <div className="container-custom relative z-10">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl lg:text-5xl mb-6 font-bold">Prestasi Siswa</h2>
+            <p className="text-xl text-blue-100 max-w-2xl mx-auto">
+              Bukti nyata keberhasilan pendidikan di Baituljannah melalui pencapaian gemilang para siswa
+            </p>
+          </div>
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={scrollAchievementPrev}
+              className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-sm items-center justify-center transition-colors"
+              aria-label="Sebelumnya"
+            >
+              <ChevronLeft className="w-6 h-6 text-white" />
+            </button>
+
+            <button
+              type="button"
+              onClick={scrollAchievementNext}
+              className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-sm items-center justify-center transition-colors"
+              aria-label="Berikutnya"
+            >
+              <ChevronRight className="w-6 h-6 text-white" />
+            </button>
+
+            <div className="overflow-hidden" ref={emblaRef}>
+              <div className="flex -ml-4">
+                {achievements.map((achievement, index) => {
+                  const scale = getAchievementScale(index);
+                  const distance = getLoopDistance(index, selectedAchievementIndex, achievements.length);
+                  const zIndex = 30 - distance;
+
+                  return (
+                    <div
+                      key={index}
+                      className="flex-[0_0_100%] md:flex-[0_0_50%] lg:flex-[0_0_20%] min-w-0 pl-4"
+                      style={{ zIndex }}
+                    >
+                      <div
+                        className="w-full aspect-[3/4] rounded-2xl overflow-hidden bg-white/10 origin-center transition-transform duration-300"
+                        style={{ transform: `scale(${scale})` }}
+                      >
+                        <ImageWithFallback
+                          src={achievement.studentImage}
+                          alt={achievement.studentName}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-12">
+            <button 
+              onClick={() => onNavigate('achievement')}
+              className="bg-white text-[#1E4AB8] hover:bg-blue-50 px-8 py-3 rounded-full font-semibold transition-colors inline-flex items-center gap-2"
+            >
+              <span>Lihat Semua Prestasi</span>
+              <Trophy className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <Footer 
+        onNavigate={onNavigate} 
+        siteName="Baitul Jannah"
+        siteTagline="Islamic School"
+      />
+    </div>
+  );
+}
+
