@@ -59,19 +59,6 @@ export const SponsorshipBanner: React.FC<SponsorshipBannerProps> = ({ onNavigate
           </p>
         </div>
 
-        {/* Sponsor Categories */}
-        <div className="flex flex-wrap justify-center gap-4 mb-12">
-          <div className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 text-white rounded-full shadow-soft">
-            <span className="text-sm">🏆 Platinum Sponsor</span>
-          </div>
-          <div className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-full shadow-soft">
-            <span className="text-sm">🥇 Gold Sponsor</span>
-          </div>
-          <div className="px-6 py-3 bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-full shadow-soft">
-            <span className="text-sm">🥈 Silver Sponsor</span>
-          </div>
-        </div>
-
         {/* Infinite Scrolling Sponsors */}
         <div className="relative mb-12">
           <div className="overflow-hidden">
@@ -88,13 +75,6 @@ export const SponsorshipBanner: React.FC<SponsorshipBannerProps> = ({ onNavigate
                         <span className="text-2xl">🏢</span>
                       </div>
                       <p className="text-xs text-gray-600 font-medium truncate">{sponsor.name}</p>
-                      <div className={`inline-block px-2 py-1 rounded-full text-xs mt-1 ${
-                        sponsor.category === 'Platinum' ? 'bg-yellow-100 text-yellow-700' :
-                        sponsor.category === 'Gold' ? 'bg-orange-100 text-orange-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {sponsor.category}
-                      </div>
                     </div>
                   </div>
                 </div>

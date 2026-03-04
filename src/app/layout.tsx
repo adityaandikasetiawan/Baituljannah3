@@ -19,6 +19,17 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "Baituljannah",
   description: "Yayasan Baituljannah - Membentuk Generasi Qur'ani",
+  icons: {
+    icon: [
+      { url: "/uploads/logos/Yayasan.webp" }
+    ],
+    apple: [
+      { url: "/uploads/logos/Yayasan.webp" }
+    ],
+    shortcut: [
+      { url: "/uploads/logos/Yayasan.webp" }
+    ]
+  }
 };
 
 export default function RootLayout({

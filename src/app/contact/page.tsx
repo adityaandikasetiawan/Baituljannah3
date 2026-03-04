@@ -119,7 +119,7 @@ export default function ContactPage() {
         </section>
 
         {/* Contact Info Cards */}
-        <section className="py-12 -mt-16 relative z-20">
+        <section className="pt-12 -pb-8 -mt-4 relative z-20">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {contactInfo.map((info, index) => {
@@ -153,7 +153,7 @@ export default function ContactPage() {
         </section>
 
         {/* Contact Form & Map Section */}
-        <section className="py-16">
+        <section className="pt-10 pb-16">
           <div className="container mx-auto px-4">
             <div className="flex flex-col lg:flex-row gap-12">
               {/* Contact Form */}

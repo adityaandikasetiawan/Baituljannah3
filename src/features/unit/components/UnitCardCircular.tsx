@@ -5,13 +5,19 @@ interface UnitCardCircularProps {
   icon: string;
   color: string;
   onClick: () => void;
+  imageClassName?: string;
+  className?: string;
+  titleClassName?: string;
 }
 
 export const UnitCardCircular: React.FC<UnitCardCircularProps> = ({
   name,
   icon,
   color,
-  onClick
+  onClick,
+  imageClassName,
+  className,
+  titleClassName
 }) => {
   const [didIconError, setDidIconError] = useState(false);
 
@@ -26,7 +32,7 @@ export const UnitCardCircular: React.FC<UnitCardCircularProps> = ({
   }, [icon]);
 
   return (
-    <div className="flex flex-col items-center gap-4 group">
+    <div className={`flex flex-col items-center group ${className || 'gap-4'}`}>
       {/* Circular Icon */}
       <div 
         className="w-28 h-28 md:w-32 md:h-32 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 cursor-pointer transform"
@@ -36,7 +42,7 @@ export const UnitCardCircular: React.FC<UnitCardCircularProps> = ({
           <img
             src={resolvedIconSrc}
             alt={name}
-            className="w-full h-full object-contain"
+            className={`w-full h-full object-contain ${imageClassName || ''}`}
             onError={() => setDidIconError(true)}
           />
         ) : (
@@ -46,7 +52,7 @@ export const UnitCardCircular: React.FC<UnitCardCircularProps> = ({
       
       {/* Name */}
       <div className="text-center">
-        <h3 className="text-white mb-3 text-base md:text-lg">{name}</h3>
+        <h3 className={`text-white text-base md:text-lg ${titleClassName || 'mb-3'}`}>{name}</h3>
         <button
           onClick={onClick}
           className="px-6 py-2 rounded-full border-2 border-white text-white text-sm hover:bg-white hover:text-[#5B4DB5] transition-all duration-300 hover:scale-105"
