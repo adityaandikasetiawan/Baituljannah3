@@ -312,7 +312,7 @@ export default function Home() {
         menuItems={menuItems}
       />
 
-      <section className="relative h-[320px] md:h-[480px] group">
+      <section className="relative h-[400px] md:h-[600px] group">
         <div className="overflow-hidden h-full" ref={heroRef}>
           <div className="flex h-full">
             {heroSlides.map((slide, index) => (
