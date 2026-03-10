@@ -1,10 +1,45 @@
 'use client';
 import React, { useState } from 'react';
 import { Sidebar } from '../../../components/layout/Sidebar';
-import { StatsCard } from '../../../features/landing/components/StatsCard';
 import { Table } from '../../../components/common/Table';
 import { useNavigationMenu } from '../../../hooks/useNavigationMenu';
 import { Users, BookOpen, Calendar, Award, FileText, Bell } from 'lucide-react';
+
+type StatTrend = { value: string; isPositive: boolean };
+
+type StatItem = {
+  title: string;
+  value: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+  trend?: StatTrend;
+};
+
+function StatsCard(props: StatItem) {
+  const Icon = props.icon;
+  return (
+    <div className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-strong transition-all duration-300 border border-gray-100">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm text-gray-500 mb-1 truncate">{props.title}</p>
+          <p className="text-2xl text-gray-900 truncate">{props.value}</p>
+        </div>
+        <div
+          className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: `${props.color}20` }}
+        >
+          <Icon className="w-6 h-6" />
+        </div>
+      </div>
+      {props.trend ? (
+        <div className="mt-4 flex items-center gap-2 text-sm">
+          <span className={props.trend.isPositive ? 'text-green-600' : 'text-red-600'}>{props.trend.value}</span>
+          <span className="text-gray-500">dari bulan lalu</span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 export default function AdminDashboardPage() {
   const [userRole, setUserRole] = useState<'Super Admin' | 'Admin Unit' | 'Guru' | 'Siswa'>('Super Admin');
   const [userName, setUserName] = useState('Admin Utama');

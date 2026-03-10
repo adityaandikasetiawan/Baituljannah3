@@ -4,8 +4,66 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '../../../components/layout/Navbar';
 import { Footer } from '../../../components/layout/Footer';
-import { getUnitConfig } from '../../../features/unit/unit-config';
 import { Users } from 'lucide-react';
+
+type UnitKey = 'tkit' | 'sdit' | 'smpit' | 'smait' | 'slbit' | 'asrama';
+
+type UnitConfig = {
+  unitName: string;
+  fullName: string;
+  icon: string;
+  accentColor: string;
+  description: string;
+};
+
+const UNIT_CONFIG: Record<UnitKey, UnitConfig> = {
+  tkit: {
+    unitName: 'TKIT',
+    fullName: 'PGIT - TKIT Baitul Jannah',
+    icon: '/uploads/logos/TK.webp',
+    accentColor: '#10B981',
+    description: 'Pendidikan anak usia dini berbasis nilai Islam dan pembelajaran aktif.'
+  },
+  sdit: {
+    unitName: 'SDIT',
+    fullName: 'SDIT Baitul Jannah',
+    icon: '/uploads/logos/SD.webp',
+    accentColor: '#3B82F6',
+    description: 'Pendidikan dasar terpadu dengan penguatan literasi, numerasi, dan karakter Islami.'
+  },
+  smpit: {
+    unitName: 'SMPIT',
+    fullName: 'SMPIT Baitul Jannah',
+    icon: '/uploads/logos/SMP.webp',
+    accentColor: '#F97316',
+    description: 'Pendidikan menengah pertama dengan pembinaan akademik dan adab yang kuat.'
+  },
+  smait: {
+    unitName: 'SMAIT',
+    fullName: 'SMAIT Baitul Jannah',
+    icon: '/uploads/logos/SMA.webp',
+    accentColor: '#8B5CF6',
+    description: 'Pendidikan menengah atas yang mempersiapkan siswa berprestasi dan berakhlak.'
+  },
+  slbit: {
+    unitName: 'SLBIT',
+    fullName: 'SLBIT Baitul Jannah',
+    icon: '/uploads/logos/SLB.webp',
+    accentColor: '#14B8A6',
+    description: 'Layanan pendidikan inklusif untuk peserta didik berkebutuhan khusus.'
+  },
+  asrama: {
+    unitName: 'Asrama',
+    fullName: 'Asrama Baitul Jannah',
+    icon: '/uploads/logos/Asrama.webp',
+    accentColor: '#D4AF37',
+    description: 'Lingkungan pembinaan dan pendampingan siswa dengan kegiatan terprogram.'
+  }
+};
+
+function getUnitConfig(unit: string) {
+  return UNIT_CONFIG[unit as UnitKey];
+}
 
 export default function UnitGuruStaffPage({ params }: { params: Promise<{ unit: string }> }) {
   const router = useRouter();

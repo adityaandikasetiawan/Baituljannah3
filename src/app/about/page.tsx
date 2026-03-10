@@ -7,7 +7,6 @@ import { Footer } from '../../components/layout/Footer';
 import { Breadcrumb } from '../../components/layout/Breadcrumb';
 import { Users, Award, BookOpen, Heart, Target, Building2, GraduationCap, Shield, Sparkles, CheckCircle, Star, Zap } from 'lucide-react';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
-import { SponsorshipBanner } from '../../features/landing/components/SponsorshipBanner';
 import { useNavigationMenu } from '../../hooks/useNavigationMenu';
 
 export default function AboutPage() {
@@ -333,8 +332,24 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Sponsorship Banner */}
-      <SponsorshipBanner />
+      <section className="py-12 md:py-16 bg-gradient-to-br from-[#1E4AB8] to-[#8B5CF6] text-white">
+        <div className="container-custom text-center">
+          <div className="inline-flex items-center gap-2 px-6 py-3 bg-white/20 backdrop-blur-sm rounded-full text-sm mb-6">
+            <Sparkles className="w-4 h-4" />
+            <span>Kolaborasi & Sponsorship</span>
+          </div>
+          <h3 className="text-2xl md:text-3xl mb-3">Dukung Program Pendidikan Kami</h3>
+          <p className="text-white/90 max-w-2xl mx-auto mb-6">
+            Mari berkolaborasi untuk menghadirkan pendidikan terbaik bagi generasi Qur&apos;ani melalui program sponsorship dan kemitraan strategis.
+          </p>
+          <button
+            onClick={() => onNavigate('contact')}
+            className="px-6 py-3 rounded-full bg-white text-[#1E4AB8] font-medium hover:bg-gray-100 transition-colors"
+          >
+            Hubungi Kami
+          </button>
+        </div>
+      </section>
 
       <Footer 
         siteName="Baitul Jannah Islamic School"

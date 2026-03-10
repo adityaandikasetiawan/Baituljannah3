@@ -5,8 +5,50 @@ import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { Breadcrumb } from '../../components/layout/Breadcrumb';
 import { Trophy, Award, Medal, Filter, Search, Calendar, Star, ArrowRight, Sparkles } from 'lucide-react';
-import { AchievementCard } from '../../features/achievement/components/AchievementCard';
 import { useNavigationMenu } from '../../hooks/useNavigationMenu';
+
+type AchievementItem = {
+  studentName: string;
+  studentImage: string;
+  achievement: string;
+  competition: string;
+  rank: string;
+  category: string;
+  accentColor: string;
+  year: string;
+};
+
+function AchievementCard(props: Omit<AchievementItem, 'year'>) {
+  return (
+    <div className="group bg-white rounded-2xl shadow-soft hover:shadow-strong transition-all duration-300 overflow-hidden border border-gray-100">
+      <div className="h-2" style={{ backgroundColor: props.accentColor }} />
+      <div className="p-6">
+        <div className="flex items-center gap-4 mb-5">
+          <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
+            <img src={props.studentImage} alt={props.studentName} className="w-full h-full object-cover" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-lg text-gray-900 truncate">{props.studentName}</p>
+            <p className="text-sm text-gray-500 truncate">{props.category}</p>
+          </div>
+        </div>
+
+        <p className="text-xl text-gray-900 mb-2 line-clamp-2">{props.achievement}</p>
+        <p className="text-sm text-gray-600 mb-4 line-clamp-2">{props.competition}</p>
+
+        <div className="flex items-center justify-between gap-3">
+          <span
+            className="px-3 py-1 rounded-full text-sm text-white"
+            style={{ backgroundColor: props.accentColor }}
+          >
+            {props.rank}
+          </span>
+          <span className="text-sm text-gray-500">Baituljannah</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function AchievementPage() {
   const { menuItems, onNavigate } = useNavigationMenu();
@@ -150,7 +192,7 @@ export default function AchievementPage() {
       accentColor: "#DC2626",
       year: "2025"
     }
-  ];
+  ] satisfies AchievementItem[];
 
   const filteredAchievements = achievements.filter(item => {
     const matchYear = selectedYear === 'Semua' || item.year === selectedYear;
@@ -383,4 +425,3 @@ export default function AchievementPage() {
     </div>
   );
 }
-

@@ -4,8 +4,6 @@
 import React from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
-import { HeroCarousel } from '../features/landing/components/HeroCarousel';
-import { UnitCardCircular } from '../features/unit/components/UnitCardCircular';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { BookOpen, Users, Award, Globe, Heart, Star, ArrowRight, Sparkles, Trophy, GraduationCap, Target, TrendingUp, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -14,6 +12,8 @@ import { useNavigationMenu } from '../hooks/useNavigationMenu';
 
 export default function Home() {
   const { onNavigate, menuItems } = useNavigationMenu();
+
+  const [heroRef] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 5000 })]);
 
   const [emblaRef, emblaApi] = useEmblaCarousel(
     { loop: true, align: 'center', skipSnaps: false, dragFree: false, containScroll: 'trimSnaps' },
@@ -309,7 +309,27 @@ export default function Home() {
         menuItems={menuItems}
       />
 
-      <HeroCarousel slides={heroSlides} accentColor="var(--color-secondary)" />
+      <section className="relative h-[320px] md:h-[480px] overflow-hidden" ref={heroRef}>
+        <div className="flex h-full">
+          {heroSlides.map((slide, index) => (
+            <div key={index} className="relative min-w-full h-full">
+              <img
+                src={slide.image}
+                alt={slide.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/40"></div>
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+                <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-full text-sm mb-3">
+                  {slide.badge}
+                </span>
+                <h1 className="text-3xl md:text-5xl text-white mb-3">{slide.title}</h1>
+                <p className="text-white/90 max-w-2xl">{slide.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section className="py-12 md:py-20 px-4 md:px-8 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #5B4DB5 0%, #7C6FCC 100%)' }}>
         <div className="absolute inset-0 islamic-pattern opacity-10"></div>
@@ -328,42 +348,32 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6 lg:gap-8 max-w-6xl mx-auto mb-8 md:mb-12">
-            <UnitCardCircular
-              name="PGIT - TKIT"
-              icon="/uploads/logos/TK.webp"
-              color="#10B981"
-              onClick={() => onNavigate('tkit')}
-            />
-            <UnitCardCircular
-              name="SDIT"
-              icon="/uploads/logos/SD.webp"
-              color="#3B82F6"
-              onClick={() => onNavigate('sdit')}
-            />
-            <UnitCardCircular
-              name="SMPIT"
-              icon="/uploads/logos/SMP.webp"
-              color="#F97316"
-              onClick={() => onNavigate('smpit')}
-            />
-            <UnitCardCircular
-              name="SMAIT"
-              icon="/uploads/logos/SMA.webp"
-              color="#8B5CF6"
-              onClick={() => onNavigate('smait')}
-            />
-            <UnitCardCircular
-              name="SLBIT"
-              icon="/uploads/logos/SLB.webp"
-              color="#14B8A6"
-              onClick={() => onNavigate('slbit')}
-            />
-            <UnitCardCircular
-              name="Asrama"
-              icon="/uploads/logos/ASRAMA.webp"
-              color="#D4AF37"
-              onClick={() => onNavigate('about')}
-            />
+            {[
+              { n: 'PGIT - TKIT', i: '/uploads/logos/TK.webp', c: '#10B981', u: 'tkit' },
+              { n: 'SDIT', i: '/uploads/logos/SD.webp', c: '#3B82F6', u: 'sdit' },
+              { n: 'SMPIT', i: '/uploads/logos/SMP.webp', c: '#F97316', u: 'smpit' },
+              { n: 'SMAIT', i: '/uploads/logos/SMA.webp', c: '#8B5CF6', u: 'smait' },
+              { n: 'SLBIT', i: '/uploads/logos/SLB.webp', c: '#14B8A6', u: 'slbit' },
+              { n: 'Asrama', i: '/uploads/logos/ASRAMA.webp', c: '#D4AF37', u: 'about' }
+            ].map((u) => (
+              <div key={u.n} className="flex flex-col items-center gap-4">
+                <div
+                  onClick={() => onNavigate(u.u)}
+                  className="w-28 h-28 md:w-32 md:h-32 flex items-center justify-center transition-all duration-300 hover:scale-110 cursor-pointer"
+                >
+                  <img src={u.i} alt={u.n} className="w-full h-full object-contain drop-shadow-lg" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-white text-base md:text-lg mb-3">{u.n}</h3>
+                  <button
+                    onClick={() => onNavigate(u.u)}
+                    className="px-6 py-2 rounded-full border-2 border-white text-white text-sm hover:bg-white hover:text-[#5B4DB5] transition-all duration-300 hover:scale-105"
+                  >
+                    Selengkapnya
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
