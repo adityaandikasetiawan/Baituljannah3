@@ -23,6 +23,7 @@ export const useNavigationMenu = (role: UserRole = 'public') => {
       'smpit': '/smpit',
       'smait': '/smait',
       'slbit': '/slbit',
+      'asrama': '/asrama',
       'news': '/news',
       'gallery': '/gallery',
       'achievement': '/achievement',

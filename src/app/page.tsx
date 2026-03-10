@@ -367,7 +367,7 @@ export default function Home() {
               { n: 'SMPIT', i: '/uploads/logos/SMP.webp', c: '#F97316', u: 'smpit' },
               { n: 'SMAIT', i: '/uploads/logos/SMA.webp', c: '#8B5CF6', u: 'smait' },
               { n: 'SLBIT', i: '/uploads/logos/SLB.webp', c: '#14B8A6', u: 'slbit' },
-              { n: 'Asrama', i: '/uploads/logos/ASRAMA.webp', c: '#D4AF37', u: 'about' }
+              { n: 'Asrama', i: '/uploads/logos/Asrama.webp', c: '#D4AF37', u: 'asrama' }
             ].map((u) => (
               <div key={u.n} className="flex flex-col items-center gap-4">
                 <div
