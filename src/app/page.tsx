@@ -322,14 +322,6 @@ export default function Home() {
                   alt={slide.title}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-black/40"></div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-                  <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-full text-sm mb-3">
-                    {slide.badge}
-                  </span>
-                  <h1 className="text-3xl md:text-5xl text-white mb-3">{slide.title}</h1>
-                  <p className="text-white/90 max-w-2xl">{slide.description}</p>
-                </div>
               </div>
             ))}
           </div>
