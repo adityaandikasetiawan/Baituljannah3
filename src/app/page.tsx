@@ -13,7 +13,10 @@ import { useNavigationMenu } from '../hooks/useNavigationMenu';
 export default function Home() {
   const { onNavigate, menuItems } = useNavigationMenu();
 
-  const [heroRef] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 5000 })]);
+  const [heroRef, heroApi] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 5000 })]);
+
+  const scrollHeroPrev = React.useCallback(() => heroApi?.scrollPrev(), [heroApi]);
+  const scrollHeroNext = React.useCallback(() => heroApi?.scrollNext(), [heroApi]);
 
   const [emblaRef, emblaApi] = useEmblaCarousel(
     { loop: true, align: 'center', skipSnaps: false, dragFree: false, containScroll: 'trimSnaps' },
@@ -309,26 +312,44 @@ export default function Home() {
         menuItems={menuItems}
       />
 
-      <section className="relative h-[320px] md:h-[480px] overflow-hidden" ref={heroRef}>
-        <div className="flex h-full">
-          {heroSlides.map((slide, index) => (
-            <div key={index} className="relative min-w-full h-full">
-              <img
-                src={slide.image}
-                alt={slide.title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black/40"></div>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-                <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-full text-sm mb-3">
-                  {slide.badge}
-                </span>
-                <h1 className="text-3xl md:text-5xl text-white mb-3">{slide.title}</h1>
-                <p className="text-white/90 max-w-2xl">{slide.description}</p>
+      <section className="relative h-[320px] md:h-[480px] group">
+        <div className="overflow-hidden h-full" ref={heroRef}>
+          <div className="flex h-full">
+            {heroSlides.map((slide, index) => (
+              <div key={index} className="relative flex-[0_0_100%] min-w-0 h-full">
+                <img
+                  src={slide.image}
+                  alt={slide.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/40"></div>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+                  <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-full text-sm mb-3">
+                    {slide.badge}
+                  </span>
+                  <h1 className="text-3xl md:text-5xl text-white mb-3">{slide.title}</h1>
+                  <p className="text-white/90 max-w-2xl">{slide.description}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
+
+        <button
+          onClick={scrollHeroPrev}
+          className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center text-white transition-all opacity-0 group-hover:opacity-100 z-10"
+          aria-label="Previous slide"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+
+        <button
+          onClick={scrollHeroNext}
+          className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center text-white transition-all opacity-0 group-hover:opacity-100 z-10"
+          aria-label="Next slide"
+        >
+          <ChevronRight className="w-6 h-6" />
+        </button>
       </section>
 
       <section className="py-12 md:py-20 px-4 md:px-8 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #5B4DB5 0%, #7C6FCC 100%)' }}>
