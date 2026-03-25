@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Navbar } from '../../../components/layout/Navbar';
+import { Sidebar } from '../../../components/layout/Sidebar';
 import { useNavigationMenu } from '../../../hooks/useNavigationMenu';
 import { BookOpen, TrendingUp, Award, Calendar, FileText, Download, Target, Clock } from 'lucide-react';
 
@@ -227,14 +227,18 @@ export default function StudentAcademicPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar 
-        siteName="Portal Siswa - Akademik"
-        accentColor="#1E4AB8"
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar
         menuItems={menuItems}
+        accentColor="#1E4AB8"
+        userRole="Siswa"
+        userName={studentData.name}
+        panelTitle="Portal Siswa"
+        panelSubtitle={`${studentData.unit} • ${studentData.class}`}
       />
 
-      <div className="container mx-auto px-4 py-8">
+      <main className="flex-1 p-6 md:p-8">
+        <div className="container mx-auto">
         {/* Header */}
         <div className="bg-gradient-to-br from-[#1E4AB8] to-[#8B5CF6] rounded-3xl p-8 mb-8 text-white shadow-lg">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -538,7 +542,8 @@ export default function StudentAcademicPage() {
             )}
           </div>
         </div>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

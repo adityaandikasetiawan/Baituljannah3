@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Navbar } from '../../../components/layout/Navbar';
+import { Sidebar } from '../../../components/layout/Sidebar';
 import { useNavigationMenu } from '../../../hooks/useNavigationMenu';
 import { DollarSign, Calendar, Download, CreditCard, CheckCircle, AlertCircle, XCircle, Clock, FileText } from 'lucide-react';
 
@@ -207,14 +207,18 @@ export default function StudentFinancePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar 
-        siteName="Portal Siswa - Keuangan"
-        accentColor="#1E4AB8"
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar
         menuItems={menuItems}
+        accentColor="#1E4AB8"
+        userRole="Siswa"
+        userName={studentData.name}
+        panelTitle="Portal Siswa"
+        panelSubtitle={`${studentData.unit} • ${studentData.class}`}
       />
 
-      <div className="container-custom py-8">
+      <main className="flex-1 p-6 md:p-8">
+        <div className="container-custom">
         {/* Header */}
         <div className="bg-gradient-to-br from-[#1E4AB8] to-[#8B5CF6] rounded-3xl p-8 mb-8 text-white shadow-strong">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -476,7 +480,8 @@ export default function StudentFinancePage() {
             )}
           </div>
         </div>
-      </div>
+        </div>
+      </main>
 
       {/* Payment Modal */}
       {showPaymentModal && selectedPayment && (

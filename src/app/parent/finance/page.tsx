@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Navbar } from '../../../components/layout/Navbar';
+import { Sidebar } from '../../../components/layout/Sidebar';
 import { useNavigationMenu } from '../../../hooks/useNavigationMenu';
 import { DollarSign, Calendar, Download, CreditCard, CheckCircle, AlertCircle, Clock, Bell, ArrowRight } from 'lucide-react';
 import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
@@ -150,14 +150,18 @@ export default function ParentFinancePage() {
   }, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar 
-        siteName="Portal Orang Tua - Keuangan"
-        accentColor="#1E4AB8"
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar
         menuItems={menuItems}
+        accentColor="#1E4AB8"
+        userRole="Orang Tua"
+        userName={parentData.name}
+        panelTitle="Portal Orang Tua"
+        panelSubtitle={`${currentChild.unit} • ${currentChild.class}`}
       />
 
-      <div className="container-custom py-8">
+      <main className="flex-1 p-6 md:p-8">
+        <div className="container-custom">
         {/* Header */}
         <div className="bg-gradient-to-br from-[#1E4AB8] to-[#8B5CF6] rounded-3xl p-8 mb-8 text-white shadow-strong">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -431,6 +435,7 @@ export default function ParentFinancePage() {
           </div>
         </div>
       </div>
+      </main>
 
       {/* Payment Modal would go here */}
       {showPaymentModal && (

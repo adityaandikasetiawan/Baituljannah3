@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { LucideIcon, ChevronDown, Menu, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { LucideIcon, ChevronDown, LogOut, Menu, X } from 'lucide-react';
 
 interface MenuItem {
   label: string;
@@ -17,6 +18,8 @@ interface SidebarProps {
   userRole: string;
   userName: string;
   logo?: string;
+  panelTitle?: string;
+  panelSubtitle?: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -24,8 +27,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   accentColor = '#1E4AB8',
   userRole,
   userName,
-  logo
+  logo,
+  panelTitle = 'Admin Panel',
+  panelSubtitle = 'Baituljannah'
 }) => {
+  const router = useRouter();
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [didLogoError, setDidLogoError] = useState(false);
@@ -47,6 +53,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setOpenSubmenu(openSubmenu === label ? null : label);
   };
 
+  const handleLogout = () => {
+    document.cookie = 'role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+    setIsMobileMenuOpen(false);
+    router.replace('/login');
+    router.refresh();
+  };
+
   const SidebarContent = () => (
     <>
       {/* Logo */}
@@ -65,8 +78,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
           <div>
-            <h3 className="text-sm">Admin Panel</h3>
-            <p className="text-xs text-gray-500">Baituljannah</p>
+            <h3 className="text-sm">{panelTitle}</h3>
+            <p className="text-xs text-gray-500">{panelSubtitle}</p>
           </div>
         </div>
       </div>
@@ -126,7 +139,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               ) : item.onClick ? (
                 <button
                   onClick={() => {
-                    item.onClick();
+                    item.onClick?.();
                     setIsMobileMenuOpen(false);
                   }}
                   className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors group"
@@ -162,6 +175,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ))}
         </ul>
       </nav>
+
+      <div className="p-4 border-t border-gray-200">
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-colors"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="text-sm">Logout</span>
+        </button>
+      </div>
     </>
   );
 

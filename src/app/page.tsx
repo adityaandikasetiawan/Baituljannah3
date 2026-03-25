@@ -5,7 +5,7 @@ import React from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { BookOpen, Users, Award, Globe, Heart, Star, ArrowRight, Sparkles, Trophy, GraduationCap, Target, TrendingUp, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BookOpen, Users, Award, Globe, Heart, Star, ArrowRight, Sparkles, Trophy, GraduationCap, Target, TrendingUp, Search, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { useNavigationMenu } from '../hooks/useNavigationMenu';
@@ -303,6 +303,23 @@ export default function Home() {
     }
   ];
 
+  const universities = [
+    { name: 'Universitas Lampung', file: 'UNILA.png' },
+    { name: 'Universitas Airlangga', file: 'UNAIR.png' },
+    { name: 'Universitas Padjadjaran', file: 'UNPAD.png' },
+    { name: 'Universitas Brawijaya', file: 'UB.png' },
+    { name: 'Universitas Sriwijaya', file: 'Logo_Universitas_Sriwijaya.svg.png' },
+    { name: 'UIN Raden Intan', file: 'Logo-UIN-Raden-Intan.png' },
+    { name: 'UIN Malang', file: 'UIN MALANG.webp' },
+    { name: 'Institut Teknologi Sumatera', file: 'Logo_ITERA.png' },
+    { name: 'Politeknik Negeri Lampung', file: 'Politeknik_Negeri_Lampung.png' },
+    { name: 'Universitas Jenderal Soedirman', file: 'Logo-UNSOED.png' },
+    { name: 'Universitas Syiah Kuala', file: 'unsyiah.png' },
+    { name: 'Universitas Negeri Semarang', file: 'UNES.png' },
+  ];
+
+  const getUniversityLogoSrc = (file: string) => encodeURI(`/uploads/universitas/${file}`);
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar
@@ -387,6 +404,42 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section-padding bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                'radial-gradient(circle at 20% 10%, rgba(255,255,255,0.12), transparent 45%), radial-gradient(circle at 80% 30%, rgba(255,255,255,0.10), transparent 40%), radial-gradient(circle at 50% 90%, rgba(255,255,255,0.08), transparent 55%)',
+            }}
+          />
+        </div>
+        <div className="container-custom relative z-10">
+          <div className="text-center mb-10 md:mb-12">
+            <div className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-sm mb-6">
+              <Play className="w-4 h-4" />
+              <span>Video Profil</span>
+            </div>
+            <h2 className="text-1xl md:text-3xl lg:text-3xl font-bold text-white leading-tight tracking-tight">
+              Mengenal Lebih Dekat Baituljannah Islamic School
+            </h2>
+          </div>
+          <div className="relative rounded-2xl overflow-hidden shadow-strong border border-white/10 max-w-5xl mx-auto aspect-[16/9] bg-black">
+            <iframe
+              width="560"
+              height="315"
+              src="https://www.youtube.com/embed/EMSGkb_-ATI?si=9kmsTfulmlc3HOtA&autoplay=1&mute=1&playsinline=1"
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+              className="absolute inset-0 w-full h-full"
+            ></iframe>
           </div>
         </div>
       </section>
@@ -627,6 +680,39 @@ export default function Home() {
               <span>Lihat Semua Prestasi</span>
               <Trophy className="w-5 h-5" />
             </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="section-padding bg-gray-50">
+        <div className="container-custom">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-6 py-3 bg-[#1E4AB8]/10 rounded-full text-[#1E4AB8] text-sm mb-6">
+              <GraduationCap className="w-4 h-4" />
+              <span>Universitas Unggulan</span>
+            </div>
+            <h2 className="text-4xl lg:text-5xl mb-4">Jejak Lulusan Kami</h2>
+            <p className="text-gray-600 text-lg max-w-3xl mx-auto">
+              Lulusan Baituljannah melanjutkan studi ke berbagai perguruan tinggi unggulan.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 max-w-6xl mx-auto">
+            {universities.map((u) => (
+              <div
+                key={u.name}
+                className="group bg-white rounded-2xl p-6 shadow-soft hover:shadow-strong transition-all duration-300 border border-gray-100 hover:border-[#1E4AB8]/20"
+              >
+                <div className="h-16 md:h-20 flex items-center justify-center">
+                  <ImageWithFallback
+                    src={getUniversityLogoSrc(u.file)}
+                    alt={u.name}
+                    className="max-h-full w-auto object-contain transition-all duration-300 grayscale group-hover:grayscale-0"
+                  />
+                </div>
+                <p className="mt-4 text-center text-xs md:text-sm text-gray-700 font-semibold">{u.name}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

@@ -4,11 +4,12 @@ import { Facebook, Instagram, Youtube, Mail, Phone, MapPin, Twitter } from 'luci
 interface FooterProps {
   logo?: string;
   siteName: string;
+  siteTagline?: string;
   accentColor?: string;
   onNavigate?: (page: string) => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ logo, siteName, accentColor = '#1E4AB8', onNavigate = () => {} }) => {
+export const Footer: React.FC<FooterProps> = ({ logo, siteName, siteTagline = 'Sekolahnya Para Juara', accentColor = '#1E4AB8', onNavigate = () => {} }) => {
   const resolvedLogoSrc = React.useMemo(() => {
     const input = logo?.trim();
     if (!input) return '/uploads/logos/Yayasan.webp';
@@ -34,7 +35,7 @@ export const Footer: React.FC<FooterProps> = ({ logo, siteName, accentColor = '#
               </div>
               <div>
                 <h3 className="text-base md:text-lg font-semibold">{siteName}</h3>
-                <p className="text-xs text-gray-400">Sekolahnya Para Juara</p>
+                <p className="text-xs text-gray-400">{siteTagline}</p>
               </div>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed mb-4">

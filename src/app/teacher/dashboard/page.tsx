@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Navbar } from '../../../components/layout/Navbar';
+import { Sidebar } from '../../../components/layout/Sidebar';
 import { useNavigationMenu } from '../../../hooks/useNavigationMenu';
 import { Users, ClipboardCheck, Calendar, Bell, TrendingUp, Clock, FileText, Award, Plus, Eye, Edit } from 'lucide-react';
 
@@ -118,14 +118,18 @@ export default function TeacherDashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar 
-        siteName="Portal Guru - Baituljannah"
-        accentColor="#1E4AB8"
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar
         menuItems={menuItems}
+        accentColor="#1E4AB8"
+        userRole="Guru"
+        userName={teacherData.name}
+        panelTitle="Portal Guru"
+        panelSubtitle={`${teacherData.unit} • ${teacherData.subject}`}
       />
 
-      <div className="container-custom py-8">
+      <main className="flex-1 p-6 md:p-8">
+        <div className="container-custom">
         {/* Header */}
         <div className="bg-gradient-to-br from-[#1E4AB8] to-[#8B5CF6] rounded-3xl p-8 mb-8 text-white shadow-strong">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -392,7 +396,8 @@ export default function TeacherDashboardPage() {
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

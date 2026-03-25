@@ -1,13 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import { Menu, X, ChevronDown, Globe } from 'lucide-react';
+
+type MenuIcon = string | LucideIcon;
 
 interface MenuItem {
   label: string;
   labelEn?: string;
   href: string;
-  icon?: string;
+  icon?: MenuIcon;
   onClick?: () => void;
-  submenu?: { label: string; labelEn?: string; href: string; icon?: string; onClick?: () => void }[];
+  submenu?: { label: string; labelEn?: string; href: string; icon?: MenuIcon; onClick?: () => void }[];
 }
 
 interface NavbarProps {
@@ -82,6 +85,15 @@ export const Navbar: React.FC<NavbarProps> = ({ logo, siteName, siteTagline = 'I
     scheduleCloseSubmenu();
   };
 
+  const renderSubmenuIcon = (icon?: MenuIcon) => {
+    if (!icon) return null;
+    if (typeof icon === 'string') {
+      return <img src={icon} alt="" className="w-5 h-5 object-contain" />;
+    }
+    const Icon = icon;
+    return <Icon className="w-5 h-5" />;
+  };
+
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
       <div className="container-custom px-4 md:px-8">
@@ -139,7 +151,7 @@ export const Navbar: React.FC<NavbarProps> = ({ logo, siteName, siteTagline = 'I
                           }}
                           className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[var(--color-primary)] transition-colors"
                         >
-                          {subitem.icon && <img src={subitem.icon} alt="" className="w-5 h-5 object-contain" />}
+                          {renderSubmenuIcon(subitem.icon)}
                           <span>{getLabel(subitem)}</span>
                         </button>
                       ))}
@@ -200,7 +212,7 @@ export const Navbar: React.FC<NavbarProps> = ({ logo, siteName, siteTagline = 'I
                         }}
                         className="w-full text-left flex items-center gap-3 py-2 text-sm text-gray-600 hover:text-[var(--color-primary)] transition-colors"
                       >
-                        {subitem.icon && <img src={subitem.icon} alt="" className="w-5 h-5 object-contain" />}
+                        {renderSubmenuIcon(subitem.icon)}
                         <span>{getLabel(subitem)}</span>
                       </button>
                     ))}

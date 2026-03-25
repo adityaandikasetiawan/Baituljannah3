@@ -19,8 +19,7 @@ export default function LoginPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Route based on user type
+    document.cookie = `role=${userType}; path=/; SameSite=Lax`;
     switch (userType) {
       case 'admin':
         router.push('/admin/dashboard');

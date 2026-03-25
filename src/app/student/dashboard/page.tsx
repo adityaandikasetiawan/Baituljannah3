@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Navbar } from '../../../components/layout/Navbar';
+import { Sidebar } from '../../../components/layout/Sidebar';
 import { useNavigationMenu } from '../../../hooks/useNavigationMenu';
 import { BookOpen, Calendar, DollarSign, Bell, Award, TrendingUp, Clock, FileText, Users, CheckCircle, AlertCircle, ChevronRight, Download } from 'lucide-react';
 import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
@@ -147,14 +147,18 @@ export default function StudentDashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar 
-        siteName="Portal Siswa - Baituljannah"
-        accentColor="#1E4AB8"
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar
         menuItems={menuItems}
+        accentColor="#1E4AB8"
+        userRole="Siswa"
+        userName={studentData.name}
+        panelTitle="Portal Siswa"
+        panelSubtitle={`${studentData.unit} • ${studentData.class}`}
       />
 
-      <div className="container-custom py-8">
+      <main className="flex-1 p-6 md:p-8">
+        <div className="container-custom">
         {/* Header Profile */}
         <div className="bg-gradient-to-br from-[#1E4AB8] to-[#8B5CF6] rounded-3xl p-8 mb-8 text-white shadow-strong">
           <div className="flex flex-col md:flex-row items-center gap-6">
@@ -463,7 +467,8 @@ export default function StudentDashboardPage() {
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
