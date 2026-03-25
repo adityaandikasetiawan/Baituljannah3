@@ -36,6 +36,10 @@ export const useNavigationMenu = (role: UserRole = 'public') => {
       'parent-dashboard': '/parent/dashboard',
       'parent-finance': '/parent/finance',
       'teacher-dashboard': '/teacher/dashboard',
+      'teacher-schedule': '/teacher/schedule',
+      'teacher-grades': '/teacher/grades',
+      'teacher-attendance': '/teacher/attendance',
+      'teacher-profile': '/teacher/profile',
       'admin-dashboard': '/admin/dashboard',
       'admin-news': '/admin/news',
       'admin-gallery': '/admin/gallery',
@@ -140,10 +144,10 @@ export const useNavigationMenu = (role: UserRole = 'public') => {
 
   const teacherMenu = [
     { label: 'Dashboard', icon: TrendingUp, href: '#', onClick: () => onNavigate('teacher-dashboard') },
-    { label: 'Jadwal', icon: Calendar, href: '#', onClick: () => {} },
-    { label: 'Nilai', icon: Award, href: '#', onClick: () => {} },
-    { label: 'Absensi', icon: ClipboardCheck, href: '#', onClick: () => {} },
-    { label: 'Profile', icon: Users, href: '#', onClick: () => {} }
+    { label: 'Jadwal', icon: Calendar, href: '#', onClick: () => onNavigate('teacher-schedule') },
+    { label: 'Nilai', icon: Award, href: '#', onClick: () => onNavigate('teacher-grades') },
+    { label: 'Absensi', icon: ClipboardCheck, href: '#', onClick: () => onNavigate('teacher-attendance') },
+    { label: 'Profile', icon: Users, href: '#', onClick: () => onNavigate('teacher-profile') }
   ];
 
   const adminMenu = [

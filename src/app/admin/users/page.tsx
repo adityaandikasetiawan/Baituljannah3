@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Sidebar } from '../../../components/layout/Sidebar';
 import { useNavigationMenu } from '../../../hooks/useNavigationMenu';
-import { Users, Plus, Edit, Search, Filter, X, Check, Mail, Phone, Calendar, User, Shield, Lock, Trash2, Eye } from 'lucide-react';
+import { Users, Plus, Edit, Search, X, Trash2, User, Mail, Copy, Link } from 'lucide-react';
 
 interface UserItem {
   id: number;
@@ -15,16 +15,21 @@ interface UserItem {
   lastLogin: string;
   phone?: string;
   image?: string;
+  inviteToken?: string;
+  inviteExpiresAt?: string;
+  passwordSet?: boolean;
 }
 
 export default function AdminUsersPage() {
   const { menuItems } = useNavigationMenu('admin');
+  const adminProfile = useMemo(() => ({ userName: 'Admin Utama', userRole: 'Super Admin' as const }), []);
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedUser, setSelectedUser] = useState<UserItem | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRole, setFilterRole] = useState('Semua');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
+  const [inviteCreated, setInviteCreated] = useState<{ email: string; link: string; expiresAt: string } | null>(null);
 
   // Mock Data
   const [userList, setUserList] = useState<UserItem[]>([
@@ -96,6 +101,52 @@ export default function AdminUsersPage() {
     return matchesSearch && matchesRole;
   });
 
+  useEffect(() => {
+    const raw = localStorage.getItem('baituljannah_password_set_emails_v1');
+    if (!raw) return;
+    const emails = JSON.parse(raw) as string[];
+    if (!Array.isArray(emails) || emails.length === 0) return;
+
+    setUserList((prev) =>
+      prev.map((u) =>
+        emails.includes(u.email)
+          ? { ...u, status: 'Aktif', passwordSet: true, inviteToken: undefined, inviteExpiresAt: undefined }
+          : u
+      )
+    );
+  }, []);
+
+  const encodeBase64Url = (input: string) => {
+    const base64 = btoa(unescape(encodeURIComponent(input)));
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  };
+
+  const buildInviteToken = (payload: {
+    email: string;
+    fullName: string;
+    role: UserItem['role'];
+    unit: string;
+    exp: number;
+    nonce: string;
+  }) => {
+    return encodeBase64Url(JSON.stringify(payload));
+  };
+
+  const buildInviteLink = (token: string) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    return `${origin}/setup-password?token=${encodeURIComponent(token)}`;
+  };
+
+  const sendInviteEmail = (email: string, link: string) => {
+    const subject = `Undangan Akun - Yayasan Baituljannah`;
+    const body = `Assalamu'alaikum Wr. Wb.\n\nAkun Anda telah dibuat di Sistem Yayasan Baituljannah.\n\nSilakan atur password Anda melalui tautan berikut (berlaku 24 jam):\n${link}\n\nWassalamu'alaikum Wr. Wb.`;
+    window.open(`mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+  };
+
+  const copyText = async (text: string) => {
+    await navigator.clipboard.writeText(text);
+  };
+
   const handleCreate = () => {
     setModalMode('create');
     setFormData({
@@ -126,17 +177,32 @@ export default function AdminUsersPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (modalMode === 'create') {
+      const exp = Date.now() + 24 * 60 * 60 * 1000;
+      const token = buildInviteToken({
+        email: formData.email || '',
+        fullName: formData.name || '',
+        role: formData.role as any,
+        unit: formData.unit || 'SDIT',
+        exp,
+        nonce: crypto.randomUUID()
+      });
+      const link = buildInviteLink(token);
+
       const newUser: UserItem = {
         id: userList.length + 1,
         name: formData.name || '',
         email: formData.email || '',
         role: formData.role as any,
         unit: formData.unit || 'SDIT',
-        status: formData.status as any,
+        status: 'Non-Aktif',
         lastLogin: 'Belum pernah login',
-        phone: formData.phone
+        phone: formData.phone,
+        inviteToken: token,
+        inviteExpiresAt: new Date(exp).toISOString(),
+        passwordSet: false
       };
       setUserList([...userList, newUser]);
+      setInviteCreated({ email: newUser.email, link, expiresAt: newUser.inviteExpiresAt! });
     } else if (selectedUser) {
       setUserList(userList.map(user => 
         user.id === selectedUser.id ? { ...user, ...formData } as UserItem : user
@@ -152,7 +218,14 @@ export default function AdminUsersPage() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <Sidebar menuItems={menuItems} accentColor="#1E4AB8" />
+      <Sidebar
+        menuItems={menuItems}
+        accentColor="#1E4AB8"
+        userRole={adminProfile.userRole}
+        userName={adminProfile.userName}
+        panelTitle="Portal Admin"
+        panelSubtitle="Manajemen Yayasan"
+      />
 
       <main className="flex-1 overflow-auto">
         <header className="bg-white shadow-sm sticky top-0 z-30">
@@ -241,15 +314,36 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="py-4 px-6 text-gray-600">{user.unit}</td>
                       <td className="py-4 px-6">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          user.status === 'Aktif' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                        }`}>
-                          {user.status}
-                        </span>
+                        {user.passwordSet ? (
+                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">Aktif</span>
+                        ) : user.inviteToken ? (
+                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Invited</span>
+                        ) : (
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              user.status === 'Aktif' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                            }`}
+                          >
+                            {user.status}
+                          </span>
+                        )}
                       </td>
                       <td className="py-4 px-6 text-gray-500 text-sm">{user.lastLogin}</td>
                       <td className="py-4 px-6">
                         <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => {
+                              if (!user.inviteToken) return;
+                              sendInviteEmail(user.email, buildInviteLink(user.inviteToken));
+                            }}
+                            className={`p-2 rounded-lg transition-colors ${
+                              user.inviteToken ? 'text-amber-700 hover:bg-amber-50' : 'text-gray-400 cursor-not-allowed'
+                            }`}
+                            title="Kirim Undangan"
+                            disabled={!user.inviteToken}
+                          >
+                            <Mail className="w-4 h-4" />
+                          </button>
                           <button
                             onClick={() => handleEdit(user)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -280,6 +374,65 @@ export default function AdminUsersPage() {
         </div>
       </main>
 
+      {inviteCreated && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-800">Undangan Berhasil Dibuat</h2>
+              <button
+                onClick={() => setInviteCreated(null)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-6 h-6 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100">
+                <p className="text-sm text-amber-900 mb-1">Email</p>
+                <p className="text-base text-amber-900">{inviteCreated.email}</p>
+                <p className="text-xs text-amber-700 mt-2">
+                  Tautan berlaku sampai {new Date(inviteCreated.expiresAt).toLocaleString('id-ID')}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-600 mb-2">Tautan Setup Password</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-700 break-all">
+                    {inviteCreated.link}
+                  </div>
+                  <button
+                    onClick={() => copyText(inviteCreated.link)}
+                    className="px-4 py-3 rounded-xl bg-gray-900 text-white hover:bg-gray-800 transition-colors flex items-center gap-2"
+                  >
+                    <Copy className="w-4 h-4" />
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                <button
+                  onClick={() => sendInviteEmail(inviteCreated.email, inviteCreated.link)}
+                  className="px-4 py-3 rounded-xl bg-[#1E4AB8] text-white hover:bg-[#1E4AB8]/90 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Mail className="w-5 h-5" />
+                  Kirim via Email
+                </button>
+                <button
+                  onClick={() => window.open(inviteCreated.link, '_blank')}
+                  className="px-4 py-3 rounded-xl bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Link className="w-5 h-5" />
+                  Buka Link
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal Form */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -297,6 +450,13 @@ export default function AdminUsersPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {modalMode === 'create' ? (
+                <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100">
+                  <p className="text-sm text-blue-900">
+                    Password tidak diisi oleh admin. Sistem akan membuat tautan undangan agar user mengatur password sendiri.
+                  </p>
+                </div>
+              ) : null}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-700">Nama Lengkap *</label>

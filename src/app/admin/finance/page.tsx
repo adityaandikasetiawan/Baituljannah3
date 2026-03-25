@@ -41,6 +41,8 @@ export default function AdminFinancePage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showReminderModal, setShowReminderModal] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [selectedInvoicePayment, setSelectedInvoicePayment] = useState<Payment | null>(null);
 
   const students: Student[] = [
     {
@@ -184,6 +186,176 @@ export default function AdminFinancePage() {
     }).format(amount);
   };
 
+  const formatDate = (value: string | null) => {
+    if (!value) return '-';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return value;
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+  };
+
+  const monthToNumber = (month: string) => {
+    const m = month.toLowerCase();
+    const map: Record<string, string> = {
+      januari: '01',
+      februari: '02',
+      maret: '03',
+      april: '04',
+      mei: '05',
+      juni: '06',
+      juli: '07',
+      agustus: '08',
+      september: '09',
+      oktober: '10',
+      november: '11',
+      desember: '12'
+    };
+    return map[m] ?? '00';
+  };
+
+  const buildInvoiceNumber = (payment: Payment) => {
+    const mm = monthToNumber(payment.month);
+    return `INV-${payment.year}-${mm}-${String(payment.id).padStart(3, '0')}`;
+  };
+
+  const escapeHtml = (text: string) => {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
+  const openInvoiceWindow = (payment: Payment) => {
+    const invoiceNumber = buildInvoiceNumber(payment);
+    const issueDate = payment.status === 'paid' ? payment.paidDate : new Date().toISOString().slice(0, 10);
+    const title = payment.status === 'paid' ? 'Kuitansi Pembayaran' : 'Invoice Tagihan';
+    const statusLabel = payment.status === 'paid' ? 'LUNAS' : payment.status === 'pending' ? 'PENDING' : 'TERLAMBAT';
+    const statusColor = payment.status === 'paid' ? '#16a34a' : payment.status === 'pending' ? '#f97316' : '#dc2626';
+
+    const html = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeHtml(invoiceNumber)} - ${escapeHtml(title)}</title>
+  <style>
+    :root { --accent: #1E4AB8; --muted: #64748b; --border: #e2e8f0; }
+    * { box-sizing: border-box; }
+    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; margin: 0; padding: 24px; color: #0f172a; background: #ffffff; }
+    .wrap { max-width: 820px; margin: 0 auto; }
+    .top { display: flex; justify-content: space-between; gap: 16px; border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+    .brand h1 { font-size: 18px; margin: 0 0 6px; letter-spacing: 0.3px; }
+    .brand p { margin: 0; color: var(--muted); font-size: 12px; }
+    .meta { text-align: right; }
+    .meta .label { color: var(--muted); font-size: 12px; margin: 0 0 4px; }
+    .meta .value { margin: 0 0 10px; font-weight: 700; }
+    .badge { display: inline-block; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1px solid var(--border); color: ${statusColor}; }
+    .section { margin-top: 18px; border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .kv { margin: 0; }
+    .k { color: var(--muted); font-size: 12px; margin: 0 0 4px; }
+    .v { margin: 0; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { border-bottom: 1px solid var(--border); padding: 10px 8px; text-align: left; font-size: 13px; }
+    th { color: var(--muted); font-weight: 700; font-size: 12px; letter-spacing: 0.2px; }
+    .right { text-align: right; }
+    .total { display: flex; justify-content: flex-end; margin-top: 14px; }
+    .totalbox { min-width: 300px; border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+    .totalrow { display: flex; justify-content: space-between; margin: 6px 0; }
+    .grand { font-weight: 800; font-size: 15px; }
+    .foot { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media print {
+      body { padding: 0; }
+      .top, .section { border: none; border-radius: 0; padding: 0; }
+      .wrap { max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <h1>Yayasan Baituljannah</h1>
+        <p>${escapeHtml(title)}</p>
+      </div>
+      <div class="meta">
+        <p class="label">No. Dokumen</p>
+        <p class="value">${escapeHtml(invoiceNumber)}</p>
+        <span class="badge">${escapeHtml(statusLabel)}</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="grid">
+        <div class="kv">
+          <p class="k">Siswa</p>
+          <p class="v">${escapeHtml(payment.studentName)}</p>
+        </div>
+        <div class="kv">
+          <p class="k">NIS</p>
+          <p class="v">${escapeHtml(payment.studentNis)}</p>
+        </div>
+        <div class="kv">
+          <p class="k">Unit & Kelas</p>
+          <p class="v">${escapeHtml(`${payment.unit} • ${payment.class}`)}</p>
+        </div>
+        <div class="kv">
+          <p class="k">Tanggal</p>
+          <p class="v">${escapeHtml(formatDate(issueDate))}</p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th class="right">Jumlah</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>SPP ${escapeHtml(payment.month)} ${escapeHtml(String(payment.year))}</td>
+            <td class="right">${escapeHtml(formatCurrency(payment.amount))}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="total">
+        <div class="totalbox">
+          <div class="totalrow grand">
+            <div>Total</div>
+            <div>${escapeHtml(formatCurrency(payment.amount))}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top: 18px;">
+        <div class="kv">
+          <p class="k">Jatuh Tempo</p>
+          <p class="v">${escapeHtml(formatDate(payment.dueDate))}</p>
+        </div>
+        <div class="kv">
+          <p class="k">Metode Pembayaran</p>
+          <p class="v">${escapeHtml(payment.paymentMethod ?? '-')}</p>
+        </div>
+      </div>
+
+      <p class="foot">Dokumen ini dihasilkan oleh sistem. Silakan simpan sebagai PDF melalui fitur print browser.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const w = window.open('', '_blank', 'noopener,noreferrer');
+    if (!w) return;
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    w.print();
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'clear':
@@ -202,6 +374,11 @@ export default function AdminFinancePage() {
   const handleOpenDetail = (student: Student) => {
     setSelectedStudent(student);
     setShowDetailModal(true);
+  };
+
+  const handleOpenInvoice = (payment: Payment) => {
+    setSelectedInvoicePayment(payment);
+    setShowInvoiceModal(true);
   };
 
   return (
@@ -424,9 +601,22 @@ export default function AdminFinancePage() {
                           {getStatusBadge(payment.status)}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                            <Download className="w-4 h-4" />
-                          </button>
+                          <div className="inline-flex items-center gap-1">
+                            <button
+                              onClick={() => handleOpenInvoice(payment)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Lihat Invoice"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => openInvoiceWindow(payment)}
+                              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                              title="Download / Print"
+                            >
+                              <Download className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -552,6 +742,71 @@ export default function AdminFinancePage() {
               >
                 Kirim
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showInvoiceModal && selectedInvoicePayment && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex items-start justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Invoice</h3>
+                <p className="text-sm text-gray-500">
+                  {buildInvoiceNumber(selectedInvoicePayment)} • {selectedInvoicePayment.studentName}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowInvoiceModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <XCircle className="w-6 h-6 text-gray-400" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <div className="text-xs text-gray-500 mb-1">Siswa</div>
+                  <div className="font-semibold text-gray-900">{selectedInvoicePayment.studentName}</div>
+                  <div className="text-sm text-gray-600">NIS: {selectedInvoicePayment.studentNis}</div>
+                  <div className="text-sm text-gray-600">{selectedInvoicePayment.unit} • {selectedInvoicePayment.class}</div>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <div className="text-xs text-gray-500 mb-1">Item</div>
+                  <div className="font-semibold text-gray-900">SPP {selectedInvoicePayment.month} {selectedInvoicePayment.year}</div>
+                  <div className="text-sm text-gray-600">Jatuh tempo: {formatDate(selectedInvoicePayment.dueDate)}</div>
+                  <div className="text-sm text-gray-600">Metode: {selectedInvoicePayment.paymentMethod || '-'}</div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between border border-gray-100 rounded-xl p-4">
+                <div>
+                  <div className="text-xs text-gray-500">Total</div>
+                  <div className="text-xl font-bold text-gray-900">{formatCurrency(selectedInvoicePayment.amount)}</div>
+                </div>
+                <div>{getStatusBadge(selectedInvoicePayment.status)}</div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    openInvoiceWindow(selectedInvoicePayment);
+                    setShowInvoiceModal(false);
+                  }}
+                  className="btn-primary flex-1 flex justify-center items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Download / Print
+                </button>
+                <button
+                  onClick={() => setShowInvoiceModal(false)}
+                  className="btn-outline flex-1"
+                >
+                  Tutup
+                </button>
+              </div>
             </div>
           </div>
         </div>

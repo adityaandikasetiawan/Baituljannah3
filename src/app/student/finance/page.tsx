@@ -184,6 +184,146 @@ export default function StudentFinancePage() {
     }).format(amount);
   };
 
+  const formatDate = (value: string | null) => {
+    if (!value) return '-';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return value;
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+  };
+
+  const escapeHtml = (text: string) => {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
+  const openInvoiceWindow = (payment: PaymentItem) => {
+    const title = payment.status === 'paid' ? 'Kuitansi Pembayaran' : 'Invoice Tagihan';
+    const statusLabel = payment.status === 'paid' ? 'LUNAS' : payment.status === 'pending' ? 'PENDING' : 'TERLAMBAT';
+    const statusColor = payment.status === 'paid' ? '#16a34a' : payment.status === 'pending' ? '#f97316' : '#dc2626';
+    const issueDate = payment.status === 'paid' ? payment.paidDate : new Date().toISOString().slice(0, 10);
+
+    const html = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeHtml(payment.invoiceNumber)} - ${escapeHtml(title)}</title>
+  <style>
+    :root { --accent: #1E4AB8; --muted: #64748b; --border: #e2e8f0; }
+    * { box-sizing: border-box; }
+    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; margin: 0; padding: 24px; color: #0f172a; background: #ffffff; }
+    .wrap { max-width: 820px; margin: 0 auto; }
+    .top { display: flex; justify-content: space-between; gap: 16px; border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+    .brand h1 { font-size: 18px; margin: 0 0 6px; letter-spacing: 0.3px; }
+    .brand p { margin: 0; color: var(--muted); font-size: 12px; }
+    .meta { text-align: right; }
+    .meta .label { color: var(--muted); font-size: 12px; margin: 0 0 4px; }
+    .meta .value { margin: 0 0 10px; font-weight: 700; }
+    .badge { display: inline-block; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1px solid var(--border); color: ${statusColor}; }
+    .section { margin-top: 18px; border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .k { color: var(--muted); font-size: 12px; margin: 0 0 4px; }
+    .v { margin: 0; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { border-bottom: 1px solid var(--border); padding: 10px 8px; text-align: left; font-size: 13px; }
+    th { color: var(--muted); font-weight: 700; font-size: 12px; letter-spacing: 0.2px; }
+    .right { text-align: right; }
+    .total { display: flex; justify-content: flex-end; margin-top: 14px; }
+    .totalbox { min-width: 300px; border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+    .totalrow { display: flex; justify-content: space-between; margin: 6px 0; }
+    .grand { font-weight: 800; font-size: 15px; }
+    .foot { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media print { body { padding: 0; } .top, .section { border: none; border-radius: 0; padding: 0; } .wrap { max-width: none; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <h1>Yayasan Baituljannah</h1>
+        <p>${escapeHtml(title)}</p>
+      </div>
+      <div class="meta">
+        <p class="label">No. Dokumen</p>
+        <p class="value">${escapeHtml(payment.invoiceNumber)}</p>
+        <span class="badge">${escapeHtml(statusLabel)}</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="grid">
+        <div>
+          <p class="k">Siswa</p>
+          <p class="v">${escapeHtml(studentData.name)}</p>
+        </div>
+        <div>
+          <p class="k">NIS</p>
+          <p class="v">${escapeHtml(studentData.nis)}</p>
+        </div>
+        <div>
+          <p class="k">Unit & Kelas</p>
+          <p class="v">${escapeHtml(`${studentData.unit} • ${studentData.class}`)}</p>
+        </div>
+        <div>
+          <p class="k">Tanggal</p>
+          <p class="v">${escapeHtml(formatDate(issueDate))}</p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th class="right">Jumlah</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>${escapeHtml(`${payment.category} ${payment.month} ${payment.year}`)}</td>
+            <td class="right">${escapeHtml(formatCurrency(payment.amount))}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="total">
+        <div class="totalbox">
+          <div class="totalrow grand">
+            <div>Total</div>
+            <div>${escapeHtml(formatCurrency(payment.amount))}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top: 18px;">
+        <div>
+          <p class="k">Jatuh Tempo</p>
+          <p class="v">${escapeHtml(formatDate(payment.dueDate))}</p>
+        </div>
+        <div>
+          <p class="k">Metode Pembayaran</p>
+          <p class="v">${escapeHtml(payment.paymentMethod ?? '-')}</p>
+        </div>
+      </div>
+
+      <p class="foot">Dokumen ini dihasilkan oleh sistem. Silakan simpan sebagai PDF melalui fitur print browser.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const w = window.open('', '_blank', 'noopener,noreferrer');
+    if (!w) return;
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    w.print();
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
@@ -423,7 +563,10 @@ export default function StudentFinancePage() {
                           <td className="px-4 py-3">{getStatusBadge(payment.status)}</td>
                           <td className="px-4 py-3">
                             {payment.status === 'paid' ? (
-                              <button className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors">
+                              <button
+                                onClick={() => openInvoiceWindow(payment)}
+                                className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
+                              >
                                 <Download className="w-4 h-4" />
                               </button>
                             ) : (
@@ -465,10 +608,18 @@ export default function StudentFinancePage() {
                           <p className="text-xs text-gray-500">Dibayar: {payment.paidDate && new Date(payment.paidDate).toLocaleDateString('id-ID')}</p>
                         </div>
                         <div className="flex gap-2">
-                          <button className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors">
+                          <button
+                            onClick={() => openInvoiceWindow(payment)}
+                            className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                            title="Download / Print"
+                          >
                             <Download className="w-5 h-5" />
                           </button>
-                          <button className="p-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                          <button
+                            onClick={() => openInvoiceWindow(payment)}
+                            className="p-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                            title="Lihat / Print"
+                          >
                             <FileText className="w-5 h-5" />
                           </button>
                         </div>
