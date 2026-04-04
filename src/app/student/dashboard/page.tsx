@@ -1,15 +1,50 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '../../../components/layout/Sidebar';
 import { useNavigationMenu } from '../../../hooks/useNavigationMenu';
-import { BookOpen, Calendar, DollarSign, Bell, Award, TrendingUp, Clock, FileText, Users, CheckCircle, AlertCircle, ChevronRight, Download } from 'lucide-react';
+import { BookOpen, Calendar, Bell, Award, TrendingUp, Clock, FileText, Users, CheckCircle, AlertCircle, ChevronRight, MessageCircle } from 'lucide-react';
 import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
+import { Toaster } from 'sonner';
+
+const STORAGE = {
+  exkul: 'student_extracurricular',
+  bk: 'student_bk_bookings',
+  inbox: 'student_messages_inbox',
+  outbox: 'student_messages_outbox'
+};
+
+const EXKUL_ACTIVITIES = [
+  { id: 'basket', name: 'Basket', day: 'Rabu', time: '15:30', location: 'Lapangan', quota: 30 },
+  { id: 'paskibra', name: 'Paskibra', day: 'Selasa', time: '15:30', location: 'Lapangan', quota: 40 },
+  { id: 'tahfidz', name: 'Tahfidz', day: 'Kamis', time: '16:00', location: 'Masjid', quota: 50 },
+  { id: 'englishclub', name: 'English Club', day: 'Senin', time: '15:30', location: 'R. Bahasa', quota: 25 }
+];
+
+const BK_COUNSELORS = [
+  { id: 'bk-1', name: 'Ustadzah Siti', specialty: 'Akademik' },
+  { id: 'bk-2', name: 'Ustadz Ahmad', specialty: 'Karir' },
+  { id: 'bk-3', name: 'Ustadzah Fatimah', specialty: 'Kedisiplinan' }
+];
 
 export default function StudentDashboardPage() {
   const router = useRouter();
-  const { menuItems } = useNavigationMenu('student');
+  const { menuItems, onNavigate } = useNavigationMenu('student');
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const isoAddDays = (days: number) => {
+    const d = new Date(startOfDay);
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+  };
+
+  const daysUntil = (isoDate: string) => {
+    const target = new Date(isoDate);
+    target.setHours(0, 0, 0, 0);
+    return Math.ceil((target.getTime() - startOfDay.getTime()) / (1000 * 60 * 60 * 24));
+  };
 
   const studentData = {
     nis: '2024001',
@@ -23,41 +58,6 @@ export default function StudentDashboardPage() {
     ranking: 3,
     totalStudents: 32
   };
-
-  const stats = [
-    {
-      label: 'IPK Semester',
-      value: studentData.gpa.toFixed(2),
-      icon: Award,
-      color: 'from-blue-500 to-blue-600',
-      change: '+0.15',
-      changeType: 'positive'
-    },
-    {
-      label: 'Kehadiran',
-      value: `${studentData.attendance}%`,
-      icon: CheckCircle,
-      color: 'from-green-500 to-green-600',
-      change: '+2%',
-      changeType: 'positive'
-    },
-    {
-      label: 'Ranking Kelas',
-      value: `${studentData.ranking}/${studentData.totalStudents}`,
-      icon: TrendingUp,
-      color: 'from-purple-500 to-purple-600',
-      change: 'Top 10%',
-      changeType: 'neutral'
-    },
-    {
-      label: 'Tugas Pending',
-      value: '3',
-      icon: FileText,
-      color: 'from-orange-500 to-orange-600',
-      change: '2 deadline hari ini',
-      changeType: 'warning'
-    }
-  ];
 
   const recentGrades = [
     { subject: 'Matematika', score: 92, grade: 'A', date: '2024-11-25', teacher: 'Ustadz Ahmad' },
@@ -79,7 +79,7 @@ export default function StudentDashboardPage() {
       id: 1,
       subject: 'Matematika',
       title: 'Tugas Integral dan Diferensial',
-      dueDate: '2024-12-10',
+      dueDate: isoAddDays(1),
       status: 'pending',
       priority: 'high',
       description: 'Kerjakan soal halaman 45-50'
@@ -88,7 +88,7 @@ export default function StudentDashboardPage() {
       id: 2,
       subject: 'Fisika',
       title: 'Laporan Praktikum Gerak Parabola',
-      dueDate: '2024-12-10',
+      dueDate: isoAddDays(1),
       status: 'pending',
       priority: 'high',
       description: 'Submit laporan praktikum minggu lalu'
@@ -97,7 +97,7 @@ export default function StudentDashboardPage() {
       id: 3,
       subject: 'Bahasa Inggris',
       title: 'Essay: My Future Career',
-      dueDate: '2024-12-15',
+      dueDate: isoAddDays(5),
       status: 'pending',
       priority: 'medium',
       description: 'Write 500 words essay'
@@ -106,7 +106,7 @@ export default function StudentDashboardPage() {
       id: 4,
       subject: 'Kimia',
       title: 'Quiz Chapter 5',
-      dueDate: '2024-12-08',
+      dueDate: isoAddDays(-1),
       status: 'submitted',
       priority: 'low',
       description: 'Online quiz'
@@ -117,34 +117,127 @@ export default function StudentDashboardPage() {
     {
       id: 1,
       title: 'Ujian Tengah Semester Genap',
-      date: '2024-12-05',
+      date: isoAddDays(7),
       category: 'Akademik',
       urgent: true,
       description: 'UTS akan dilaksanakan tanggal 15-20 Desember 2024'
     },
     {
       id: 2,
-      title: 'Pembayaran SPP Bulan Desember',
-      date: '2024-12-01',
-      category: 'Keuangan',
+      title: 'Pengambilan Kartu Ujian',
+      date: isoAddDays(3),
+      category: 'Administrasi',
       urgent: true,
-      description: 'Harap segera melunasi SPP bulan Desember'
+      description: 'Kartu ujian dapat diunduh dari Portal Siswa'
     },
     {
       id: 3,
       title: 'Libur Semester Ganjil',
-      date: '2024-11-28',
+      date: isoAddDays(20),
       category: 'Pengumuman',
       urgent: false,
       description: 'Libur semester: 23 Des - 5 Jan 2025'
     }
   ];
 
-  const achievements = [
-    { title: 'Juara 1 OSN Matematika', date: '2024-11-15', type: 'Akademik' },
-    { title: 'Siswa Teladan Semester 1', date: '2024-11-10', type: 'Prestasi' },
-    { title: 'Perfect Attendance', date: '2024-11-01', type: 'Kehadiran' }
+  const examSchedule = [
+    { title: 'UTS Matematika', date: isoAddDays(7), location: 'Ruang Kelas', time: '07:30' },
+    { title: 'UTS Fisika', date: isoAddDays(9), location: 'Lab Fisika', time: '10:15' }
   ];
+
+  const reminderAssignments = assignments
+    .filter((a) => a.status === 'pending')
+    .map((a) => ({ ...a, daysLeft: daysUntil(a.dueDate) }))
+    .filter((a) => a.daysLeft <= 3)
+    .sort((a, b) => a.daysLeft - b.daysLeft);
+
+  const reminderExams = examSchedule
+    .map((e) => ({ ...e, daysLeft: daysUntil(e.date) }))
+    .filter((e) => e.daysLeft <= 7)
+    .sort((a, b) => a.daysLeft - b.daysLeft);
+
+  const [registeredExkul, setRegisteredExkul] = useState<string[]>([]);
+  const [bkBookings, setBkBookings] = useState<Array<{ id: string; counselorId: string; date: string; time: string }>>([]);
+  const [inbox, setInbox] = useState<Array<{ id: string; from: string; subject: string; content: string; date: string; read: boolean }>>([]);
+  const [outbox, setOutbox] = useState<Array<{ id: string; to: string; subject: string; content: string; date: string }>>([]);
+
+  const loadStorage = React.useCallback(() => {
+    try {
+      const ex = JSON.parse(localStorage.getItem(STORAGE.exkul) || '[]');
+      const bk = JSON.parse(localStorage.getItem(STORAGE.bk) || '[]');
+      const ib = JSON.parse(localStorage.getItem(STORAGE.inbox) || '[]');
+      const ob = JSON.parse(localStorage.getItem(STORAGE.outbox) || '[]');
+      setRegisteredExkul(Array.isArray(ex) ? ex : []);
+      setBkBookings(Array.isArray(bk) ? bk : []);
+      setInbox(Array.isArray(ib) ? ib : []);
+      setOutbox(Array.isArray(ob) ? ob : []);
+    } catch {}
+  }, [setBkBookings, setInbox, setOutbox, setRegisteredExkul]);
+
+  const persistStorage = React.useCallback(() => {
+    try {
+      localStorage.setItem(STORAGE.exkul, JSON.stringify(registeredExkul));
+      localStorage.setItem(STORAGE.bk, JSON.stringify(bkBookings));
+      localStorage.setItem(STORAGE.inbox, JSON.stringify(inbox));
+      localStorage.setItem(STORAGE.outbox, JSON.stringify(outbox));
+    } catch {}
+  }, [registeredExkul, bkBookings, inbox, outbox]);
+
+  React.useEffect(() => {
+    loadStorage();
+  }, [loadStorage]);
+
+  React.useEffect(() => {
+    persistStorage();
+  }, [persistStorage]);
+
+  const pendingAssignments = assignments
+    .filter((a) => a.status === 'pending')
+    .slice()
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+
+  const unreadCount = inbox.filter((m) => !m.read).length;
+  const dueTodayCount = pendingAssignments.filter((a) => daysUntil(a.dueDate) === 0).length;
+
+  const stats = [
+    {
+      label: 'IPK Semester',
+      value: studentData.gpa.toFixed(2),
+      icon: Award,
+      color: 'from-blue-500 to-blue-600',
+      change: '+0.15',
+      changeType: 'positive'
+    },
+    {
+      label: 'Kehadiran',
+      value: `${studentData.attendance}%`,
+      icon: CheckCircle,
+      color: 'from-green-500 to-green-600',
+      change: '+2%',
+      changeType: 'positive'
+    },
+    {
+      label: 'Tugas Pending',
+      value: `${pendingAssignments.length}`,
+      icon: FileText,
+      color: 'from-orange-500 to-orange-600',
+      change: dueTodayCount > 0 ? `${dueTodayCount} deadline hari ini` : 'Tidak ada deadline hari ini',
+      changeType: pendingAssignments.length > 0 ? 'warning' : 'neutral'
+    },
+    {
+      label: 'Pesan Baru',
+      value: `${unreadCount}`,
+      icon: MessageCircle,
+      color: 'from-purple-500 to-purple-600',
+      change: unreadCount > 0 ? 'Perlu dibaca' : 'Tidak ada pesan baru',
+      changeType: unreadCount > 0 ? 'warning' : 'neutral'
+    }
+  ];
+
+  const bkBookingsPreview = bkBookings
+    .slice()
+    .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time))
+    .slice(0, 2);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -238,7 +331,7 @@ export default function StudentDashboardPage() {
                 </span>
               </div>
               <div className="space-y-3">
-                {todaySchedule.map((schedule, idx) => (
+                {todaySchedule.slice(0, 3).map((schedule, idx) => (
                   <div 
                     key={idx}
                     className={`p-4 rounded-xl border-l-4 ${
@@ -292,7 +385,7 @@ export default function StudentDashboardPage() {
                 </button>
               </div>
               <div className="space-y-3">
-                {recentGrades.map((grade, idx) => (
+                {recentGrades.slice(0, 3).map((grade, idx) => (
                   <div key={idx} className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-medium">{grade.subject}</h3>
@@ -324,14 +417,19 @@ export default function StudentDashboardPage() {
                   <FileText className="w-6 h-6 text-[#1E4AB8]" />
                   Tugas & Deadline
                 </h2>
-                <select className="px-3 py-1 border border-gray-200 rounded-lg text-sm outline-none">
-                  <option>Semua Status</option>
-                  <option>Pending</option>
-                  <option>Submitted</option>
-                </select>
+                <button
+                  onClick={() => router.push('/student/academic')}
+                  className="px-3 py-1.5 rounded-lg bg-blue-50 text-[#1E4AB8] hover:bg-blue-100 text-sm flex items-center gap-2"
+                >
+                  Buka Modul
+                  <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
               <div className="space-y-3">
-                {assignments.filter(a => a.status === 'pending').map((assignment) => (
+                {pendingAssignments.length === 0 ? (
+                  <div className="text-sm text-gray-600">Tidak ada tugas pending.</div>
+                ) : null}
+                {pendingAssignments.slice(0, 3).map((assignment) => (
                   <div 
                     key={assignment.id}
                     className="p-4 border border-gray-200 rounded-xl hover:border-[#1E4AB8] transition-colors"
@@ -359,19 +457,91 @@ export default function StudentDashboardPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2 mt-3">
-                      <button className="flex-1 px-4 py-2 bg-[#1E4AB8] text-white rounded-lg hover:bg-[#1a3d9a] transition-colors text-sm">
-                        Submit Tugas
-                      </button>
-                      <button className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm">
-                        <Download className="w-4 h-4" />
-                      </button>
-                    </div>
                   </div>
                 ))}
               </div>
             </div>
+            {/* Extracurricular */}
+            <div className="bg-white rounded-2xl p-6 shadow-soft">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl flex items-center gap-2">
+                  <Users className="w-6 h-6 text-[#1E4AB8]" />
+                  Ekstrakurikuler
+                </h2>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-500">Terdaftar: {registeredExkul.length}</span>
+                  <button
+                    onClick={() => onNavigate('student-extracurricular')}
+                    className="px-3 py-1.5 rounded-lg bg-blue-50 text-[#1E4AB8] hover:bg-blue-100 text-sm"
+                  >
+                    Buka Modul
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-3">
+                {registeredExkul.length === 0 ? (
+                  <div className="text-sm text-gray-600">Belum ada ekskul diikuti. Gunakan tombol “Buka Modul” untuk mendaftar.</div>
+                ) : (
+                  registeredExkul.slice(0, 2).map((id) => {
+                    const a = EXKUL_ACTIVITIES.find((x) => x.id === id);
+                    if (!a) return null;
+                    return (
+                      <div key={id} className="p-3 border border-gray-200 rounded-xl">
+                        <div className="font-medium text-gray-900">{a.name}</div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          {a.day}, {a.time} • {a.location}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+                {registeredExkul.length > 2 ? (
+                  <div className="text-xs text-gray-500">+{registeredExkul.length - 2} ekskul lainnya</div>
+                ) : null}
+              </div>
+            </div>
+
+            {/* BK Counseling */}
+            <div className="bg-white rounded-2xl p-6 shadow-soft">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl flex items-center gap-2">
+                  <Calendar className="w-6 h-6 text-[#1E4AB8]" />
+                  Konseling BK
+                </h2>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-500">Terbooking: {bkBookings.length}</span>
+                  <button
+                    onClick={() => onNavigate('student-counseling')}
+                    className="px-3 py-1.5 rounded-lg bg-blue-50 text-[#1E4AB8] hover:bg-blue-100 text-sm"
+                  >
+                    Buka Modul
+                  </button>
+                </div>
+              </div>
+              <div className="text-sm text-gray-600 mb-3">Preview jadwal konseling kamu. Untuk booking/ubah jadwal, gunakan tombol “Buka Modul”.</div>
+              {bkBookings.length > 0 ? (
+                <div className="mt-4">
+                  <h3 className="text-sm text-gray-700 mb-2">Jadwal Saya</h3>
+                  <div className="space-y-2">
+                    {bkBookingsPreview.map((b) => {
+                      const c = BK_COUNSELORS.find((x) => x.id === b.counselorId);
+                      return (
+                        <div key={b.id} className="p-3 border border-gray-200 rounded-xl">
+                          <div className="text-sm text-gray-700">
+                            <div>{new Date(b.date).toLocaleDateString('id-ID')} • {b.time}</div>
+                            <div className="text-gray-500">{c?.name} • {c?.specialty}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm text-gray-600">Belum ada booking BK.</div>
+              )}
+            </div>
           </div>
+
 
           {/* Right Column */}
           <div className="space-y-8">
@@ -401,7 +571,7 @@ export default function StudentDashboardPage() {
                         <div className="flex items-center gap-2 text-xs text-gray-500">
                           <span className={`px-2 py-0.5 rounded-full ${
                             announcement.category === 'Akademik' ? 'bg-blue-100 text-blue-700' :
-                            announcement.category === 'Keuangan' ? 'bg-green-100 text-green-700' :
+                            announcement.category === 'Administrasi' ? 'bg-purple-100 text-purple-700' :
                             'bg-gray-100 text-gray-700'
                           }`}>
                             {announcement.category}
@@ -415,27 +585,95 @@ export default function StudentDashboardPage() {
               </div>
             </div>
 
-            {/* Achievements */}
-            <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 shadow-soft">
+            {/* Reminders */}
+            <div className="bg-yellow-50 rounded-2xl p-6 shadow-soft border border-yellow-100">
               <div className="flex items-center gap-2 mb-6">
-                <Award className="w-6 h-6 text-orange-600" />
-                <h2 className="text-xl">Prestasi Terbaru</h2>
+                <Clock className="w-6 h-6 text-yellow-700" />
+                <h2 className="text-xl text-yellow-900">Pengingat</h2>
               </div>
               <div className="space-y-3">
-                {achievements.map((achievement, idx) => (
-                  <div key={idx} className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center flex-shrink-0">
-                      <Award className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-medium mb-1">{achievement.title}</h3>
-                      <div className="text-xs text-gray-600 flex items-center gap-2">
-                        <span className="px-2 py-0.5 bg-white rounded-full">{achievement.type}</span>
-                        <span>{new Date(achievement.date).toLocaleDateString('id-ID')}</span>
+                {reminderAssignments.length === 0 && reminderExams.length === 0 ? (
+                  <div className="text-sm text-yellow-800">Tidak ada pengingat dalam 7 hari ke depan.</div>
+                ) : null}
+                {reminderAssignments.slice(0, 3).map((a) => (
+                  <div key={`assignment-${a.id}`} className="bg-white/70 rounded-xl p-4 border border-yellow-100">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="text-xs text-yellow-800 mb-1">Tugas • {a.subject}</div>
+                        <div className="font-medium text-gray-900">{a.title}</div>
+                        <div className="text-xs text-gray-600 mt-1">
+                          Deadline: {new Date(a.dueDate).toLocaleDateString('id-ID')}
+                        </div>
+                      </div>
+                      <div className={`px-2 py-1 rounded-lg text-xs font-medium ${
+                        a.daysLeft < 0 ? 'bg-red-100 text-red-700' : a.daysLeft === 0 ? 'bg-orange-100 text-orange-700' : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {a.daysLeft < 0 ? `Terlambat ${Math.abs(a.daysLeft)} hari` : a.daysLeft === 0 ? 'Hari ini' : `H-${a.daysLeft}`}
                       </div>
                     </div>
                   </div>
                 ))}
+                {reminderExams.slice(0, 2).map((e, idx) => (
+                  <div key={`exam-${idx}`} className="bg-white/70 rounded-xl p-4 border border-yellow-100">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="text-xs text-yellow-800 mb-1">Ujian</div>
+                        <div className="font-medium text-gray-900">{e.title}</div>
+                        <div className="text-xs text-gray-600 mt-1">
+                          {new Date(e.date).toLocaleDateString('id-ID')} • {e.time} • {e.location}
+                        </div>
+                      </div>
+                      <div className={`px-2 py-1 rounded-lg text-xs font-medium ${
+                        e.daysLeft < 0 ? 'bg-red-100 text-red-700' : e.daysLeft === 0 ? 'bg-orange-100 text-orange-700' : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {e.daysLeft < 0 ? `Lewat ${Math.abs(e.daysLeft)} hari` : e.daysLeft === 0 ? 'Hari ini' : `H-${e.daysLeft}`}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="bg-white rounded-2xl p-6 shadow-soft">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="w-6 h-6 text-[#1E4AB8]" />
+                  <h2 className="text-xl">Pesan</h2>
+                </div>
+                <button
+                  onClick={() => onNavigate('student-messages')}
+                  className="px-3 py-1.5 rounded-lg bg-blue-50 text-[#1E4AB8] hover:bg-blue-100 text-sm"
+                >
+                  Buka Modul
+                </button>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm text-gray-700 mb-2">Inbox</h3>
+                  <div className="space-y-2">
+                    <div className="text-xs text-gray-500 mb-1">Belum dibaca: {inbox.filter((m) => !m.read).length}</div>
+                    {inbox.slice(0, 2).map((m) => (
+                      <div key={m.id} className={`p-3 rounded-xl border ${m.read ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200'}`}>
+                        <div className="text-sm font-medium text-gray-900 truncate">{m.subject}</div>
+                        <div className="text-xs text-gray-600">{m.from} • {new Date(m.date).toLocaleString('id-ID')}</div>
+                      </div>
+                    ))}
+                    {inbox.length === 0 && <div className="text-sm text-gray-500">Tidak ada pesan</div>}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm text-gray-700 mb-2">Outbox</h3>
+                  <div className="space-y-2">
+                    {outbox.slice(0, 2).map((m) => (
+                      <div key={m.id} className="p-3 rounded-xl border bg-gray-50 border-gray-200">
+                        <div className="text-sm font-medium text-gray-900 truncate">{m.subject}</div>
+                        <div className="text-xs text-gray-600">{m.to} • {new Date(m.date).toLocaleString('id-ID')}</div>
+                      </div>
+                    ))}
+                    {outbox.length === 0 && <div className="text-sm text-gray-500">Belum ada pesan terkirim</div>}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -454,12 +692,42 @@ export default function StudentDashboardPage() {
                   <ChevronRight className="w-5 h-5" />
                 </button>
                 <button 
-                  onClick={() => router.push('/student/finance')}
+                  onClick={() => router.push('/student/messages')}
                   className="w-full px-4 py-3 bg-green-50 text-green-700 rounded-xl hover:bg-green-100 transition-colors text-left flex items-center justify-between"
                 >
                   <span className="flex items-center gap-2">
-                    <DollarSign className="w-5 h-5" />
-                    Cek Tagihan
+                    <MessageCircle className="w-5 h-5" />
+                    Modul Pesan
+                  </span>
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+                <button 
+                  onClick={() => router.push('/student/extracurricular')}
+                  className="w-full px-4 py-3 bg-indigo-50 text-indigo-700 rounded-xl hover:bg-indigo-100 transition-colors text-left flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    Modul Ekskul
+                  </span>
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+                <button 
+                  onClick={() => router.push('/student/counseling')}
+                  className="w-full px-4 py-3 bg-purple-50 text-purple-700 rounded-xl hover:bg-purple-100 transition-colors text-left flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5" />
+                    Modul BK/Konseling
+                  </span>
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => router.push('/student/profile')}
+                  className="w-full px-4 py-3 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors text-left flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    Buka Profil
                   </span>
                   <ChevronRight className="w-5 h-5" />
                 </button>
@@ -469,6 +737,7 @@ export default function StudentDashboardPage() {
         </div>
         </div>
       </main>
+      <Toaster richColors />
     </div>
   );
 }

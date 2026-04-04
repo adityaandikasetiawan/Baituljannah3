@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { Toaster, toast } from 'sonner';
 import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { Breadcrumb } from '../../components/layout/Breadcrumb';
@@ -13,6 +14,44 @@ import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 export default function AdmissionPage() {
   const { onNavigate, menuItems } = useNavigationMenu();
   const [selectedUnit, setSelectedUnit] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const apiBaseUrl = useMemo(() => {
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    return base.replace(/\/$/, '');
+  }, []);
+
+  const jenjang = useMemo(() => {
+    const map: Record<string, string> = {
+      tkit: 'TKIT',
+      sdit: 'SDIT',
+      smpit: 'SMPIT',
+      smait: 'SMAIT',
+      slbit: 'SLBIT'
+    };
+    return map[selectedUnit] || '';
+  }, [selectedUnit]);
+
+  const [form, setForm] = useState({
+    nama_lengkap: '',
+    jenis_kelamin: '' as '' | 'L' | 'P',
+    tempat_lahir: '',
+    tanggal_lahir: '',
+    nik: '',
+    alamat: '',
+    kota: '',
+    provinsi: '',
+    kode_pos: '',
+    nama_ayah: '',
+    pekerjaan_ayah: '',
+    nama_ibu: '',
+    pekerjaan_ibu: '',
+    no_telp: '',
+    email: '',
+    asal_sekolah: '',
+    prestasi: '',
+    informasi_dari: ''
+  });
 
   const breadcrumbItems = [
     { label: 'Beranda', href: '#' },
@@ -106,13 +145,80 @@ export default function AdmissionPage() {
     }
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Pendaftaran berhasil! Silakan cek email untuk informasi selanjutnya.');
+
+    if (!jenjang) {
+      toast.error('Silakan pilih unit sekolah terlebih dahulu.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`${apiBaseUrl}/ppdb/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          jenjang,
+          tempat_lahir: form.tempat_lahir.trim() ? form.tempat_lahir : null,
+          nik: form.nik.trim() ? form.nik : null,
+          kota: form.kota.trim() ? form.kota : null,
+          provinsi: form.provinsi.trim() ? form.provinsi : null,
+          kode_pos: form.kode_pos.trim() ? form.kode_pos : null,
+          pekerjaan_ayah: form.pekerjaan_ayah.trim() ? form.pekerjaan_ayah : null,
+          pekerjaan_ibu: form.pekerjaan_ibu.trim() ? form.pekerjaan_ibu : null,
+          asal_sekolah: form.asal_sekolah.trim() ? form.asal_sekolah : null,
+          prestasi: form.prestasi.trim() ? form.prestasi : null,
+          informasi_dari: form.informasi_dari.trim() ? form.informasi_dari : null
+        })
+      });
+
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        const msg =
+          json?.errors?.[0]?.message ||
+          json?.message ||
+          'Terjadi kesalahan saat mengirim pendaftaran.';
+        toast.error(msg);
+        return;
+      }
+
+      const noPendaftaran = json?.data?.no_pendaftaran;
+      toast.success(noPendaftaran ? `Pendaftaran berhasil. No. pendaftaran: ${noPendaftaran}` : 'Pendaftaran berhasil.');
+
+      setForm({
+        nama_lengkap: '',
+        jenis_kelamin: '',
+        tempat_lahir: '',
+        tanggal_lahir: '',
+        nik: '',
+        alamat: '',
+        kota: '',
+        provinsi: '',
+        kode_pos: '',
+        nama_ayah: '',
+        pekerjaan_ayah: '',
+        nama_ibu: '',
+        pekerjaan_ibu: '',
+        no_telp: '',
+        email: '',
+        asal_sekolah: '',
+        prestasi: '',
+        informasi_dari: ''
+      });
+      setSelectedUnit('');
+    } catch {
+      toast.error('Gagal terhubung ke server pendaftaran. Pastikan API PPDB sudah berjalan.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Toaster position="top-right" richColors />
       <Navbar 
         siteName="Baitul Jannah Islamic School"
         siteTagline="Sekolahnya Para Juara"
@@ -285,6 +391,8 @@ export default function AdmissionPage() {
                   <input
                     type="text"
                     required
+                    value={form.nama_lengkap}
+                    onChange={(e) => setForm((prev) => ({ ...prev, nama_lengkap: e.target.value }))}
                     className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
                     placeholder="Masukkan nama lengkap"
                   />
@@ -292,25 +400,58 @@ export default function AdmissionPage() {
 
                 <div>
                   <label className="block text-gray-700 mb-2 text-sm">
-                    Nama Orang Tua/Wali <span className="text-red-500">*</span>
+                    Jenis Kelamin <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={form.jenis_kelamin}
+                    onChange={(e) => setForm((prev) => ({ ...prev, jenis_kelamin: e.target.value as 'L' | 'P' }))}
+                    className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+                  >
+                    <option value="" disabled>Pilih jenis kelamin</option>
+                    <option value="L">Laki-laki</option>
+                    <option value="P">Perempuan</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 mb-2 text-sm">
+                    Tanggal Lahir <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="text"
+                    type="date"
                     required
+                    value={form.tanggal_lahir}
+                    onChange={(e) => setForm((prev) => ({ ...prev, tanggal_lahir: e.target.value }))}
                     className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
-                    placeholder="Masukkan nama orang tua"
                   />
                 </div>
 
                 <div>
                   <label className="block text-gray-700 mb-2 text-sm">
-                    Email <span className="text-red-500">*</span>
+                    Nama Ayah <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="email"
+                    type="text"
+                    required
+                    value={form.nama_ayah}
+                    onChange={(e) => setForm((prev) => ({ ...prev, nama_ayah: e.target.value }))}
+                    className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+                    placeholder="Masukkan nama ayah"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 mb-2 text-sm">
+                    Nama Ibu <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
                     required
                     className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
-                    placeholder="email@example.com"
+                    value={form.nama_ibu}
+                    onChange={(e) => setForm((prev) => ({ ...prev, nama_ibu: e.target.value }))}
+                    placeholder="Masukkan nama ibu"
                   />
                 </div>
 
@@ -321,6 +462,8 @@ export default function AdmissionPage() {
                   <input
                     type="tel"
                     required
+                    value={form.no_telp}
+                    onChange={(e) => setForm((prev) => ({ ...prev, no_telp: e.target.value }))}
                     className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
                     placeholder="08xx-xxxx-xxxx"
                   />
@@ -328,9 +471,36 @@ export default function AdmissionPage() {
 
                 <div>
                   <label className="block text-gray-700 mb-2 text-sm">
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={form.email}
+                    onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                    className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+                    placeholder="email@example.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 mb-2 text-sm">
+                    Alamat <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    required
+                    value={form.alamat}
+                    onChange={(e) => setForm((prev) => ({ ...prev, alamat: e.target.value }))}
+                    className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all min-h-[96px]"
+                    placeholder="Tulis alamat lengkap"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 mb-2 text-sm">
                     Unit Sekolah <span className="text-red-500">*</span>
                   </label>
-                  <select 
+                  <select
                     required
                     className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
                     value={selectedUnit}
@@ -346,9 +516,10 @@ export default function AdmissionPage() {
                 <div className="pt-2">
                   <button 
                     type="submit"
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-3.5 px-6 rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    disabled={isSubmitting}
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-3.5 px-6 rounded-lg hover:from-blue-700 hover:to-indigo-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:from-blue-600 disabled:hover:to-indigo-700 disabled:hover:shadow-lg disabled:hover:translate-y-0"
                   >
-                    Daftar Sekarang
+                    {isSubmitting ? 'Mengirim...' : 'Daftar Sekarang'}
                   </button>
                 </div>
 

@@ -7,7 +7,7 @@ import { BookOpen, TrendingUp, Award, Calendar, FileText, Download, Target, Cloc
 
 export default function StudentAcademicPage() {
   const { menuItems } = useNavigationMenu('student');
-  const [selectedTab, setSelectedTab] = useState<'grades' | 'schedule' | 'attendance' | 'assignments'>('grades');
+  const [selectedTab, setSelectedTab] = useState<'grades' | 'schedule' | 'attendance' | 'assignments' | 'materials'>('grades');
   const [selectedSemester, setSelectedSemester] = useState('Genap 2024/2025');
 
   const studentData = {
@@ -183,6 +183,29 @@ export default function StudentAcademicPage() {
     }
   ];
 
+  const materials = [
+    {
+      subject: 'Matematika',
+      items: [
+        { title: 'Materi Integral Dasar.pdf', type: 'PDF', size: '1.2 MB', updatedAt: '2024-11-20' },
+        { title: 'Latihan Soal Integral.docx', type: 'DOCX', size: '340 KB', updatedAt: '2024-11-21' }
+      ]
+    },
+    {
+      subject: 'Fisika',
+      items: [
+        { title: 'Gerak Parabola.pptx', type: 'PPTX', size: '2.4 MB', updatedAt: '2024-11-18' },
+        { title: 'Lembar Kerja Percobaan.xlsx', type: 'XLSX', size: '210 KB', updatedAt: '2024-11-19' }
+      ]
+    },
+    {
+      subject: 'Bahasa Inggris',
+      items: [
+        { title: 'Grammar Tenses.pdf', type: 'PDF', size: '980 KB', updatedAt: '2024-11-10' }
+      ]
+    }
+  ];
+
   const averageGrade = subjects.reduce((sum, s) => sum + s.finalGrade, 0) / subjects.length;
   const totalAttendance = attendance.reduce((sum, a) => sum + a.hadir, 0);
   const totalDays = attendance.reduce((sum, a) => sum + a.hadir + a.sakit + a.izin + a.alpha, 0);
@@ -324,6 +347,16 @@ export default function StudentAcademicPage() {
                 }`}
               >
                 Tugas & Penilaian
+              </button>
+              <button
+                onClick={() => setSelectedTab('materials')}
+                className={`px-6 py-4 text-sm font-medium transition-colors whitespace-nowrap ${
+                  selectedTab === 'materials'
+                    ? 'bg-[#1E4AB8] text-white'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Materi
               </button>
             </div>
           </div>
@@ -535,6 +568,33 @@ export default function StudentAcademicPage() {
                           <Download className="w-5 h-5" />
                         </button>
                       </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Materials Tab */}
+            {selectedTab === 'materials' && (
+              <div className="space-y-6">
+                {materials.map((subject, idx) => (
+                  <div key={idx} className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                    <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                      <h3 className="font-bold text-gray-800">{subject.subject}</h3>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {subject.items.map((item, iidx) => (
+                        <div key={iidx} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                          <div>
+                            <p className="font-medium text-gray-800">{item.title}</p>
+                            <p className="text-xs text-gray-500">{item.type} • {item.size} • Diperbarui {new Date(item.updatedAt).toLocaleDateString('id-ID')}</p>
+                          </div>
+                          <button className="px-3 py-2 rounded-lg bg-blue-50 text-[#1E4AB8] hover:bg-blue-100 transition-colors flex items-center gap-2">
+                            <Download className="w-4 h-4" />
+                            Download
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}

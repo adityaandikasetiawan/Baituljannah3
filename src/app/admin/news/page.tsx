@@ -1,9 +1,12 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Sidebar } from '../../../components/layout/Sidebar';
 import { useNavigationMenu } from '../../../hooks/useNavigationMenu';
 import { FileText, Plus, Edit, Trash2, Eye, Search, Filter, Calendar, Tag, X, Bell } from 'lucide-react';
 import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
+import { Toaster, toast } from 'sonner';
+
+type NewsStatus = 'Published' | 'Draft' | 'Archived';
 
 interface NewsItem {
   id: number;
@@ -15,7 +18,7 @@ interface NewsItem {
   excerpt: string;
   content: string;
   image: string;
-  status: 'Published' | 'Draft';
+  status: NewsStatus;
   views: number;
 }
 
@@ -29,92 +32,47 @@ export default function AdminNewsPage() {
   const [filterStatus, setFilterStatus] = useState('Semua');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
 
-  const [newsList, setNewsList] = useState<NewsItem[]>([
-    {
-      id: 1,
-      title: 'Peringatan Maulid Nabi Muhammad SAW 1446 H',
-      category: 'Keagamaan',
-      unit: 'Semua Unit',
-      date: '2024-12-01',
-      author: 'Admin Yayasan',
-      excerpt: 'Alhamdulillah, Yayasan Baituljannah mengadakan peringatan Maulid Nabi Muhammad SAW dengan berbagai kegiatan.',
-      content: 'Alhamdulillah, pada hari Senin, 15 Desember 2024, Yayasan Baituljannah mengadakan peringatan Maulid Nabi Muhammad SAW yang diikuti oleh seluruh siswa dari TKIT hingga SLBIT. Kegiatan dimulai dengan pembacaan Al-Quran, dilanjutkan dengan ceramah tentang sirah nabawiyah, dan ditutup dengan pentas seni Islami yang meriah.',
-      image: 'https://images.unsplash.com/photo-1644380644655-fcf91fa5c43b',
-      status: 'Published',
-      views: 1250
-    },
-    {
-      id: 2,
-      title: 'Siswa SMAIT Raih Juara 1 Olimpiade Matematika Tingkat Provinsi',
-      category: 'Prestasi',
-      unit: 'SMAIT',
-      date: '2024-11-28',
-      author: 'Admin SMAIT',
-      excerpt: 'Muhammad Rizki, siswa kelas XI SMAIT Baituljannah berhasil meraih juara 1 Olimpiade Matematika.',
-      content: 'Prestasi membanggakan kembali ditorehkan oleh siswa SMAIT Baituljannah. Muhammad Rizki dari kelas XI IPA berhasil meraih juara 1 dalam Olimpiade Matematika Tingkat Provinsi yang diselenggarakan di Jakarta Convention Center. Pencapaian ini merupakan hasil dari pembinaan intensif yang dilakukan oleh tim olimpiade sekolah.',
-      image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c',
-      status: 'Published',
-      views: 890
-    },
-    {
-      id: 3,
-      title: 'Wisuda Tahfidz 10 Juz - 50 Siswa SDIT Lulus',
-      category: 'Keagamaan',
-      unit: 'SDIT',
-      date: '2024-11-25',
-      author: 'Admin SDIT',
-      excerpt: 'Sebanyak 50 siswa SDIT Baituljannah berhasil menyelesaikan hafalan 10 juz Al-Quran.',
-      content: 'Alhamdulillah, pada tanggal 20 Januari 2025, sebanyak 50 siswa SDIT Baituljannah akan diwisuda setelah berhasil menyelesaikan hafalan 10 juz Al-Quran. Wisuda akan dilaksanakan di Aula Baituljannah dengan menghadirkan para orang tua, guru, dan tamu undangan. Ini merupakan wisuda tahfidz terbesar yang pernah dilaksanakan oleh SDIT Baituljannah.',
-      image: 'https://images.unsplash.com/photo-1763673404724-2b27e7f6e6bc',
-      status: 'Published',
-      views: 1100
-    },
-    {
-      id: 4,
-      title: 'Pendaftaran PPDB Tahun Ajaran 2025/2026 Dibuka',
-      category: 'Akademik',
-      unit: 'Semua Unit',
-      date: '2024-12-05',
-      author: 'Admin Yayasan',
-      excerpt: 'Pendaftaran peserta didik baru untuk tahun ajaran 2025/2026 telah dibuka untuk semua unit.',
-      content: 'Yayasan Baituljannah membuka pendaftaran peserta didik baru untuk tahun ajaran 2025/2026. Pendaftaran dibuka mulai 1 Januari hingga 31 Maret 2025 untuk semua unit sekolah (TKIT, SDIT, SMPIT, SMAIT, SLBIT). Informasi lengkap dan formulir pendaftaran dapat diakses melalui website atau datang langsung ke kantor yayasan.',
-      image: 'https://images.unsplash.com/photo-1644380644655-fcf91fa5c43b',
-      status: 'Draft',
-      views: 0
-    },
-    {
-      id: 5,
-      title: 'Workshop Pembelajaran Kreatif untuk Guru',
-      category: 'Kegiatan',
-      unit: 'Yayasan',
-      date: '2024-11-20',
-      author: 'Admin Yayasan',
-      excerpt: 'Seluruh guru mengikuti workshop pembelajaran kreatif yang diselenggarakan oleh yayasan.',
-      content: 'Pada tanggal 15 November 2024, Yayasan Baituljannah mengadakan workshop pembelajaran kreatif untuk seluruh guru dari semua unit. Workshop ini menghadirkan narasumber dari Universitas Pendidikan Indonesia yang membagikan metode-metode pembelajaran inovatif dan engaging untuk meningkatkan kualitas pengajaran.',
-      image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c',
-      status: 'Published',
-      views: 450
+  const [newsList, setNewsList] = useState<NewsItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const apiBaseUrl = useMemo(() => {
+    return (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1').replace(/\/$/, '');
+  }, []);
+
+  const getToken = () => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('baituljannah_token');
+  };
+
+  const getStoredUserName = () => {
+    if (typeof window === 'undefined') return 'Admin';
+    try {
+      const userStr = localStorage.getItem('baituljannah_user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      return user?.full_name || user?.username || 'Admin';
+    } catch {
+      return 'Admin';
     }
-  ]);
+  };
 
   const [formData, setFormData] = useState<Partial<NewsItem>>({
     title: '',
     category: 'Akademik',
-    unit: 'Semua Unit',
+    unit: 'Semua',
     date: new Date().toISOString().split('T')[0],
-    author: 'Admin Yayasan',
+    author: '',
     excerpt: '',
     content: '',
     image: '',
     status: 'Draft'
   });
 
-  const categories = ['Semua', 'Akademik', 'Keagamaan', 'Prestasi', 'Kegiatan', 'Pengumuman'];
-  const units = ['Semua Unit', 'TKIT', 'SDIT', 'SMPIT', 'SMAIT', 'SLBIT', 'Yayasan'];
-  const statuses = ['Semua', 'Published', 'Draft'];
+  const categories = ['Semua', 'Akademik', 'Kegiatan', 'Prestasi', 'Pengumuman', 'Lainnya'];
+  const units = ['Semua', 'TKIT', 'SDIT', 'SMPIT', 'SMAIT', 'SLBIT'];
+  const statuses = ['Semua', 'Published', 'Draft', 'Archived'];
   const accentColor = '#1E4AB8';
 
-  const filteredNews = newsList.filter(news => {
+  const filteredNews = newsList.filter((news) => {
     const matchesSearch = news.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          news.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = filterCategory === 'Semua' || news.category === filterCategory;
@@ -122,14 +80,79 @@ export default function AdminNewsPage() {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
+  const fromApiStatus = (status: string | null | undefined): NewsStatus => {
+    if (status === 'published') return 'Published';
+    if (status === 'archived') return 'Archived';
+    return 'Draft';
+  };
+
+  const toApiStatus = (status: NewsStatus): string => {
+    if (status === 'Published') return 'published';
+    if (status === 'Archived') return 'archived';
+    return 'draft';
+  };
+
+  const toUiNewsItem = (row: any): NewsItem => {
+    const content = String(row?.content || '');
+    const excerpt = content.length > 160 ? `${content.slice(0, 160)}...` : content;
+    const dateValue = row?.publish_date || row?.created_at || new Date().toISOString();
+    return {
+      id: Number(row?.id),
+      title: String(row?.title || ''),
+      category: String(row?.category || 'Lainnya'),
+      unit: String(row?.unit_sekolah || 'Semua'),
+      date: String(dateValue).split('T')[0],
+      author: String(row?.author_name || 'Admin'),
+      excerpt,
+      content,
+      image: String(row?.image_url || 'https://images.unsplash.com/photo-1644380644655-fcf91fa5c43b'),
+      status: fromApiStatus(row?.status),
+      views: Number(row?.views || 0),
+    };
+  };
+
+  const loadNews = async () => {
+    const token = getToken();
+    if (!token) {
+      setNewsList([]);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${apiBaseUrl}/news/manage?limit=200&sort=created_at&order=DESC`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        const message = data?.message || 'Gagal memuat berita';
+        toast.error(message);
+        setNewsList([]);
+        return;
+      }
+
+      const rows = Array.isArray(data.data) ? data.data : [];
+      setNewsList(rows.map(toUiNewsItem));
+    } catch {
+      toast.error('Tidak bisa terhubung ke server');
+      setNewsList([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadNews();
+  }, []);
+
   const handleCreate = () => {
     setModalMode('create');
     setFormData({
       title: '',
       category: 'Akademik',
-      unit: 'Semua Unit',
+      unit: 'Semua',
       date: new Date().toISOString().split('T')[0],
-      author: 'Admin Yayasan',
+      author: getStoredUserName(),
       excerpt: '',
       content: '',
       image: 'https://images.unsplash.com/photo-1644380644655-fcf91fa5c43b',
@@ -152,26 +175,83 @@ export default function AdminNewsPage() {
     setShowModal(true);
   };
 
-  const handleSave = () => {
-    if (modalMode === 'create') {
-      const newNews: NewsItem = {
-        ...formData as NewsItem,
-        id: Math.max(...newsList.map(n => n.id), 0) + 1,
-        views: 0
-      };
-      setNewsList([newNews, ...newsList]);
-    } else if (modalMode === 'edit' && selectedNews) {
-      setNewsList(newsList.map(news => 
-        news.id === selectedNews.id ? { ...formData as NewsItem, id: selectedNews.id } : news
-      ));
+  const handleSave = async () => {
+    const token = getToken();
+    if (!token) {
+      toast.error('Silakan login ulang (token tidak ditemukan)');
+      return;
     }
-    setShowModal(false);
-    setSelectedNews(null);
+
+    const payload = {
+      title: String(formData.title || '').trim(),
+      content: String(formData.content || ''),
+      category: String(formData.category || 'Lainnya'),
+      unit_sekolah: String(formData.unit || 'Semua'),
+      image_url: String(formData.image || ''),
+      status: toApiStatus((formData.status as NewsStatus) || 'Draft'),
+      publish_date: formData.date ? String(formData.date) : null,
+    };
+
+    if (!payload.title || !payload.content) {
+      toast.error('Judul dan konten wajib diisi');
+      return;
+    }
+
+    try {
+      const isEdit = modalMode === 'edit' && selectedNews?.id;
+      const endpoint = isEdit ? `${apiBaseUrl}/news/${selectedNews!.id}` : `${apiBaseUrl}/news`;
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const res = await fetch(endpoint, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        const message = data?.message || 'Gagal menyimpan berita';
+        toast.error(message);
+        return;
+      }
+
+      toast.success('Berita berhasil disimpan');
+      setShowModal(false);
+      setSelectedNews(null);
+      await loadNews();
+    } catch {
+      toast.error('Tidak bisa terhubung ke server');
+    }
   };
 
-  const handleDelete = (id: number) => {
-    setNewsList(newsList.filter(news => news.id !== id));
-    setShowDeleteConfirm(null);
+  const handleDelete = async (id: number) => {
+    const token = getToken();
+    if (!token) {
+      toast.error('Silakan login ulang (token tidak ditemukan)');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${apiBaseUrl}/news/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        const message = data?.message || 'Gagal menghapus berita';
+        toast.error(message);
+        return;
+      }
+
+      toast.success('Berita berhasil dihapus');
+      setShowDeleteConfirm(null);
+      await loadNews();
+    } catch {
+      toast.error('Tidak bisa terhubung ke server');
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -190,6 +270,7 @@ export default function AdminNewsPage() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
+      <Toaster position="top-right" richColors />
       <Sidebar
         menuItems={menuItems}
         accentColor={accentColor}
@@ -295,6 +376,13 @@ export default function AdminNewsPage() {
 
           {/* News List */}
           <div className="space-y-4">
+            {isLoading && (
+              <div className="bg-white rounded-2xl p-12 text-center">
+                <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-gray-600">Memuat berita...</p>
+              </div>
+            )}
+
             {filteredNews.map((news) => (
               <div key={news.id} className="bg-white rounded-2xl p-6 shadow-soft hover:shadow-strong transition-all">
                 <div className="flex gap-6">
@@ -313,8 +401,10 @@ export default function AdminNewsPage() {
                       <div>
                         <div className="flex items-center gap-2 mb-2">
                           <span className={`px-3 py-1 rounded-full text-xs ${
-                            news.status === 'Published' 
-                              ? 'bg-green-100 text-green-700' 
+                            news.status === 'Published'
+                              ? 'bg-green-100 text-green-700'
+                              : news.status === 'Archived'
+                              ? 'bg-gray-100 text-gray-700'
                               : 'bg-yellow-100 text-yellow-700'
                           }`}>
                             {news.status}
@@ -413,8 +503,10 @@ export default function AdminNewsPage() {
                       <h3 className="text-2xl mb-2">{formData.title}</h3>
                       <div className="flex items-center gap-2 mb-4">
                         <span className={`px-3 py-1 rounded-full text-xs ${
-                          formData.status === 'Published' 
-                            ? 'bg-green-100 text-green-700' 
+                          formData.status === 'Published'
+                            ? 'bg-green-100 text-green-700'
+                            : formData.status === 'Archived'
+                            ? 'bg-gray-100 text-gray-700'
                             : 'bg-yellow-100 text-yellow-700'
                         }`}>
                           {formData.status}
@@ -471,7 +563,7 @@ export default function AdminNewsPage() {
                           onChange={handleInputChange}
                           className="w-full px-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#1E4AB8] focus:ring-2 focus:ring-[#1E4AB8]/20"
                         >
-                          {units.filter(u => u !== 'Semua Unit').map(unit => (
+                          {units.map(unit => (
                             <option key={unit}>{unit}</option>
                           ))}
                         </select>
@@ -552,6 +644,17 @@ export default function AdminNewsPage() {
                             className="w-4 h-4 text-[#1E4AB8]"
                           />
                           <span>Draft</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="status"
+                            value="Archived"
+                            checked={formData.status === 'Archived'}
+                            onChange={handleInputChange}
+                            className="w-4 h-4 text-[#1E4AB8]"
+                          />
+                          <span>Archived</span>
                         </label>
                       </div>
                     </div>

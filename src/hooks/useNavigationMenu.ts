@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { 
   TrendingUp, BookOpen, Users, FileText, Calendar, Settings, 
   DollarSign, ClipboardCheck, Award, MessageCircle, Home, 
-  Info, Grid, Phone, Briefcase, GraduationCap 
+  Info, Grid, Phone, Briefcase, GraduationCap, Zap 
 } from 'lucide-react';
 
 export type UserRole = 'public' | 'student' | 'parent' | 'teacher' | 'admin';
@@ -32,13 +32,17 @@ export const useNavigationMenu = (role: UserRole = 'public') => {
       // Portal routes
       'student-dashboard': '/student/dashboard',
       'student-academic': '/student/academic',
-      'student-finance': '/student/finance',
+      'student-profile': '/student/profile',
+      'student-extracurricular': '/student/extracurricular',
+      'student-counseling': '/student/counseling',
+      'student-messages': '/student/messages',
       'parent-dashboard': '/parent/dashboard',
       'parent-finance': '/parent/finance',
       'teacher-dashboard': '/teacher/dashboard',
       'teacher-schedule': '/teacher/schedule',
       'teacher-grades': '/teacher/grades',
       'teacher-attendance': '/teacher/attendance',
+      'teacher-messages': '/teacher/messages',
       'teacher-profile': '/teacher/profile',
       'admin-dashboard': '/admin/dashboard',
       'admin-news': '/admin/news',
@@ -117,7 +121,6 @@ export const useNavigationMenu = (role: UserRole = 'public') => {
       submenu: [
         { label: 'Pendaftaran', labelEn: 'Registration', href: '#', onClick: () => onNavigate('admission') },
         { label: 'Jadwal & Alur', labelEn: 'Schedule & Flow', href: '#', onClick: () => onNavigate('admission') },
-        { label: 'Biaya Pendidikan', labelEn: 'Tuition Fees', href: '#', onClick: () => onNavigate('admission') }
       ]
     },
     { 
@@ -132,8 +135,10 @@ export const useNavigationMenu = (role: UserRole = 'public') => {
   const studentMenu = [
     { label: 'Dashboard', icon: TrendingUp, href: '#', onClick: () => onNavigate('student-dashboard') },
     { label: 'Akademik', icon: BookOpen, href: '#', onClick: () => onNavigate('student-academic') },
-    { label: 'Keuangan', icon: DollarSign, href: '#', onClick: () => onNavigate('student-finance') },
-    { label: 'Profile', icon: Users, href: '#', onClick: () => {} }
+    { label: 'Ekskul', icon: Zap, href: '#', onClick: () => onNavigate('student-extracurricular') },
+    { label: 'BK', icon: Calendar, href: '#', onClick: () => onNavigate('student-counseling') },
+    { label: 'Pesan', icon: MessageCircle, href: '#', onClick: () => onNavigate('student-messages') },
+    { label: 'Profile', icon: Users, href: '#', onClick: () => onNavigate('student-profile') }
   ];
 
   const parentMenu = [
@@ -147,6 +152,7 @@ export const useNavigationMenu = (role: UserRole = 'public') => {
     { label: 'Jadwal', icon: Calendar, href: '#', onClick: () => onNavigate('teacher-schedule') },
     { label: 'Nilai', icon: Award, href: '#', onClick: () => onNavigate('teacher-grades') },
     { label: 'Absensi', icon: ClipboardCheck, href: '#', onClick: () => onNavigate('teacher-attendance') },
+    { label: 'Pesan', icon: MessageCircle, href: '#', onClick: () => onNavigate('teacher-messages') },
     { label: 'Profile', icon: Users, href: '#', onClick: () => onNavigate('teacher-profile') }
   ];
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { Menu, X, ChevronDown, Globe } from 'lucide-react';
 
@@ -27,8 +27,27 @@ export const Navbar: React.FC<NavbarProps> = ({ logo, siteName, siteTagline = 'I
   const [language, setLanguage] = useState<'id' | 'en'>('id');
   const [didLogoError, setDidLogoError] = useState(false);
   const [hoveringLabel, setHoveringLabel] = useState<string | null>(null);
+  const [taglineLetterSpacingPx, setTaglineLetterSpacingPx] = useState(0);
   const openTimeoutRef = React.useRef<any>(null);
   const closeTimeoutRef = React.useRef<any>(null);
+  const siteNameRef = React.useRef<HTMLHeadingElement | null>(null);
+  const siteTaglineRef = React.useRef<HTMLParagraphElement | null>(null);
+  const displaySiteName = useMemo(() => {
+    const input = String(siteName ?? '').trim();
+    if (!input) return '';
+    return input
+      .split(/\s+/g)
+      .map((word) => {
+        const w = word.trim();
+        if (!w) return '';
+        const isAcronym = w.length <= 3 && w === w.toUpperCase();
+        if (isAcronym) return w;
+        return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+      })
+      .filter(Boolean)
+      .join(' ');
+  }, [siteName]);
+  const displaySiteTagline = useMemo(() => String(siteTagline ?? '').toUpperCase(), [siteTagline]);
 
   const resolvedLogoSrc = useMemo(() => {
     const input = logo?.trim();
@@ -42,6 +61,40 @@ export const Navbar: React.FC<NavbarProps> = ({ logo, siteName, siteTagline = 'I
   useEffect(() => {
     setDidLogoError(false);
   }, [resolvedLogoSrc]);
+
+  useLayoutEffect(() => {
+    const taglineEl = siteTaglineRef.current;
+    const titleEl = siteNameRef.current;
+    if (!taglineEl || !titleEl) return;
+
+    const measureTextWidth = (text: string, style: CSSStyleDeclaration) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return 0;
+      const font = `${style.fontStyle} ${style.fontVariant} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+      ctx.font = font;
+      return ctx.measureText(text).width;
+    };
+
+    const recalc = () => {
+      if (!siteTaglineRef.current || !siteNameRef.current) return;
+      const titleWidth = siteNameRef.current.getBoundingClientRect().width;
+      const computed = window.getComputedStyle(siteTaglineRef.current);
+      const text = siteTaglineRef.current.textContent || '';
+      const charCount = Array.from(text).length;
+      const gaps = Math.max(1, charCount - 1);
+      const naturalWidth = measureTextWidth(text, computed);
+      const needed = titleWidth > naturalWidth ? (titleWidth - naturalWidth) / gaps : 0;
+      const clamped = Math.max(0, Math.min(8, needed));
+      setTaglineLetterSpacingPx(clamped);
+    };
+
+    recalc();
+    window.addEventListener('resize', recalc);
+    return () => {
+      window.removeEventListener('resize', recalc);
+    };
+  }, [displaySiteName, displaySiteTagline]);
 
   const toggleLanguage = () => {
     setLanguage(language === 'id' ? 'en' : 'id');
@@ -106,15 +159,15 @@ export const Navbar: React.FC<NavbarProps> = ({ logo, siteName, siteTagline = 'I
               ) : (
                 <img
                   src={resolvedLogoSrc}
-                  alt={siteName}
+                  alt={displaySiteName}
                   className="w-full h-full object-contain"
                   onError={() => setDidLogoError(true)}
                 />
               )}
             </div>
             <div>
-              <h1 className="text-base md:text-xl truncate max-w-[150px] md:max-w-none" style={{ color: accentColor }}>{siteName}</h1>
-              <p className="text-xs text-gray-500 hidden sm:block">{siteTagline}</p>
+              <h1 ref={siteNameRef} className="text-base md:text-xl truncate max-w-[150px] sm:max-w-none" style={{ color: accentColor }}>{displaySiteName}</h1>
+              <p ref={siteTaglineRef} className="text-xs text-gray-500 hidden sm:block" style={{ letterSpacing: `${taglineLetterSpacingPx}px` }}>{displaySiteTagline}</p>
             </div>
           </div>
 

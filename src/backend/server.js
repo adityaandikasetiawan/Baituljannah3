@@ -70,11 +70,17 @@ const authRoutes = require('./routes/auth');
 const newsRoutes = require('./routes/news');
 const ppdbRoutes = require('./routes/ppdb');
 const contactRoutes = require('./routes/contact');
+const messagesRoutes = require('./routes/messages');
+const extracurricularRoutes = require('./routes/extracurricular');
+const counselingRoutes = require('./routes/counseling');
 
 app.use(`/api/${config.apiVersion}/auth`, authRoutes);
 app.use(`/api/${config.apiVersion}/news`, newsRoutes);
 app.use(`/api/${config.apiVersion}/ppdb`, ppdbRoutes);
 app.use(`/api/${config.apiVersion}/contact`, contactRoutes);
+app.use(`/api/${config.apiVersion}/messages`, messagesRoutes);
+app.use(`/api/${config.apiVersion}/extracurricular`, extracurricularRoutes);
+app.use(`/api/${config.apiVersion}/counseling`, counselingRoutes);
 
 // Welcome route
 app.get('/', (req, res) => {
@@ -87,7 +93,10 @@ app.get('/', (req, res) => {
       auth: `/api/${config.apiVersion}/auth`,
       news: `/api/${config.apiVersion}/news`,
       ppdb: `/api/${config.apiVersion}/ppdb`,
-      contact: `/api/${config.apiVersion}/contact`
+      contact: `/api/${config.apiVersion}/contact`,
+      messages: `/api/${config.apiVersion}/messages`,
+      extracurricular: `/api/${config.apiVersion}/extracurricular`,
+      counseling: `/api/${config.apiVersion}/counseling`
     }
   });
 });

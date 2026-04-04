@@ -6,6 +6,7 @@ import { Navbar } from '../../components/layout/Navbar';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { Eye, EyeOff, LogIn, Mail, Lock, ArrowRight } from 'lucide-react';
 import { useNavigationMenu } from '../../hooks/useNavigationMenu';
+import { Toaster, toast } from 'sonner';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,9 +18,47 @@ export default function LoginPage() {
     password: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    document.cookie = `role=${userType}; path=/; SameSite=Lax`;
+
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1').replace(/\/$/, '');
+    const fallbackRoleCookie = userType;
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, password: formData.password }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (response.ok && data?.success && data?.data?.token) {
+        localStorage.setItem('baituljannah_token', data.data.token);
+        if (data.data.user) {
+          localStorage.setItem('baituljannah_user', JSON.stringify(data.data.user));
+        }
+
+        const roleFromApi: string | undefined = data.data.user?.role;
+        const roleCookie = roleFromApi || fallbackRoleCookie;
+        document.cookie = `role=${roleCookie}; path=/; SameSite=Lax`;
+
+        if (roleFromApi === 'admin') router.push('/admin/dashboard');
+        else if (roleFromApi === 'guru') router.push('/teacher/dashboard');
+        else if (roleFromApi === 'ortu') router.push('/parent/dashboard');
+        else router.push('/student/dashboard');
+
+        toast.success('Login berhasil');
+        return;
+      }
+
+      const message = data?.message || 'Login gagal';
+      toast.error(message);
+    } catch (error: any) {
+      toast.error('Tidak bisa terhubung ke server. Menggunakan mode demo.');
+    }
+
+    document.cookie = `role=${fallbackRoleCookie}; path=/; SameSite=Lax`;
     switch (userType) {
       case 'admin':
         router.push('/admin/dashboard');
@@ -69,6 +108,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
+      <Toaster position="top-right" richColors />
       <Navbar 
         siteName="Login - Baituljannah"
         accentColor="#1E4AB8"

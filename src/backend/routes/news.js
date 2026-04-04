@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
   getAllNews,
+  getAllNewsManage,
   getNewsById,
   createNews,
   updateNews,
@@ -14,6 +15,7 @@ const { newsRules, validate } = require('../middleware/validation');
 // Public routes
 router.get('/', getAllNews);
 router.get('/latest', getLatestNews);
+router.get('/manage', protect, authorize('admin', 'guru'), getAllNewsManage);
 router.get('/:id', getNewsById);
 
 // Protected routes (Admin, Guru)

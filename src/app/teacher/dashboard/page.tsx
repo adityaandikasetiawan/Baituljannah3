@@ -1,11 +1,21 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { Sidebar } from '../../../components/layout/Sidebar';
 import { useNavigationMenu } from '../../../hooks/useNavigationMenu';
-import { Users, ClipboardCheck, Calendar, Bell, TrendingUp, Clock, FileText, Award, Plus, Eye, Edit } from 'lucide-react';
+import { Users, ClipboardCheck, Calendar, Bell, TrendingUp, Clock, FileText, Award, Plus, MessageCircle } from 'lucide-react';
+
+type InboxMessage = { id: string; from: string; subject: string; content: string; date: string; read: boolean };
+type OutboxMessage = { id: string; to: string; subject: string; content: string; date: string };
+
+const STORAGE = {
+  inbox: 'teacher_messages_inbox',
+  outbox: 'teacher_messages_outbox',
+};
 
 export default function TeacherDashboardPage() {
+  const router = useRouter();
   const { menuItems } = useNavigationMenu('teacher');
 
   const teacherData = {
@@ -16,36 +26,32 @@ export default function TeacherDashboardPage() {
     unit: 'SMAIT'
   };
 
-  const stats = [
-    {
-      label: 'Total Siswa',
-      value: '96',
-      icon: Users,
-      color: 'from-blue-500 to-blue-600',
-      detail: '3 kelas'
-    },
-    {
-      label: 'Rata-rata Kelas',
-      value: '86.5',
-      icon: Award,
-      color: 'from-green-500 to-green-600',
-      detail: 'Nilai rata-rata'
-    },
-    {
-      label: 'Kehadiran',
-      value: '94%',
-      icon: ClipboardCheck,
-      color: 'from-purple-500 to-purple-600',
-      detail: 'Bulan ini'
-    },
-    {
-      label: 'Tugas Pending',
-      value: '12',
-      icon: FileText,
-      color: 'from-orange-500 to-orange-600',
-      detail: 'Perlu dinilai'
+  const [inbox, setInbox] = React.useState<InboxMessage[]>([]);
+  const [outbox, setOutbox] = React.useState<OutboxMessage[]>([]);
+
+  const loadLocal = React.useCallback(() => {
+    try {
+      const ib = JSON.parse(localStorage.getItem(STORAGE.inbox) || '[]');
+      const ob = JSON.parse(localStorage.getItem(STORAGE.outbox) || '[]');
+      setInbox(Array.isArray(ib) ? ib : []);
+      setOutbox(Array.isArray(ob) ? ob : []);
+    } catch {
+      setInbox([]);
+      setOutbox([]);
     }
-  ];
+  }, []);
+
+  React.useEffect(() => {
+    loadLocal();
+  }, [loadLocal]);
+
+  React.useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE.inbox || e.key === STORAGE.outbox) loadLocal();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [loadLocal]);
 
   const todaySchedule = [
     { time: '07:00-08:30', class: 'XII IPA 1', subject: 'Matematika', topic: 'Integral Tentu', room: 'Lab Komputer' },
@@ -115,6 +121,41 @@ export default function TeacherDashboardPage() {
     { class: 'XII IPA 1', students: 32, average: 87.5, highest: 95, lowest: 75, attendance: 96 },
     { class: 'XII IPA 2', students: 30, average: 85.2, highest: 92, lowest: 72, attendance: 94 },
     { class: 'XI IPA 1', students: 34, average: 86.8, highest: 94, lowest: 78, attendance: 95 }
+  ];
+
+  const tasksNeedGrading = pendingAssignments.reduce((sum, a) => sum + a.needGrading, 0);
+  const upcomingAnnouncementCount = announcements.filter((a) => a.urgent).length;
+  const unreadCount = React.useMemo(() => inbox.filter((m) => !m.read).length, [inbox]);
+
+  const stats = [
+    {
+      label: 'Total Siswa',
+      value: '96',
+      icon: Users,
+      color: 'from-blue-500 to-blue-600',
+      detail: '3 kelas'
+    },
+    {
+      label: 'Rata-rata Kelas',
+      value: '86.5',
+      icon: Award,
+      color: 'from-green-500 to-green-600',
+      detail: 'Nilai rata-rata'
+    },
+    {
+      label: 'Pesan Baru',
+      value: String(unreadCount),
+      icon: MessageCircle,
+      color: 'from-purple-500 to-purple-600',
+      detail: `Total terkirim: ${outbox.length}`
+    },
+    {
+      label: 'Tugas Perlu Dinilai',
+      value: String(tasksNeedGrading),
+      icon: FileText,
+      color: 'from-orange-500 to-orange-600',
+      detail: 'Menunggu penilaian'
+    }
   ];
 
   return (
@@ -188,7 +229,7 @@ export default function TeacherDashboardPage() {
                 </span>
               </div>
               <div className="space-y-3">
-                {todaySchedule.map((schedule, idx) => (
+                {todaySchedule.slice(0, 3).map((schedule, idx) => (
                   <div key={idx} className="p-4 bg-blue-50 border-l-4 border-[#1E4AB8] rounded-xl">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -218,13 +259,15 @@ export default function TeacherDashboardPage() {
                   <FileText className="w-6 h-6 text-[#1E4AB8]" />
                   Tugas Menunggu Penilaian
                 </h2>
-                <button className="px-4 py-2 bg-[#1E4AB8] text-white rounded-xl hover:bg-[#1a3d9a] transition-colors text-sm flex items-center gap-2">
-                  <Plus className="w-4 h-4" />
-                  <span>Buat Tugas Baru</span>
+                <button
+                  onClick={() => router.push('/teacher/grades')}
+                  className="px-3 py-1.5 rounded-lg bg-blue-50 text-[#1E4AB8] hover:bg-blue-100 text-sm flex items-center gap-2"
+                >
+                  Buka Modul
                 </button>
               </div>
               <div className="space-y-3">
-                {pendingAssignments.map((assignment, idx) => (
+                {pendingAssignments.slice(0, 3).map((assignment, idx) => (
                   <div key={idx} className="p-4 border border-gray-200 rounded-xl hover:border-[#1E4AB8] transition-colors">
                     <div className="flex items-start justify-between mb-3">
                       <div>
@@ -242,14 +285,6 @@ export default function TeacherDashboardPage() {
                         <p className="text-sm text-gray-600">
                           Deadline: {new Date(assignment.dueDate).toLocaleDateString('id-ID')}
                         </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button className="p-2 hover:bg-green-50 text-green-600 rounded-lg transition-colors">
-                          <Edit className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -275,7 +310,7 @@ export default function TeacherDashboardPage() {
                 Performa Kelas
               </h2>
               <div className="space-y-4">
-                {classPerformance.map((cls, idx) => (
+                {classPerformance.slice(0, 2).map((cls, idx) => (
                   <div key={idx} className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-medium">{cls.class}</h3>
@@ -314,7 +349,7 @@ export default function TeacherDashboardPage() {
                 <h2 className="text-xl">Pengumuman</h2>
               </div>
               <div className="space-y-3">
-                {announcements.map((announcement, idx) => (
+                {announcements.slice(0, 3).map((announcement, idx) => (
                   <div 
                     key={idx}
                     className={`p-4 rounded-xl border ${
@@ -343,11 +378,94 @@ export default function TeacherDashboardPage() {
               </div>
             </div>
 
+            {/* Reminders */}
+            <div className="bg-yellow-50 rounded-2xl p-6 shadow-soft border border-yellow-100">
+              <div className="flex items-center gap-2 mb-6">
+                <Clock className="w-6 h-6 text-yellow-700" />
+                <h2 className="text-xl text-yellow-900">Pengingat</h2>
+              </div>
+              <div className="space-y-3">
+                {tasksNeedGrading === 0 && upcomingAnnouncementCount === 0 ? (
+                  <div className="text-sm text-yellow-800">Tidak ada pengingat penting.</div>
+                ) : null}
+                {tasksNeedGrading > 0 && (
+                  <div className="bg-white/70 rounded-xl p-4 border border-yellow-100">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="text-xs text-yellow-800 mb-1">Penilaian</div>
+                        <div className="font-medium text-gray-900">Tugas perlu dinilai</div>
+                        <div className="text-xs text-gray-600 mt-1">Total: {tasksNeedGrading} tugas</div>
+                      </div>
+                      <button
+                        onClick={() => router.push('/teacher/grades')}
+                        className="px-3 py-1.5 rounded-lg bg-blue-50 text-[#1E4AB8] hover:bg-blue-100 text-xs"
+                      >
+                        Buka Modul
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {upcomingAnnouncementCount > 0 && (
+                  <div className="bg-white/70 rounded-xl p-4 border border-yellow-100">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="text-xs text-yellow-800 mb-1">Agenda</div>
+                        <div className="font-medium text-gray-900">Pengumuman Urgen</div>
+                        <div className="text-xs text-gray-600 mt-1">Jumlah: {upcomingAnnouncementCount}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-soft">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="w-6 h-6 text-[#1E4AB8]" />
+                  <h2 className="text-xl">Pesan</h2>
+                </div>
+                <button
+                  onClick={() => router.push('/teacher/messages')}
+                  className="px-3 py-1.5 rounded-lg bg-blue-50 text-[#1E4AB8] hover:bg-blue-100 text-sm"
+                >
+                  Buka Modul
+                </button>
+              </div>
+              <div className="flex items-center gap-3 text-sm text-gray-600 mb-4">
+                <span>Inbox: {inbox.length}</span>
+                <span>•</span>
+                <span>Belum dibaca: {unreadCount}</span>
+              </div>
+              <div className="space-y-3">
+                {inbox.length === 0 ? (
+                  <div className="text-sm text-gray-600">Belum ada pesan.</div>
+                ) : (
+                  inbox.slice(0, 2).map((m) => (
+                    <div
+                      key={m.id}
+                      className={`p-3 rounded-xl border ${
+                        m.read ? 'border-gray-200 bg-gray-50' : 'border-[#1E4AB8] bg-[#1E4AB8]/5'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-medium text-sm truncate">{m.subject}</div>
+                          <div className="text-xs text-gray-600 mt-1 truncate">Dari: {m.from}</div>
+                        </div>
+                        {!m.read ? <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">Baru</span> : null}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
             {/* Recent Grades */}
             <div className="bg-white rounded-2xl p-6 shadow-soft">
               <h2 className="text-lg mb-4">Nilai Terbaru</h2>
               <div className="space-y-3">
-                {recentGrades.map((grade, idx) => (
+                {recentGrades.slice(0, 4).map((grade, idx) => (
                   <div key={idx} className="p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center justify-between mb-1">
                       <p className="font-medium text-sm">{grade.studentName}</p>
@@ -367,29 +485,49 @@ export default function TeacherDashboardPage() {
             <div className="bg-white rounded-2xl p-6 shadow-soft">
               <h2 className="text-lg mb-4">Quick Actions</h2>
               <div className="space-y-2">
-                <button className="w-full px-4 py-3 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 transition-colors text-left flex items-center justify-between">
+                <button
+                  onClick={() => router.push('/teacher/grades')}
+                  className="w-full px-4 py-3 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 transition-colors text-left flex items-center justify-between"
+                >
                   <span className="flex items-center gap-2">
                     <Plus className="w-5 h-5" />
                     Input Nilai
                   </span>
-                  <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded-full">12</span>
                 </button>
-                <button className="w-full px-4 py-3 bg-green-50 text-green-700 rounded-xl hover:bg-green-100 transition-colors text-left flex items-center justify-between">
+                <button
+                  onClick={() => router.push('/teacher/attendance')}
+                  className="w-full px-4 py-3 bg-green-50 text-green-700 rounded-xl hover:bg-green-100 transition-colors text-left flex items-center justify-between"
+                >
                   <span className="flex items-center gap-2">
                     <ClipboardCheck className="w-5 h-5" />
                     Input Absensi
                   </span>
                 </button>
-                <button className="w-full px-4 py-3 bg-purple-50 text-purple-700 rounded-xl hover:bg-purple-100 transition-colors text-left flex items-center justify-between">
+                <button
+                  onClick={() => router.push('/teacher/messages')}
+                  className="w-full px-4 py-3 bg-purple-50 text-purple-700 rounded-xl hover:bg-purple-100 transition-colors text-left flex items-center justify-between"
+                >
                   <span className="flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    Buat Tugas
+                    <MessageCircle className="w-5 h-5" />
+                    Modul Pesan
                   </span>
                 </button>
-                <button className="w-full px-4 py-3 bg-orange-50 text-orange-700 rounded-xl hover:bg-orange-100 transition-colors text-left flex items-center justify-between">
+                <button
+                  onClick={() => router.push('/teacher/schedule')}
+                  className="w-full px-4 py-3 bg-orange-50 text-orange-700 rounded-xl hover:bg-orange-100 transition-colors text-left flex items-center justify-between"
+                >
                   <span className="flex items-center gap-2">
                     <Calendar className="w-5 h-5" />
                     Lihat Jadwal
+                  </span>
+                </button>
+                <button
+                  onClick={() => router.push('/teacher/profile')}
+                  className="w-full px-4 py-3 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors text-left flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    Buka Profil
                   </span>
                 </button>
               </div>

@@ -80,6 +80,87 @@ exports.getAllNews = async (req, res) => {
   }
 };
 
+// @desc    Get all news (including drafts) for admin/guru
+// @route   GET /api/v1/news/manage
+// @access  Private (Admin, Guru)
+exports.getAllNewsManage = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 20,
+      category,
+      unit_sekolah,
+      status,
+      search,
+      sort = 'created_at',
+      order = 'DESC'
+    } = req.query;
+
+    const offset = (page - 1) * limit;
+    let whereConditions = [];
+    let params = [];
+
+    if (category) {
+      whereConditions.push('category = ?');
+      params.push(category);
+    }
+
+    if (unit_sekolah) {
+      whereConditions.push('(unit_sekolah = ? OR unit_sekolah = "Semua")');
+      params.push(unit_sekolah);
+    }
+
+    if (status) {
+      whereConditions.push('status = ?');
+      params.push(status);
+    }
+
+    if (search) {
+      whereConditions.push('(title LIKE ? OR content LIKE ?)');
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+    const countQuery = `SELECT COUNT(*) as total FROM news ${whereClause}`;
+    const countResult = await getOne(countQuery, params);
+    const total = countResult.total;
+
+    const allowedSortFields = ['created_at', 'title', 'views', 'publish_date'];
+    const sortField = allowedSortFields.includes(sort) ? sort : 'created_at';
+    const sortOrder = order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    const query = `
+      SELECT 
+        n.*,
+        u.full_name as author_name
+      FROM news n
+      LEFT JOIN users u ON n.author_id = u.id
+      ${whereClause}
+      ORDER BY ${sortField} ${sortOrder}
+      LIMIT ? OFFSET ?
+    `;
+
+    const news = await executeQuery(query, [...params, parseInt(limit), offset]);
+
+    res.status(200).json({
+      success: true,
+      count: news.length,
+      total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: parseInt(page),
+      data: news
+    });
+  } catch (error) {
+    console.error('Get All News Manage Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan saat mengambil data berita (admin)',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 // @desc    Get single news by ID
 // @route   GET /api/v1/news/:id
 // @access  Public

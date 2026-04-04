@@ -5,7 +5,7 @@ import React from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { BookOpen, Users, Award, Globe, Heart, Star, ArrowRight, Sparkles, Trophy, GraduationCap, Target, TrendingUp, Search, ChevronLeft, ChevronRight, Play } from 'lucide-react';
+import { BookOpen, Users, Award, Globe, Heart, Star, ArrowRight, Sparkles, Trophy, GraduationCap, Target, TrendingUp, Search, ChevronLeft, ChevronRight, Play, Lightbulb, Zap } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { useNavigationMenu } from '../hooks/useNavigationMenu';
@@ -214,32 +214,46 @@ export default function Home() {
 
   const programs = [
     {
-      title: 'Tahfidz Al-Qur\'an',
-      description: 'Program unggulan menghafal Al-Qur\'an dengan metode mudah, menyenangkan, dan terbukti efektif.',
-      icon: BookOpen,
+      title: 'Islamic Studies',
+      description: 'Akidah, ibadah, akhlak, Al-Qur’an, hadis, fiqih, dan pembiasaan harian untuk membentuk karakter Islami.',
+      icon: Heart,
       color: '#10B981',
       gradient: 'from-green-500 to-emerald-500'
     },
     {
-      title: 'Bilingual Program',
-      description: 'Pembelajaran dua bahasa (Arab & Inggris) untuk mempersiapkan generasi global yang Islami.',
-      icon: Globe,
-      color: '#3B82F6',
-      gradient: 'from-blue-500 to-cyan-500'
-    },
-    {
-      title: 'Character Building',
-      description: 'Pembentukan karakter Islami melalui pembiasaan akhlak mulia dalam kehidupan sehari-hari.',
-      icon: Heart,
+      title: 'Academic Excellence',
+      description: 'Penguatan literasi-numerasi, pembelajaran tuntas, dan pembinaan prestasi melalui penilaian yang terukur.',
+      icon: Award,
       color: '#F97316',
       gradient: 'from-orange-500 to-amber-500'
     },
     {
-      title: 'Academic Excellence',
-      description: 'Program akselerasi akademik dengan metode pembelajaran inovatif dan guru berpengalaman.',
-      icon: Star,
+      title: 'Project Based Learning',
+      description: 'Proyek lintas mata pelajaran yang melatih riset, kreativitas, problem solving, dan presentasi karya.',
+      icon: Lightbulb,
+      color: '#6366F1',
+      gradient: 'from-indigo-500 to-blue-500'
+    },
+    {
+      title: 'Interpersonal Skill',
+      description: 'Komunikasi efektif, teamwork, kepemimpinan, empati, dan etika melalui pembiasaan dan aktivitas terarah.',
+      icon: Users,
       color: '#8B5CF6',
       gradient: 'from-purple-500 to-indigo-500'
+    },
+    {
+      title: 'Entrepreneur',
+      description: 'Market day, proyek bisnis sederhana, literasi finansial, dan kreativitas produk untuk menumbuhkan mental wirausaha.',
+      icon: Target,
+      color: '#F59E0B',
+      gradient: 'from-amber-500 to-yellow-500'
+    },
+    {
+      title: 'ICT',
+      description: 'Literasi digital, keamanan digital, tools produktivitas, dan pengenalan coding/robotik sesuai jenjang.',
+      icon: Zap,
+      color: '#3B82F6',
+      gradient: 'from-blue-500 to-cyan-500'
     }
   ];
 
@@ -370,7 +384,7 @@ export default function Home() {
               <Sparkles className="w-4 h-4" />
               <span>Jenjang Pendidikan</span>
             </div>
-            <h2 className="text-white mb-3 md:mb-4">Program Unggulan</h2>
+            <h2 className="text-white mb-3 md:mb-4">Jenjang Pendidikan</h2>
             <p className="text-white/90 text-base md:text-xl lg:text-2xl max-w-3xl mx-auto px-4">
               Lima unit pendidikan terintegrasi dari PAUD hingga SMA untuk perjalanan pendidikan yang berkesinambungan
             </p>
@@ -481,15 +495,15 @@ export default function Home() {
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-6 py-3 bg-green-100 text-green-700 rounded-full text-sm mb-4">
               <BookOpen className="w-4 h-4" />
-              <span>Program Unggulan</span>
+              <span>Six Aspects of Curriculum</span>
             </div>
-            <h2 className="mb-4">Program Pendidikan Kami</h2>
+            <h2 className="mb-4">Six Aspects of Curriculum</h2>
             <p className="text-gray-600 text-lg max-w-3xl mx-auto">
-              Berbagai program unggulan yang dirancang khusus untuk membentuk generasi Qurani yang cerdas dan berkarakter
+              Enam aspek kurikulum untuk membentuk siswa yang unggul dalam iman, ilmu, keterampilan, dan teknologi
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {programs.map((program, index) => {
               const Icon = program.icon;
               return (

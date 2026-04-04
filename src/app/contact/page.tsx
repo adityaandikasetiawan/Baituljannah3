@@ -85,7 +85,12 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
-      <Navbar menuItems={menuItems} activePage="contact" onNavigate={onNavigate} />
+      <Navbar
+        siteName="Baitul Jannah Islamic School"
+        siteTagline="Sekolahnya Para Juara"
+        menuItems={menuItems}
+        accentColor="#1E4AB8"
+      />
 
       <main>
         {/* Hero Section */}
@@ -114,7 +119,7 @@ export default function ContactPage() {
         {/* Breadcrumb */}
         <section className="bg-white border-b border-gray-200">
           <div className="container mx-auto px-4 py-3">
-            <Breadcrumb items={breadcrumbItems} />
+            <Breadcrumb items={breadcrumbItems} onNavigate={onNavigate} />
           </div>
         </section>
 

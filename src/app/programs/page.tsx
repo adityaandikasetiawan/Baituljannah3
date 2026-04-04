@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { Breadcrumb } from '../../components/layout/Breadcrumb';
-import { BookOpen, Users, Award, Globe, Heart, Star, Lightbulb, Target, Zap, Shield, ArrowRight, Sparkles, CheckCircle, TrendingUp } from 'lucide-react';
+import { Users, Award, Globe, Heart, Star, Lightbulb, Target, Zap, ArrowRight, Sparkles, CheckCircle, Search } from 'lucide-react';
 import { useNavigationMenu } from '../../hooks/useNavigationMenu';
 
 export default function ProgramsPage() {
@@ -13,127 +13,84 @@ export default function ProgramsPage() {
 
   const breadcrumbItems = [
     { label: 'Beranda', onClick: () => onNavigate('main') },
-    { label: 'Program Unggulan' }
-  ];
-
-  const categories = [
-    { name: 'Semua', icon: Star, count: 12 },
-    { name: 'Akademik', icon: BookOpen, count: 2 },
-    { name: 'Keagamaan', icon: Heart, count: 3 },
-    { name: 'Ekstrakurikuler', icon: Zap, count: 3 },
-    { name: 'Pengembangan', icon: TrendingUp, count: 4 }
+    { label: 'Program Pendidikan' }
   ];
 
   const programs = [
     {
-      icon: BookOpen,
-      title: 'Program Tahfidz Al-Quran',
-      description: 'Program menghafal Al-Quran dengan metode yang efektif dan terstruktur untuk semua jenjang pendidikan dengan bimbingan ustadz berpengalaman.',
-      category: 'Keagamaan',
-      features: ['Target 30 juz', 'Bimbingan Ustadz berpengalaman', 'Metode terbukti efektif', 'Wisuda Tahfidz'],
+      icon: Heart,
+      title: 'Islamic Studies',
+      description:
+        'Pembelajaran terpadu untuk membentuk akidah yang lurus, ibadah yang benar, dan akhlak mulia melalui Al-Qur’an, hadis, fiqih, sirah, dan pembiasaan harian.',
+      category: 'Islamic Studies',
+      features: ['Tahfidz & tahsin terstruktur', 'Adab & pembiasaan ibadah', 'Bahasa Arab dasar', 'Mentoring ruhiyah'],
       color: '#10B981',
       bgGradient: 'from-green-50 to-emerald-50'
     },
     {
-      icon: Globe,
-      title: 'Bahasa Asing (English & Arabic)',
-      description: 'Program pembelajaran bahasa Inggris dan Arab dengan metode praktis dan komunikatif untuk persiapan komunikasi global.',
-      category: 'Akademik',
-      features: ['Native speaker', 'Language lab', 'International certification', 'Daily conversation'],
-      color: '#3B82F6',
-      bgGradient: 'from-blue-50 to-cyan-50'
-    },
-    {
       icon: Award,
-      title: 'Olimpiade & Kompetisi',
-      description: 'Pembinaan khusus untuk persiapan olimpiade sains, matematika, dan kompetisi akademik lainnya dengan track record juara.',
-      category: 'Akademik',
-      features: ['Pembimbing ahli', 'Latihan intensif', 'Track record juara', 'Kompetisi rutin'],
+      title: 'Academic Excellence',
+      description:
+        'Pembelajaran akademik yang kuat, terukur, dan berorientasi prestasi melalui penguatan literasi-numerasi, penilaian berkala, dan pembinaan kompetisi.',
+      category: 'Academic Excellence',
+      features: ['Literasi & numerasi', 'Assessment berbasis capaian', 'Pembinaan olimpiade/kompetisi', 'Pembelajaran terarah & tuntas'],
       color: '#F97316',
       bgGradient: 'from-orange-50 to-amber-50'
     },
     {
-      icon: Heart,
-      title: 'Bina Pribadi Islami (BPI)',
-      description: 'Pembinaan karakter dan kepribadian Islam melalui mentoring rutin dalam kelompok kecil untuk membentuk akhlak mulia.',
-      category: 'Keagamaan',
-      features: ['Mentoring pekanan', 'Materi komprehensif', 'Pembentukan karakter', 'Ukhuwah islamiyah'],
-      color: '#8B5CF6',
-      bgGradient: 'from-purple-50 to-violet-50'
-    },
-    {
-      icon: Zap,
-      title: 'Robotik & Coding',
-      description: 'Pengenalan teknologi masa depan melalui ekstrakurikuler robotik dan coding yang melatih logika dan kreativitas siswa.',
-      category: 'Ekstrakurikuler',
-      features: ['Kit robotik lengkap', 'Kurikulum coding modern', 'Kompetisi nasional', 'Project based'],
-      color: '#EC4899',
-      bgGradient: 'from-pink-50 to-rose-50'
-    },
-    {
-      icon: Users,
-      title: 'Leadership Camp',
-      description: 'Pelatihan kepemimpinan untuk melatih jiwa leadership, kemandirian, dan kerjasama tim melalui kegiatan outdoor.',
-      category: 'Pengembangan',
-      features: ['Outbound training', 'Team building', 'Leadership materi', 'Character building'],
-      color: '#14B8A6',
-      bgGradient: 'from-teal-50 to-cyan-50'
-    },
-    {
-      icon: Target,
-      title: 'Entrepreneurship',
-      description: 'Menumbuhkan jiwa wirausaha sejak dini melalui market day dan proyek bisnis sederhana yang dikelola siswa.',
-      category: 'Pengembangan',
-      features: ['Market day', 'Business plan', 'Financial literacy', 'Creative product'],
-      color: '#F59E0B',
-      bgGradient: 'from-amber-50 to-yellow-50'
-    },
-    {
-      icon: Shield,
-      title: 'Pramuka SIT',
-      description: 'Kegiatan kepramukaan berbasis Sekolah Islam Terpadu yang menggabungkan ketangkasan, kemandirian, dan nilai keislaman.',
-      category: 'Ekstrakurikuler',
-      features: ['Kemah ukhuwah', 'Keterampilan hidup', 'Survival skill', 'Nilai keislaman'],
-      color: '#8B4513',
-      bgGradient: 'from-orange-50 to-red-50'
-    },
-    {
       icon: Lightbulb,
-      title: 'Literasi & Jurnalistik',
-      description: 'Mengembangkan kemampuan membaca, menulis, dan jurnalistik siswa melalui majalah sekolah dan mading.',
-      category: 'Pengembangan',
-      features: ['Majalah sekolah', 'Pelatihan menulis', 'Kunjungan media', 'Publikasi karya'],
+      title: 'Project Based Learning',
+      description:
+        'Pembelajaran berbasis proyek yang melatih riset, kreativitas, problem solving, dan presentasi melalui proyek lintas mata pelajaran yang relevan dengan dunia nyata.',
+      category: 'Project Based Learning',
+      features: ['Proyek lintas mapel', 'Riset sederhana & eksperimen', 'Kolaborasi tim', 'Pameran/presentasi karya'],
       color: '#6366F1',
       bgGradient: 'from-indigo-50 to-blue-50'
     },
     {
-      icon: Sparkles,
-      title: 'Seni & Budaya Islam',
-      description: 'Melestarikan seni dan budaya Islam melalui nasyid, kaligrafi, dan seni peran yang sesuai syariat.',
-      category: 'Ekstrakurikuler',
-      features: ['Nasyid/Marawis', 'Kaligrafi', 'Teater Islami', 'Pentas seni'],
-      color: '#D946EF',
-      bgGradient: 'from-fuchsia-50 to-pink-50'
+      icon: Users,
+      title: 'Interpersonal Skill',
+      description:
+        'Penguatan soft skills untuk membangun komunikasi yang baik, kepemimpinan, empati, dan kemampuan bekerja sama dalam tim melalui pembiasaan dan aktivitas terarah.',
+      category: 'Interpersonal Skill',
+      features: ['Komunikasi efektif', 'Teamwork & kolaborasi', 'Leadership & tanggung jawab', 'Empati, disiplin, dan etika'],
+      color: '#8B5CF6',
+      bgGradient: 'from-purple-50 to-violet-50'
     },
     {
-      icon: CheckCircle,
-      title: 'Shalat Dhuha & Tahajud',
-      description: 'Pembiasaan ibadah sunnah harian dan bulanan (Mabit) untuk mendekatkan diri kepada Allah SWT.',
-      category: 'Keagamaan',
-      features: ['Dhuha berjamaah', 'Mabit bulanan', 'Kultum siswa', 'Evaluasi ibadah'],
-      color: '#0EA5E9',
-      bgGradient: 'from-sky-50 to-blue-50'
+      icon: Target,
+      title: 'Entrepreneur',
+      description:
+        'Pembelajaran kewirausahaan untuk menumbuhkan mental mandiri, kreatif, dan berani mencoba melalui proyek bisnis, market day, dan literasi finansial.',
+      category: 'Entrepreneur',
+      features: ['Market day & bazar siswa', 'Project bisnis sederhana', 'Financial literacy', 'Kreativitas produk & layanan'],
+      color: '#F59E0B',
+      bgGradient: 'from-amber-50 to-yellow-50'
     },
     {
-      icon: TrendingUp,
-      title: 'Life Skill & Kemandirian',
-      description: 'Pembekalan keterampilan hidup sehari-hari seperti memasak, menjahit, dan pertukangan dasar.',
-      category: 'Pengembangan',
-      features: ['Cooking class', 'Basic crafting', 'Gardening', 'Home management'],
-      color: '#84CC16',
-      bgGradient: 'from-lime-50 to-green-50'
+      icon: Zap,
+      title: 'ICT',
+      description:
+        'Penguatan literasi digital dan teknologi melalui pemanfaatan tools produktivitas, keamanan digital, dan pengenalan coding/robotik sesuai jenjang.',
+      category: 'ICT',
+      features: ['Digital literacy & safety', 'Produktivitas (tools belajar)', 'Coding dasar', 'Robotik/komputasi terapan'],
+      color: '#3B82F6',
+      bgGradient: 'from-blue-50 to-cyan-50'
     }
   ];
+
+  const categories = [
+    { name: 'Semua', icon: Star },
+    { name: 'Islamic Studies', icon: Heart },
+    { name: 'Academic Excellence', icon: Award },
+    { name: 'Project Based Learning', icon: Lightbulb },
+    { name: 'Interpersonal Skill', icon: Users },
+    { name: 'Entrepreneur', icon: Target },
+    { name: 'ICT', icon: Zap }
+  ].map((c) => ({
+    ...c,
+    count: c.name === 'Semua' ? programs.length : programs.filter((p) => p.category === c.name).length,
+  }));
 
   const filteredPrograms = selectedCategory === 'Semua' 
     ? programs 
@@ -158,10 +115,10 @@ export default function ProgramsPage() {
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-6 animate-fade-in-down">
-                Program Unggulan
+                Six Aspects of Curriculum
               </h1>
               <p className="text-xl text-blue-100 mb-8 animate-fade-in-up">
-                Mengembangkan potensi siswa melalui berbagai program akademik, keagamaan, dan pengembangan diri yang komprehensif.
+                Enam aspek kurikulum untuk membentuk siswa yang unggul dalam iman, ilmu, keterampilan, dan teknologi.
               </p>
             </div>
           </div>
