@@ -17,7 +17,7 @@ export default function AdmissionPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const apiBaseUrl = useMemo(() => {
-    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    const base = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
     return base.replace(/\/$/, '');
   }, []);
 

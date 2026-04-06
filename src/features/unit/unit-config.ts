@@ -51,7 +51,7 @@ const unitConfigs: Record<string, UnitConfig> = {
     unitName: 'Asrama',
     fullName: 'Boarding School Baituljannah',
     accentColor: '#D4AF37',
-    icon: '/uploads/logos/Asrama.webp',
+    icon: '/uploads/logos/ASRAMA.webp',
     description:
       "Program asrama yang membentuk karakter mandiri, disiplin, dan religius dalam lingkungan yang kondusif.",
   },

@@ -1,4 +1,13 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
+const normalizeOrigin = (value) => String(value || '').trim().replace(/\/$/, '');
+
+const frontendUrl = normalizeOrigin(process.env.FRONTEND_URL || 'http://localhost:3000');
+const frontendUrls = (process.env.FRONTEND_URLS || `${frontendUrl},https://baituljannah.sch.id,https://www.baituljannah.sch.id,http://baituljannah.sch.id,http://www.baituljannah.sch.id`)
+  .split(',')
+  .map(normalizeOrigin)
+  .filter(Boolean);
 
 module.exports = {
   // Server
@@ -12,7 +21,7 @@ module.exports = {
     port: process.env.DB_PORT || 3306,
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'baituljannah_db'
+    database: process.env.DB_NAME || 'baituljannah_school'
   },
   
   // JWT
@@ -39,7 +48,8 @@ module.exports = {
   },
   
   // Frontend
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+  frontendUrl,
+  frontendUrls,
   
   // Rate Limiting
   rateLimit: {

@@ -21,7 +21,14 @@ const STORAGE = {
 
 const CHANNEL_NAME = 'student_portal';
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1').replace(/\/$/, '');
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/$/, '');
+const getToken = () => {
+  try {
+    return localStorage.getItem('baituljannah_token');
+  } catch {
+    return null;
+  }
+};
 
 export default function StudentExtracurricularPage() {
   const { menuItems } = useNavigationMenu('student');
@@ -63,10 +70,12 @@ export default function StudentExtracurricularPage() {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 1200);
     try {
+      const token = getToken();
       const [actRes, regRes] = await Promise.allSettled([
         fetch(`${API_BASE_URL}/extracurricular/activities`, { signal: controller.signal }),
         fetch(`${API_BASE_URL}/extracurricular/registrations?student_nis=${encodeURIComponent(student.nis)}`, {
           signal: controller.signal,
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         }),
       ]);
 
@@ -151,16 +160,18 @@ export default function StudentExtracurricularPage() {
     toast(isNowRegistered ? 'Ekskul berhasil didaftarkan' : 'Pendaftaran ekskul dibatalkan');
 
     try {
+      const token = getToken();
+      const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
       if (isNowRegistered) {
         await fetch(`${API_BASE_URL}/extracurricular/registrations`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeader },
           body: JSON.stringify({ student_nis: student.nis, activity_id: activityId }),
         });
       } else {
         await fetch(`${API_BASE_URL}/extracurricular/registrations`, {
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeader },
           body: JSON.stringify({ student_nis: student.nis, activity_id: activityId }),
         });
       }

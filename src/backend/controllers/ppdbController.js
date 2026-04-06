@@ -1,5 +1,25 @@
 const { executeQuery, getOne, insert, update } = require('../config/database');
-const { v4: uuidv4 } = require('uuid');
+
+const getSchoolUnitIdByCode = async (code) => {
+  if (!code) return null;
+  const row = await getOne('SELECT id FROM school_units WHERE code = ? LIMIT 1', [code]);
+  return row ? Number(row.id) : null;
+};
+
+const getActiveAcademicYearId = async () => {
+  const row = await getOne('SELECT id FROM academic_years WHERE is_active = 1 ORDER BY id DESC LIMIT 1');
+  if (row) return Number(row.id);
+  const fallback = await getOne('SELECT id FROM academic_years ORDER BY id DESC LIMIT 1');
+  return fallback ? Number(fallback.id) : null;
+};
+
+const toSchemaStatus = (status) => {
+  const s = String(status || '').toLowerCase();
+  if (s === 'approved') return 'accepted';
+  if (s === 'registered') return 'enrolled';
+  if (['pending', 'verified', 'accepted', 'rejected', 'enrolled'].includes(s)) return s;
+  return 'pending';
+};
 
 // @desc    Submit PPDB registration
 // @route   POST /api/v1/ppdb/register
@@ -33,45 +53,70 @@ exports.submitRegistration = async (req, res) => {
       informasi_dari
     } = req.body;
 
+    const school_unit_id = await getSchoolUnitIdByCode(jenjang);
+    if (!school_unit_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Jenjang tidak valid'
+      });
+    }
+
+    const academic_year_id = await getActiveAcademicYearId();
+    if (!academic_year_id) {
+      return res.status(500).json({
+        success: false,
+        message: 'Tahun ajaran belum disiapkan di database'
+      });
+    }
+
     // Generate unique registration number
     const tahun = new Date().getFullYear();
     const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const no_pendaftaran = `PPDB${tahun}${jenjang}${randomNum}`;
+    const registration_number = `PPDB${tahun}${jenjang}${randomNum}`;
 
     // Insert registration
     const registrationId = await insert(
       `INSERT INTO ppdb_registrations 
-        (no_pendaftaran, nama_lengkap, jenjang, jenis_kelamin, tempat_lahir, tanggal_lahir, 
-         nik, alamat, kota, provinsi, kode_pos, nama_ayah, pekerjaan_ayah, nama_ibu, 
-         pekerjaan_ibu, no_telp, email, asal_sekolah, prestasi, informasi_dari, 
-         status, created_at, updated_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())`,
+        (school_unit_id, academic_year_id, registration_number, full_name, nik, birth_place, birth_date, gender,
+         address, phone, email, previous_school, father_name, father_occupation, mother_name, mother_occupation,
+         notes, status, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())`,
       [
-        no_pendaftaran,
+        school_unit_id,
+        academic_year_id,
+        registration_number,
         nama_lengkap,
-        jenjang,
-        jenis_kelamin,
-        tempat_lahir,
-        tanggal_lahir,
         nik || null,
+        tempat_lahir || null,
+        tanggal_lahir,
+        jenis_kelamin,
         alamat,
-        kota || null,
-        provinsi || null,
-        kode_pos || null,
+        no_telp,
+        email,
+        asal_sekolah || null,
         nama_ayah,
         pekerjaan_ayah || null,
         nama_ibu,
         pekerjaan_ibu || null,
-        no_telp,
-        email,
-        asal_sekolah || null,
-        prestasi || null,
-        informasi_dari || null
+        [prestasi, informasi_dari].filter(Boolean).join(' | ') || null
       ]
     );
 
     const registration = await getOne(
-      'SELECT * FROM ppdb_registrations WHERE id = ?',
+      `SELECT 
+         r.*,
+         su.code AS jenjang,
+         r.registration_number AS no_pendaftaran,
+         r.full_name AS nama_lengkap,
+         r.birth_place AS tempat_lahir,
+         r.birth_date AS tanggal_lahir,
+         r.gender AS jenis_kelamin,
+         r.address AS alamat,
+         r.phone AS no_telp,
+         r.previous_school AS asal_sekolah
+       FROM ppdb_registrations r
+       LEFT JOIN school_units su ON r.school_unit_id = su.id
+       WHERE r.id = ?`,
       [registrationId]
     );
 
@@ -81,7 +126,7 @@ exports.submitRegistration = async (req, res) => {
       success: true,
       message: 'Pendaftaran berhasil! Nomor pendaftaran Anda akan dikirim via email',
       data: {
-        no_pendaftaran,
+        no_pendaftaran: registration_number,
         registration
       }
     });
@@ -103,7 +148,20 @@ exports.checkRegistration = async (req, res) => {
     const { no_pendaftaran } = req.params;
 
     const registration = await getOne(
-      'SELECT * FROM ppdb_registrations WHERE no_pendaftaran = ?',
+      `SELECT 
+         r.*,
+         su.code AS jenjang,
+         r.registration_number AS no_pendaftaran,
+         r.full_name AS nama_lengkap,
+         r.birth_place AS tempat_lahir,
+         r.birth_date AS tanggal_lahir,
+         r.gender AS jenis_kelamin,
+         r.address AS alamat,
+         r.phone AS no_telp,
+         r.previous_school AS asal_sekolah
+       FROM ppdb_registrations r
+       LEFT JOIN school_units su ON r.school_unit_id = su.id
+       WHERE r.registration_number = ?`,
       [no_pendaftaran]
     );
 
@@ -143,32 +201,32 @@ exports.getAllRegistrations = async (req, res) => {
       order = 'DESC'
     } = req.query;
 
-    const offset = (page - 1) * limit;
+    const offset = (Number(page) - 1) * Number(limit);
     let whereConditions = [];
     let params = [];
 
     // Filter by jenjang
-    if (jenjang) {
-      whereConditions.push('jenjang = ?');
+    if (jenjang && String(jenjang).toLowerCase() !== 'semua') {
+      whereConditions.push('su.code = ?');
       params.push(jenjang);
     }
 
     // Filter by status
     if (status) {
-      whereConditions.push('status = ?');
-      params.push(status);
+      whereConditions.push('r.status = ?');
+      params.push(toSchemaStatus(status));
     }
 
     // Search
     if (search) {
-      whereConditions.push('(nama_lengkap LIKE ? OR no_pendaftaran LIKE ? OR email LIKE ?)');
+      whereConditions.push('(r.full_name LIKE ? OR r.registration_number LIKE ? OR r.email LIKE ?)');
       params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
     // Get total count
-    const countQuery = `SELECT COUNT(*) as total FROM ppdb_registrations ${whereClause}`;
+    const countQuery = `SELECT COUNT(*) as total FROM ppdb_registrations r LEFT JOIN school_units su ON r.school_unit_id = su.id ${whereClause}`;
     const countResult = await getOne(countQuery, params);
     const total = countResult.total;
 
@@ -176,11 +234,28 @@ exports.getAllRegistrations = async (req, res) => {
     const allowedSortFields = ['created_at', 'nama_lengkap', 'jenjang', 'status'];
     const sortField = allowedSortFields.includes(sort) ? sort : 'created_at';
     const sortOrder = order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+    const sortColumn = sortField === 'nama_lengkap'
+      ? 'r.full_name'
+      : sortField === 'jenjang'
+        ? 'su.code'
+        : `r.${sortField}`;
 
     const query = `
-      SELECT * FROM ppdb_registrations
+      SELECT 
+        r.*,
+        su.code AS jenjang,
+        r.registration_number AS no_pendaftaran,
+        r.full_name AS nama_lengkap,
+        r.birth_place AS tempat_lahir,
+        r.birth_date AS tanggal_lahir,
+        r.gender AS jenis_kelamin,
+        r.address AS alamat,
+        r.phone AS no_telp,
+        r.previous_school AS asal_sekolah
+      FROM ppdb_registrations r
+      LEFT JOIN school_units su ON r.school_unit_id = su.id
       ${whereClause}
-      ORDER BY ${sortField} ${sortOrder}
+      ORDER BY ${sortColumn} ${sortOrder}
       LIMIT ? OFFSET ?
     `;
 
@@ -220,8 +295,8 @@ exports.updateRegistrationStatus = async (req, res) => {
     }
 
     // Validate status
-    const validStatuses = ['pending', 'verified', 'approved', 'rejected', 'registered'];
-    if (!validStatuses.includes(status)) {
+    const validStatuses = ['pending', 'verified', 'approved', 'accepted', 'rejected', 'registered', 'enrolled'];
+    if (!validStatuses.includes(String(status || '').toLowerCase())) {
       return res.status(400).json({
         success: false,
         message: 'Status tidak valid'
@@ -242,10 +317,11 @@ exports.updateRegistrationStatus = async (req, res) => {
     }
 
     // Update status
-    await update(
-      'UPDATE ppdb_registrations SET status = ?, catatan = ?, updated_at = NOW() WHERE id = ?',
-      [status, catatan || null, id]
-    );
+    await update('UPDATE ppdb_registrations SET status = ?, notes = ?, updated_at = NOW() WHERE id = ?', [
+      toSchemaStatus(status),
+      catatan || null,
+      id
+    ]);
 
     // Get updated registration
     const updatedRegistration = await getOne(
@@ -280,7 +356,11 @@ exports.getStatistics = async (req, res) => {
     
     // By jenjang
     const byJenjang = await executeQuery(
-      'SELECT jenjang, COUNT(*) as count FROM ppdb_registrations GROUP BY jenjang'
+      `SELECT su.code AS jenjang, COUNT(*) as count
+       FROM ppdb_registrations r
+       LEFT JOIN school_units su ON r.school_unit_id = su.id
+       GROUP BY su.code
+       ORDER BY su.code`
     );
     
     // By status

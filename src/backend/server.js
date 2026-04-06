@@ -4,7 +4,8 @@ const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const config = require('./config/config');
 const { testConnection } = require('./config/database');
@@ -12,6 +13,7 @@ const errorHandler = require('./middleware/errorHandler');
 
 // Initialize express app
 const app = express();
+app.locals.dbConnected = false;
 
 // ======================
 // MIDDLEWARE
@@ -22,7 +24,12 @@ app.use(helmet());
 
 // Enable CORS
 app.use(cors({
-  origin: config.frontendUrl,
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const normalized = String(origin).trim().replace(/\/$/, '');
+    if (config.frontendUrls.includes(normalized)) return callback(null, true);
+    return callback(null, false);
+  },
   credentials: true
 }));
 
@@ -60,6 +67,7 @@ app.get('/health', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Server is running',
+    dbConnected: Boolean(req.app.locals.dbConnected),
     environment: config.nodeEnv,
     timestamp: new Date().toISOString()
   });
@@ -73,6 +81,8 @@ const contactRoutes = require('./routes/contact');
 const messagesRoutes = require('./routes/messages');
 const extracurricularRoutes = require('./routes/extracurricular');
 const counselingRoutes = require('./routes/counseling');
+const slidersRoutes = require('./routes/sliders');
+const achievementsRoutes = require('./routes/achievements');
 
 app.use(`/api/${config.apiVersion}/auth`, authRoutes);
 app.use(`/api/${config.apiVersion}/news`, newsRoutes);
@@ -81,6 +91,8 @@ app.use(`/api/${config.apiVersion}/contact`, contactRoutes);
 app.use(`/api/${config.apiVersion}/messages`, messagesRoutes);
 app.use(`/api/${config.apiVersion}/extracurricular`, extracurricularRoutes);
 app.use(`/api/${config.apiVersion}/counseling`, counselingRoutes);
+app.use(`/api/${config.apiVersion}/sliders`, slidersRoutes);
+app.use(`/api/${config.apiVersion}/achievements`, achievementsRoutes);
 
 // Welcome route
 app.get('/', (req, res) => {
@@ -96,7 +108,9 @@ app.get('/', (req, res) => {
       contact: `/api/${config.apiVersion}/contact`,
       messages: `/api/${config.apiVersion}/messages`,
       extracurricular: `/api/${config.apiVersion}/extracurricular`,
-      counseling: `/api/${config.apiVersion}/counseling`
+      counseling: `/api/${config.apiVersion}/counseling`,
+      sliders: `/api/${config.apiVersion}/sliders`,
+      achievements: `/api/${config.apiVersion}/achievements`
     }
   });
 });
@@ -122,10 +136,14 @@ const startServer = async () => {
   try {
     // Test database connection
     const dbConnected = await testConnection();
+    app.locals.dbConnected = dbConnected;
     
     if (!dbConnected) {
-      console.error('❌ Failed to connect to database. Server not started.');
-      process.exit(1);
+      console.error('❌ Failed to connect to database. Server running in degraded mode.');
+      app.listen(PORT, () => {
+        console.log(`📍 Server running on port: ${PORT} (degraded mode - no database connection)`);
+      });
+      return;
     }
 
     // Start server

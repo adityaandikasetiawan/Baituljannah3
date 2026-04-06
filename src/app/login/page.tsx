@@ -18,10 +18,19 @@ export default function LoginPage() {
     password: ''
   });
 
+  const toRoleCookie = (role: string | undefined, fallback: typeof userType) => {
+    const r = String(role || '').toLowerCase();
+    if (r === 'admin') return 'admin';
+    if (r === 'guru') return 'teacher';
+    if (r === 'siswa') return 'student';
+    if (r === 'ortu') return 'parent';
+    return fallback;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1').replace(/\/$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/$/, '');
     const fallbackRoleCookie = userType;
 
     try {
@@ -40,7 +49,7 @@ export default function LoginPage() {
         }
 
         const roleFromApi: string | undefined = data.data.user?.role;
-        const roleCookie = roleFromApi || fallbackRoleCookie;
+        const roleCookie = toRoleCookie(roleFromApi, fallbackRoleCookie);
         document.cookie = `role=${roleCookie}; path=/; SameSite=Lax`;
 
         if (roleFromApi === 'admin') router.push('/admin/dashboard');
@@ -343,4 +352,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

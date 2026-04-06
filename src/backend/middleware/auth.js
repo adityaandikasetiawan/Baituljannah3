@@ -2,6 +2,15 @@ const jwt = require('jsonwebtoken');
 const config = require('../config/config');
 const { getOne } = require('../config/database');
 
+const normalizeRole = (role) => {
+  if (!role) return 'siswa';
+  const r = String(role).toLowerCase();
+  if (['admin', 'super_admin', 'admin_unit'].includes(r)) return 'admin';
+  if (['guru', 'teacher'].includes(r)) return 'guru';
+  if (['ortu', 'orang_tua', 'parent'].includes(r)) return 'ortu';
+  return 'siswa';
+};
+
 // Protect routes - require authentication
 exports.protect = async (req, res, next) => {
   let token;
@@ -29,7 +38,16 @@ exports.protect = async (req, res, next) => {
 
     // Get user from database
     const user = await getOne(
-      'SELECT id, username, email, role, full_name FROM users WHERE id = ? AND is_active = 1',
+      `SELECT 
+         u.id,
+         u.username,
+         u.email,
+         u.role,
+         u.status,
+         up.full_name
+       FROM users u
+       LEFT JOIN user_profiles up ON up.user_id = u.id
+       WHERE u.id = ?`,
       [decoded.id]
     );
 
@@ -40,8 +58,22 @@ exports.protect = async (req, res, next) => {
       });
     }
 
+    if (String(user.status).toLowerCase() !== 'active') {
+      return res.status(401).json({
+        success: false,
+        message: 'User tidak ditemukan atau tidak aktif'
+      });
+    }
+
     // Attach user to request
-    req.user = user;
+    req.user = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      full_name: user.full_name || user.username,
+      role: normalizeRole(user.role),
+      role_raw: user.role
+    };
     next();
   } catch (error) {
     return res.status(401).json({

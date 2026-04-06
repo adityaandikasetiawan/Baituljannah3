@@ -36,7 +36,7 @@ export default function AdminNewsPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const apiBaseUrl = useMemo(() => {
-    return (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1').replace(/\/$/, '');
+    return (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/$/, '');
   }, []);
 
   const getToken = () => {
@@ -711,4 +711,3 @@ export default function AdminNewsPage() {
     </div>
   );
 }
-

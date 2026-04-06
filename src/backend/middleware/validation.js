@@ -60,7 +60,7 @@ exports.registerRules = [
     .withMessage('Nama lengkap harus 3-100 karakter'),
   body('role')
     .optional()
-    .isIn(['admin', 'guru', 'siswa', 'ortu'])
+    .isIn(['siswa', 'ortu'])
     .withMessage('Role tidak valid')
 ];
 

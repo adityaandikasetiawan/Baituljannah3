@@ -16,9 +16,16 @@ const STORAGE = {
 
 const CHANNEL_NAME = 'student_portal';
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1').replace(/\/$/, '');
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/$/, '');
 
 const nowIso = () => new Date().toISOString();
+const getToken = () => {
+  try {
+    return localStorage.getItem('baituljannah_token');
+  } catch {
+    return null;
+  }
+};
 
 export default function StudentMessagesPage() {
   const { menuItems } = useNavigationMenu('student');
@@ -68,7 +75,11 @@ export default function StudentMessagesPage() {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 1200);
     try {
-      const res = await fetch(`${API_BASE_URL}/messages?student_nis=${encodeURIComponent(student.nis)}`, { signal: controller.signal });
+      const token = getToken();
+      const res = await fetch(`${API_BASE_URL}/messages?student_nis=${encodeURIComponent(student.nis)}`, {
+        signal: controller.signal,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
       if (!res.ok) return;
       const payload = await res.json();
       const rows = payload?.data;
@@ -157,7 +168,11 @@ export default function StudentMessagesPage() {
     setInbox(next);
     persistLocal(next, outbox);
     try {
-      await fetch(`${API_BASE_URL}/messages/${encodeURIComponent(id)}/read`, { method: 'PUT' });
+      const token = getToken();
+      await fetch(`${API_BASE_URL}/messages/${encodeURIComponent(id)}/read`, {
+        method: 'PUT',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
     } catch {}
   };
 
@@ -166,7 +181,11 @@ export default function StudentMessagesPage() {
     setInbox(nextInbox);
     persistLocal(nextInbox, outbox);
     try {
-      await fetch(`${API_BASE_URL}/messages/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const token = getToken();
+      await fetch(`${API_BASE_URL}/messages/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
     } catch {}
     toast('Pesan dihapus');
   };
@@ -176,7 +195,11 @@ export default function StudentMessagesPage() {
     setOutbox(nextOutbox);
     persistLocal(inbox, nextOutbox);
     try {
-      await fetch(`${API_BASE_URL}/messages/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const token = getToken();
+      await fetch(`${API_BASE_URL}/messages/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
     } catch {}
     toast('Pesan dihapus');
   };
@@ -205,9 +228,13 @@ export default function StudentMessagesPage() {
     toast('Pesan terkirim');
 
     try {
+      const token = getToken();
       await fetch(`${API_BASE_URL}/messages`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           student_nis: student.nis,
           direction: 'out',

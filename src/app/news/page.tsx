@@ -157,7 +157,7 @@ export default function NewsPage() {
         <div className="absolute bottom-10 right-10 w-32 h-32 bg-purple-400/20 rounded-full blur-2xl animate-pulse delay-700"></div>
 
         <div className="container-custom relative z-10">
-          <Breadcrumb items={breadcrumbItems} theme="dark" />
+          <Breadcrumb items={breadcrumbItems} />
           
           <div className="mt-8">
             <div className="inline-flex items-center gap-2 px-6 py-3 bg-white/20 backdrop-blur-sm rounded-full text-sm mb-6">
@@ -478,4 +478,3 @@ export default function NewsPage() {
     </div>
   );
 }
-

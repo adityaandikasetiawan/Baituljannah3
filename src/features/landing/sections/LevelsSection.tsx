@@ -48,7 +48,7 @@ export function LevelsSection() {
           />
           <UnitCardCircular
             name="Asrama"
-            icon="/uploads/logos/Asrama.webp"
+            icon="/uploads/logos/ASRAMA.webp"
             color="#D4AF37"
             onClick={() => onNavigate('asrama')}
             imageClassName="p-5"

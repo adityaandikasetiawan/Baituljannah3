@@ -25,7 +25,12 @@ export default function Home() {
 
   const [selectedAchievementIndex, setSelectedAchievementIndex] = React.useState(0);
 
-  const achievements = [
+  const apiBaseUrl = React.useMemo(() => {
+    const base = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    return base.replace(/\/$/, '');
+  }, []);
+
+  const fallbackAchievements = React.useMemo(() => ([
     {
       studentName: "M. Husein Haekal",
       studentImage: "/uploads/achievement/achievement_1769996411538_dig650xbr3b.webp",
@@ -134,46 +139,9 @@ export default function Home() {
       category: "Olahraga",
       accentColor: "#DC2626"
     }
-  ];
+  ]), []);
 
-  React.useEffect(() => {
-    if (!emblaApi) return;
-
-    const onSelect = () => {
-      setSelectedAchievementIndex(emblaApi.selectedScrollSnap());
-    };
-
-    onSelect();
-    emblaApi.on('select', onSelect);
-    emblaApi.on('reInit', onSelect);
-
-    return () => {
-      emblaApi.off('select', onSelect);
-      emblaApi.off('reInit', onSelect);
-    };
-  }, [emblaApi]);
-
-  const scrollAchievementPrev = React.useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
-  const scrollAchievementNext = React.useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
-
-  const getLoopDistance = React.useCallback((index: number, selected: number, count: number) => {
-    if (count <= 0) return 0;
-    const direct = Math.abs(index - selected);
-    return Math.min(direct, count - direct);
-  }, []);
-
-  const getAchievementScale = React.useCallback((index: number) => {
-    const count = achievements.length;
-    const distance = getLoopDistance(index, selectedAchievementIndex, count);
-
-    if (distance === 0) return 1;
-    if (distance === 1) return 0.92;
-    if (distance === 2) return 0.86;
-    return 0.82;
-  }, [achievements.length, getLoopDistance, selectedAchievementIndex]);
-
-
-  const heroSlides = [
+  const fallbackHeroSlides = React.useMemo(() => ([
     {
       image: '/uploads/hero/hero_1769592571870_m7ehtcua18j.webp',
       title: 'Yayasan Baituljannah',
@@ -210,7 +178,117 @@ export default function Home() {
       description: 'Membangun karakter dan akhlak mulia dalam suasana pembelajaran yang kondusif',
       badge: '🕋 Akhlak & Adab'
     }
-  ];
+  ]), []);
+
+  const [achievements, setAchievements] = React.useState(fallbackAchievements);
+  const [heroSlides, setHeroSlides] = React.useState(fallbackHeroSlides);
+
+  const getAccentColor = React.useCallback((category?: string, level?: string) => {
+    const key = (category || level || '').toLowerCase();
+    if (key.includes('olahraga')) return '#F97316';
+    if (key.includes('tahfidz') || key.includes('agama')) return '#8B5CF6';
+    if (key.includes('seni') || key.includes('budaya')) return '#10B981';
+    if (key.includes('sains') || key.includes('biologi') || key.includes('kimia') || key.includes('fisika')) return '#3B82F6';
+    if (key.includes('bahasa')) return '#14B8A6';
+    if (key.includes('matematika')) return '#6366F1';
+    return '#1E4AB8';
+  }, []);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const [slidersRes, achievementsRes] = await Promise.all([
+          fetch(`${apiBaseUrl}/sliders`).then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch(`${apiBaseUrl}/achievements?limit=12`).then(r => r.ok ? r.json() : null).catch(() => null)
+        ]);
+
+        const slidersRows = slidersRes?.success && Array.isArray(slidersRes.data) ? slidersRes.data : null;
+        if (!cancelled && slidersRows && slidersRows.length) {
+          setHeroSlides(
+            slidersRows.map((row: any) => ({
+              image: row.image,
+              title: row.title,
+              description: row.subtitle || '',
+              badge: row.button_text || ''
+            }))
+          );
+        }
+
+        const achievementRows = achievementsRes?.success && Array.isArray(achievementsRes.data) ? achievementsRes.data : null;
+        if (!cancelled && achievementRows && achievementRows.length) {
+          const mapped = achievementRows.map((row: any, index: number) => ({
+            studentName: row.student_name || 'Siswa',
+            studentImage:
+              row.image_url ||
+              fallbackAchievements[index % fallbackAchievements.length]?.studentImage ||
+              '/uploads/logos/Yayasan.webp',
+            achievement: row.title,
+            competition: row.description || '',
+            rank: row.rank || '',
+            category: row.category || '',
+            accentColor: getAccentColor(row.category, row.level)
+          }));
+
+          const combined = [...mapped];
+          for (const fallback of fallbackAchievements) {
+            if (combined.length >= fallbackAchievements.length) break;
+            if (combined.some(item => item.studentImage === fallback.studentImage)) continue;
+            combined.push(fallback);
+          }
+
+          setAchievements(combined.slice(0, Math.max(fallbackAchievements.length, mapped.length)));
+        }
+      } catch {
+        if (!cancelled) {
+          setHeroSlides(fallbackHeroSlides);
+          setAchievements(fallbackAchievements);
+        }
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBaseUrl, fallbackAchievements, fallbackHeroSlides, getAccentColor]);
+
+  React.useEffect(() => {
+    if (!emblaApi) return;
+
+    const onSelect = () => {
+      setSelectedAchievementIndex(emblaApi.selectedScrollSnap());
+    };
+
+    onSelect();
+    emblaApi.on('select', onSelect);
+    emblaApi.on('reInit', onSelect);
+
+    return () => {
+      emblaApi.off('select', onSelect);
+      emblaApi.off('reInit', onSelect);
+    };
+  }, [emblaApi]);
+
+  const scrollAchievementPrev = React.useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+  const scrollAchievementNext = React.useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+
+  const getLoopDistance = React.useCallback((index: number, selected: number, count: number) => {
+    if (count <= 0) return 0;
+    const direct = Math.abs(index - selected);
+    return Math.min(direct, count - direct);
+  }, []);
+
+  const getAchievementScale = React.useCallback((index: number) => {
+    const count = achievements.length;
+    const distance = getLoopDistance(index, selectedAchievementIndex, count);
+
+    if (distance === 0) return 1;
+    if (distance === 1) return 0.92;
+    if (distance === 2) return 0.86;
+    return 0.82;
+  }, [achievements.length, getLoopDistance, selectedAchievementIndex]);
 
   const programs = [
     {
@@ -398,7 +476,7 @@ export default function Home() {
               { n: 'SMPIT', i: '/uploads/logos/SMP.webp', c: '#F97316', u: 'smpit' },
               { n: 'SMAIT', i: '/uploads/logos/SMA.webp', c: '#8B5CF6', u: 'smait' },
               { n: 'SLBIT', i: '/uploads/logos/SLB.webp', c: '#14B8A6', u: 'slbit' },
-              { n: 'Asrama', i: '/uploads/logos/Asrama.webp', c: '#D4AF37', u: 'asrama' }
+              { n: 'Asrama', i: '/uploads/logos/ASRAMA.webp', c: '#D4AF37', u: 'asrama' }
             ].map((u) => (
               <div key={u.n} className="flex flex-col items-center gap-4">
                 <div
@@ -739,4 +817,3 @@ export default function Home() {
     </div>
   );
 }
-

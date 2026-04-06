@@ -13,6 +13,23 @@ const ensureTables = async () => {
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  const cols = await executeQuery('SHOW COLUMNS FROM messages');
+  const colSet = new Set((Array.isArray(cols) ? cols : []).map((c) => String(c.Field)));
+
+  const addColumn = async (name, ddl) => {
+    if (colSet.has(name)) return;
+    await executeQuery(`ALTER TABLE messages ADD COLUMN ${ddl}`);
+    colSet.add(name);
+  };
+
+  await addColumn('student_nis', 'student_nis VARCHAR(32) NOT NULL');
+  await addColumn('direction', "direction ENUM('in','out') NOT NULL");
+  await addColumn('peer', 'peer VARCHAR(128) NOT NULL');
+  await addColumn('subject', 'subject VARCHAR(255) NOT NULL');
+  await addColumn('content', 'content TEXT NOT NULL');
+  await addColumn('is_read', 'is_read TINYINT(1) NOT NULL DEFAULT 0');
+  await addColumn('created_at', 'created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP');
 };
 
 exports.getAll = async (req, res) => {
@@ -21,6 +38,10 @@ exports.getAll = async (req, res) => {
     const { student_nis } = req.query;
     if (!student_nis) {
       return res.status(400).json({ success: false, message: 'student_nis wajib diisi' });
+    }
+
+    if (req.user?.role === 'siswa' && String(req.user.username) !== String(student_nis)) {
+      return res.status(403).json({ success: false, message: 'Tidak memiliki akses' });
     }
 
     const rows = await executeQuery(
@@ -49,6 +70,10 @@ exports.create = async (req, res) => {
       return res.status(400).json({ success: false, message: 'direction harus in atau out' });
     }
 
+    if (req.user?.role === 'siswa' && String(req.user.username) !== String(student_nis)) {
+      return res.status(403).json({ success: false, message: 'Tidak memiliki akses' });
+    }
+
     const id = await insert(
       `INSERT INTO messages (student_nis, direction, peer, subject, content, is_read, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -70,6 +95,14 @@ exports.markRead = async (req, res) => {
   try {
     await ensureTables();
     const { id } = req.params;
+
+    if (req.user?.role === 'siswa') {
+      const existing = await getOne('SELECT student_nis FROM messages WHERE id = ?', [id]);
+      if (!existing || String(existing.student_nis) !== String(req.user.username)) {
+        return res.status(404).json({ success: false, message: 'Pesan tidak ditemukan' });
+      }
+    }
+
     const affected = await update('UPDATE messages SET is_read = 1 WHERE id = ?', [id]);
     if (!affected) return res.status(404).json({ success: false, message: 'Pesan tidak ditemukan' });
     const row = await getOne('SELECT * FROM messages WHERE id = ?', [id]);
@@ -87,6 +120,14 @@ exports.remove = async (req, res) => {
   try {
     await ensureTables();
     const { id } = req.params;
+
+    if (req.user?.role === 'siswa') {
+      const existing = await getOne('SELECT student_nis FROM messages WHERE id = ?', [id]);
+      if (!existing || String(existing.student_nis) !== String(req.user.username)) {
+        return res.status(404).json({ success: false, message: 'Pesan tidak ditemukan' });
+      }
+    }
+
     const affected = await deleteRow('DELETE FROM messages WHERE id = ?', [id]);
     if (!affected) return res.status(404).json({ success: false, message: 'Pesan tidak ditemukan' });
     return res.status(200).json({ success: true, message: 'Pesan dihapus' });
@@ -98,4 +139,3 @@ exports.remove = async (req, res) => {
     });
   }
 };
-

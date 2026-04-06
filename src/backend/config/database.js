@@ -7,7 +7,7 @@ const pool = mysql.createPool({
   port: process.env.DB_PORT || 3306,
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'baituljannah_db',
+  database: process.env.DB_NAME || 'baituljannah_school',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -32,7 +32,7 @@ const testConnection = async () => {
 // Execute query helper
 const executeQuery = async (query, params = []) => {
   try {
-    const [rows] = await pool.execute(query, params);
+    const [rows] = await pool.query(query, params);
     return rows;
   } catch (error) {
     console.error('Query Error:', error.message);
@@ -43,7 +43,7 @@ const executeQuery = async (query, params = []) => {
 // Get single row
 const getOne = async (query, params = []) => {
   try {
-    const [rows] = await pool.execute(query, params);
+    const [rows] = await pool.query(query, params);
     return rows[0] || null;
   } catch (error) {
     console.error('Query Error:', error.message);
@@ -54,7 +54,7 @@ const getOne = async (query, params = []) => {
 // Insert and return ID
 const insert = async (query, params = []) => {
   try {
-    const [result] = await pool.execute(query, params);
+    const [result] = await pool.query(query, params);
     return result.insertId;
   } catch (error) {
     console.error('Insert Error:', error.message);
@@ -65,7 +65,7 @@ const insert = async (query, params = []) => {
 // Update and return affected rows
 const update = async (query, params = []) => {
   try {
-    const [result] = await pool.execute(query, params);
+    const [result] = await pool.query(query, params);
     return result.affectedRows;
   } catch (error) {
     console.error('Update Error:', error.message);
@@ -76,7 +76,7 @@ const update = async (query, params = []) => {
 // Delete and return affected rows
 const deleteRow = async (query, params = []) => {
   try {
-    const [result] = await pool.execute(query, params);
+    const [result] = await pool.query(query, params);
     return result.affectedRows;
   } catch (error) {
     console.error('Delete Error:', error.message);

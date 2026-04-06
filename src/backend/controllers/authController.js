@@ -3,6 +3,23 @@ const jwt = require('jsonwebtoken');
 const { executeQuery, getOne, insert } = require('../config/database');
 const config = require('../config/config');
 
+const normalizeRole = (role) => {
+  if (!role) return 'siswa';
+  const r = String(role).toLowerCase();
+  if (['admin', 'super_admin', 'admin_unit'].includes(r)) return 'admin';
+  if (['guru', 'teacher'].includes(r)) return 'guru';
+  if (['ortu', 'orang_tua', 'parent'].includes(r)) return 'ortu';
+  return 'siswa';
+};
+
+const toDbRole = (role) => {
+  const r = String(role || '').toLowerCase();
+  if (r === 'admin') return 'super_admin';
+  if (r === 'ortu' || r === 'orang_tua' || r === 'parent') return 'orang_tua';
+  if (r === 'guru' || r === 'teacher') return 'guru';
+  return 'siswa';
+};
+
 // Generate JWT Token
 const generateToken = (id) => {
   return jwt.sign({ id }, config.jwt.secret, {
@@ -15,7 +32,9 @@ const generateToken = (id) => {
 // @access  Public
 exports.register = async (req, res) => {
   try {
-    const { username, email, password, full_name, role = 'siswa', phone } = req.body;
+    const { username, email, password, full_name, phone } = req.body;
+    const requestedRole = String(req.body?.role || '').toLowerCase();
+    const role = requestedRole === 'ortu' ? 'ortu' : 'siswa';
 
     // Check if user already exists
     const existingUser = await getOne(
@@ -35,9 +54,15 @@ exports.register = async (req, res) => {
 
     // Insert user
     const userId = await insert(
-      `INSERT INTO users (username, email, password, full_name, role, phone, is_active, created_at) 
-       VALUES (?, ?, ?, ?, ?, ?, 1, NOW())`,
-      [username, email, hashedPassword, full_name, role, phone || null]
+      `INSERT INTO users (username, email, password_hash, role, status, email_verified, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, 'active', 0, NOW(), NOW())`,
+      [username, email, hashedPassword, toDbRole(role)]
+    );
+
+    await executeQuery(
+      `INSERT INTO user_profiles (user_id, full_name, phone, created_at, updated_at)
+       VALUES (?, ?, ?, NOW(), NOW())`,
+      [userId, full_name || username, phone || null]
     );
 
     // Generate token
@@ -50,7 +75,7 @@ exports.register = async (req, res) => {
         id: userId,
         username,
         email,
-        full_name,
+        full_name: full_name || username,
         role,
         token
       }
@@ -74,7 +99,18 @@ exports.login = async (req, res) => {
 
     // Get user with password
     const user = await getOne(
-      'SELECT id, username, email, password, full_name, role, is_active FROM users WHERE email = ?',
+      `SELECT 
+         u.id,
+         u.username,
+         u.email,
+         u.password_hash AS password,
+         u.role,
+         u.status,
+         up.full_name,
+         up.phone
+       FROM users u
+       LEFT JOIN user_profiles up ON up.user_id = u.id
+       WHERE u.email = ?`,
       [email]
     );
 
@@ -86,7 +122,7 @@ exports.login = async (req, res) => {
     }
 
     // Check if user is active
-    if (!user.is_active) {
+    if (String(user.status).toLowerCase() !== 'active') {
       return res.status(401).json({
         success: false,
         message: 'Akun Anda tidak aktif. Silakan hubungi administrator'
@@ -112,14 +148,21 @@ exports.login = async (req, res) => {
     // Generate token
     const token = generateToken(user.id);
 
-    // Remove password from response
-    delete user.password;
+    const responseUser = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      full_name: user.full_name || user.username,
+      phone: user.phone || null,
+      role: normalizeRole(user.role),
+      role_raw: user.role
+    };
 
     res.status(200).json({
       success: true,
       message: 'Login berhasil',
       data: {
-        user,
+        user: responseUser,
         token
       }
     });
@@ -139,13 +182,28 @@ exports.login = async (req, res) => {
 exports.getMe = async (req, res) => {
   try {
     const user = await getOne(
-      'SELECT id, username, email, full_name, role, phone, avatar, created_at, last_login FROM users WHERE id = ?',
+      `SELECT 
+         u.id,
+         u.username,
+         u.email,
+         COALESCE(up.full_name, u.username) AS full_name,
+         up.phone,
+         u.role,
+         u.created_at,
+         u.last_login
+       FROM users u
+       LEFT JOIN user_profiles up ON up.user_id = u.id
+       WHERE u.id = ?`,
       [req.user.id]
     );
 
     res.status(200).json({
       success: true,
-      data: user
+      data: {
+        ...user,
+        role: normalizeRole(user.role),
+        role_raw: user.role
+      }
     });
   } catch (error) {
     console.error('Get Me Error:', error);
@@ -164,38 +222,57 @@ exports.updateDetails = async (req, res) => {
   try {
     const { full_name, phone } = req.body;
 
-    const fieldsToUpdate = {};
-    if (full_name) fieldsToUpdate.full_name = full_name;
-    if (phone) fieldsToUpdate.phone = phone;
-
-    if (Object.keys(fieldsToUpdate).length === 0) {
+    if (!full_name && !phone) {
       return res.status(400).json({
         success: false,
         message: 'Tidak ada data yang diupdate'
       });
     }
 
-    // Build update query
-    const updateFields = Object.keys(fieldsToUpdate)
-      .map(key => `${key} = ?`)
-      .join(', ');
-    const values = [...Object.values(fieldsToUpdate), req.user.id];
+    const existing = await getOne('SELECT user_id FROM user_profiles WHERE user_id = ?', [req.user.id]);
 
-    await executeQuery(
-      `UPDATE users SET ${updateFields}, updated_at = NOW() WHERE id = ?`,
-      values
-    );
+    if (!existing) {
+      await executeQuery(
+        'INSERT INTO user_profiles (user_id, full_name, phone, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())',
+        [req.user.id, full_name || req.user.username, phone || null]
+      );
+    } else {
+      const nextFullName = full_name ? String(full_name) : null;
+      const nextPhone = phone ? String(phone) : null;
+
+      await executeQuery(
+        `UPDATE user_profiles SET
+           full_name = COALESCE(?, full_name),
+           phone = COALESCE(?, phone),
+           updated_at = NOW()
+         WHERE user_id = ?`,
+        [nextFullName, nextPhone, req.user.id]
+      );
+    }
 
     // Get updated user
     const user = await getOne(
-      'SELECT id, username, email, full_name, role, phone FROM users WHERE id = ?',
+      `SELECT 
+         u.id,
+         u.username,
+         u.email,
+         COALESCE(up.full_name, u.username) AS full_name,
+         up.phone,
+         u.role
+       FROM users u
+       LEFT JOIN user_profiles up ON up.user_id = u.id
+       WHERE u.id = ?`,
       [req.user.id]
     );
 
     res.status(200).json({
       success: true,
       message: 'Profile berhasil diupdate',
-      data: user
+      data: {
+        ...user,
+        role: normalizeRole(user.role),
+        role_raw: user.role
+      }
     });
   } catch (error) {
     console.error('Update Details Error:', error);
@@ -223,7 +300,7 @@ exports.updatePassword = async (req, res) => {
 
     // Get user with password
     const user = await getOne(
-      'SELECT id, password FROM users WHERE id = ?',
+      'SELECT id, password_hash AS password FROM users WHERE id = ?',
       [req.user.id]
     );
 
@@ -242,7 +319,7 @@ exports.updatePassword = async (req, res) => {
 
     // Update password
     await executeQuery(
-      'UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?',
+      'UPDATE users SET password_hash = ?, updated_at = NOW() WHERE id = ?',
       [hashedPassword, req.user.id]
     );
 

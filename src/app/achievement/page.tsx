@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { Breadcrumb } from '../../components/layout/Breadcrumb';
@@ -52,147 +52,223 @@ function AchievementCard(props: Omit<AchievementItem, 'year'>) {
 
 export default function AchievementPage() {
   const { menuItems, onNavigate } = useNavigationMenu();
-  const [selectedYear, setSelectedYear] = useState('2025');
+  const [selectedYear, setSelectedYear] = useState('Semua');
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [searchQuery, setSearchQuery] = useState('');
+  const [achievements, setAchievements] = useState<AchievementItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const legacyAchievements = useMemo(
+    () => [
+      {
+        studentName: 'M. Husein Haekal',
+        studentImage: '/uploads/achievement/achievement_1769996411538_dig650xbr3b.webp',
+        achievement: 'Peserta Olimpiade Terbaik',
+        competition: '"SAHABAYA CUP 2025" Tingkat Perwakilan Lampung',
+        rank: 'JUARA 1',
+        category: 'Cerdas Cermat'
+      },
+      {
+        studentName: 'Zalika Tsabita Az - Zahra',
+        studentImage: '/uploads/achievement/achievement_1770259138348_pcj36zz54xh.webp',
+        achievement: 'Pencak Silat Tunggal',
+        competition: '"SAHABAYA CUP 2025" Tingkat Perwakilan Lampung',
+        rank: 'JUARA 3',
+        category: 'Olahraga'
+      },
+      {
+        studentName: 'Dhoffa Adzellia Khaerani',
+        studentImage: '/uploads/achievement/achievement_1770259163513_vakbjibn58j.webp',
+        achievement: 'Pidato Bahasa Inggris',
+        competition: '"SAHABAYA CUP 2025" Tingkat Perwakilan Lampung',
+        rank: 'JUARA 2',
+        category: 'Bahasa'
+      },
+      {
+        studentName: 'Ahmad Fadhil Rahman',
+        studentImage: '/uploads/achievement/achievement_1770259176223_998ib4a3t76.webp',
+        achievement: 'Matematika Olimpiade',
+        competition: '"Kompetisi Sains Nasional 2025" Tingkat Nasional',
+        rank: 'JUARA 1',
+        category: 'Matematika'
+      },
+      {
+        studentName: 'Aisha Zahra Putri',
+        studentImage: '/uploads/achievement/achievement_1770259190080_iu7u3uoup9.webp',
+        achievement: "Tahfidz Al-Qur'an",
+        competition: '"Musabaqah Tilawatil Quran 2025" Tingkat Provinsi',
+        rank: 'JUARA 1',
+        category: 'Tahfidz'
+      },
+      {
+        studentName: 'Muhammad Rizki Alfarizi',
+        studentImage: '/uploads/achievement/achievement_1770259204289_7zh4ifi6pca.webp',
+        achievement: 'Robotika',
+        competition: '"Indonesia Robot Olympiad 2025" Tingkat Nasional',
+        rank: 'JUARA 2',
+        category: 'Sains'
+      },
+      {
+        studentName: 'Siti Nurhaliza',
+        studentImage: '/uploads/achievement/achievement_1770259218100_4znqxdhqfjq.webp',
+        achievement: 'Juara Umum',
+        competition: '"Lomba Cerdas Cermat 2025" Tingkat Kota',
+        rank: 'JUARA 1',
+        category: 'Akademik'
+      },
+      {
+        studentName: 'Budi Santoso',
+        studentImage: '/uploads/achievement/achievement_1770259234557_sdnixtxzwr.webp',
+        achievement: 'Lari Marathon',
+        competition: '"Pekan Olahraga Pelajar 2025" Tingkat Provinsi',
+        rank: 'JUARA 2',
+        category: 'Olahraga'
+      },
+      {
+        studentName: 'Rina Wati',
+        studentImage: '/uploads/achievement/achievement_1770601549377_5saxw8xrr2i.webp',
+        achievement: 'Seni Lukis',
+        competition: '"Festival Seni Siswa Nasional 2025"',
+        rank: 'JUARA 1',
+        category: 'Seni'
+      },
+      {
+        studentName: 'Joko Susilo',
+        studentImage: '/uploads/achievement/achievement_1770601631186_pq0yr3wit0b.webp',
+        achievement: 'Pidato Bahasa Arab',
+        competition: '"Musabaqah Bahasa Arab 2025" Tingkat Nasional',
+        rank: 'JUARA 3',
+        category: 'Bahasa'
+      },
+      {
+        studentName: 'Dewi Sartika',
+        studentImage: '/uploads/achievement/achievement_1770601645303_qumz9y74jk.webp',
+        achievement: 'Olimpiade Biologi',
+        competition: '"Olimpiade Sains Nasional 2025"',
+        rank: 'JUARA 2',
+        category: 'Sains'
+      },
+      {
+        studentName: 'Andi Wijaya',
+        studentImage: '/uploads/achievement/achievement_1770601668743_4hdkv8zve2a.webp',
+        achievement: 'Karate',
+        competition: '"Kejuaraan Karate Pelajar 2025" Tingkat Nasional',
+        rank: 'JUARA 1',
+        category: 'Olahraga'
+      }
+    ],
+    []
+  );
+
+  const apiBaseUrl = useMemo(() => {
+    const base = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    return base.replace(/\/$/, '');
+  }, []);
+
+  const getAccentColor = useMemo(() => {
+    return (category?: string, level?: string) => {
+      const key = (category || level || '').toLowerCase();
+      if (key.includes('olahraga')) return '#F97316';
+      if (key.includes('tahfidz') || key.includes('agama')) return '#8B5CF6';
+      if (key.includes('seni') || key.includes('budaya')) return '#10B981';
+      if (key.includes('sains') || key.includes('biologi') || key.includes('kimia') || key.includes('fisika')) return '#3B82F6';
+      if (key.includes('bahasa')) return '#14B8A6';
+      if (key.includes('matematika')) return '#6366F1';
+      return '#1E4AB8';
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`${apiBaseUrl}/achievements?limit=200`).then(r => r.ok ? r.json() : null).catch(() => null);
+        const rows = res?.success && Array.isArray(res.data) ? res.data : [];
+
+        const mapped: AchievementItem[] = rows.map((row: any, index: number) => {
+          const year = row.achievement_date ? String(new Date(row.achievement_date).getFullYear()) : String(new Date().getFullYear());
+          const category = row.category || 'Lainnya';
+          return {
+            studentName: row.student_name || 'Siswa',
+            studentImage: row.image_url || legacyAchievements[index % legacyAchievements.length]?.studentImage || '/uploads/logos/Yayasan.webp',
+            achievement: row.title || '',
+            competition: row.description || '',
+            rank: row.rank || '',
+            category,
+            accentColor: getAccentColor(category, row.level),
+            year
+          };
+        });
+
+        const legacyMapped: AchievementItem[] = legacyAchievements.map(item => {
+          const category = item.category || 'Lainnya';
+          return {
+            studentName: item.studentName,
+            studentImage: item.studentImage,
+            achievement: item.achievement,
+            competition: item.competition,
+            rank: item.rank,
+            category,
+            accentColor: getAccentColor(category, category),
+            year: String(new Date().getFullYear())
+          };
+        });
+
+        const combined = [...mapped];
+        for (const legacy of legacyMapped) {
+          if (combined.length >= Math.max(12, legacyMapped.length)) break;
+          if (combined.some(item => item.studentImage === legacy.studentImage)) continue;
+          combined.push(legacy);
+        }
+
+        if (!cancelled) setAchievements(combined);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBaseUrl, getAccentColor, legacyAchievements]);
 
   const breadcrumbItems = [
     { label: 'Beranda', onClick: () => onNavigate('main') },
     { label: 'Prestasi Siswa' }
   ];
 
-  const years = ['2025', '2024', '2023', '2022'];
-  const categories = [
-    { name: 'Semua', count: 24, icon: Star },
-    { name: 'Olimpiade', count: 8, icon: Trophy },
-    { name: 'Olahraga', count: 6, icon: Medal },
-    { name: 'Seni & Budaya', count: 5, icon: Award },
-    { name: 'Tahfidz', count: 3, icon: Star },
-    { name: 'Sains', count: 2, icon: Trophy }
-  ];
+  const years = useMemo(() => {
+    const set = new Set<string>();
+    achievements.forEach(a => set.add(a.year));
+    const list = Array.from(set).filter(Boolean).sort((a, b) => Number(b) - Number(a));
+    return ['Semua', ...list];
+  }, [achievements]);
 
-  const achievements = [
-    {
-      studentName: "M. Husein Haekal",
-      studentImage: "/uploads/achievement/achievement_1769996411538_dig650xbr3b.webp",
-      achievement: "Peserta Olimpiade Terbaik",
-      competition: '"SAHABAYA CUP 2025" Tingkat Perwakilan Lampung',
-      rank: "JUARA 1",
-      category: "Olimpiade",
-      accentColor: "#1E4AB8",
-      year: "2025"
-    },
-    {
-      studentName: "Zalika Tsabita Az - Zahra",
-      studentImage: "/uploads/achievement/achievement_1770259138348_pcj36zz54xh.webp",
-      achievement: "Pencak Silat Tunggal",
-      competition: '"SAHABAYA CUP 2025" Tingkat Perwakilan Lampung',
-      rank: "JUARA 3",
-      category: "Olahraga",
-      accentColor: "#F97316",
-      year: "2025"
-    },
-    {
-      studentName: "Dhoffa Adzellia Khaerani",
-      studentImage: "/uploads/achievement/achievement_1770259163513_vakbjibn58j.webp",
-      achievement: "Pidato Bahasa Inggris",
-      competition: '"SAHABAYA CUP 2025" Tingkat Perwakilan Lampung',
-      rank: "JUARA 2",
-      category: "Seni & Budaya",
-      accentColor: "#10B981",
-      year: "2025"
-    },
-    {
-      studentName: "Ahmad Fauzan",
-      studentImage: "/uploads/achievement/achievement_1770259176223_998ib4a3t76.webp",
-      achievement: "Tahfidz 30 Juz",
-      competition: "Wisuda Tahfidz Nasional 2025",
-      rank: "JUARA 1",
-      category: "Tahfidz",
-      accentColor: "#8B5CF6",
-      year: "2025"
-    },
-    {
-      studentName: "Siti Aisyah Ramadhani",
-      studentImage: "/uploads/achievement/achievement_1770259190080_iu7u3uoup9.webp",
-      achievement: "Matematika Tingkat Nasional",
-      competition: "Olimpiade Sains Nasional (OSN) 2024",
-      rank: "JUARA 1",
-      category: "Sains",
-      accentColor: "#3B82F6",
-      year: "2024"
-    },
-    {
-      studentName: "Muhammad Rizki",
-      studentImage: "/uploads/achievement/achievement_1770259204289_7zh4ifi6pca.webp",
-      achievement: "Renang Gaya Bebas 100m",
-      competition: "POPDA Tingkat Provinsi 2024",
-      rank: "JUARA 2",
-      category: "Olahraga",
-      accentColor: "#14B8A6",
-      year: "2024"
-    },
-    {
-      studentName: "Fatimah Az-Zahra",
-      studentImage: "/uploads/achievement/achievement_1770259218100_4znqxdhqfjq.webp",
-      achievement: "Kaligrafi Arab",
-      competition: "Festival Seni Islam Tingkat Nasional 2024",
-      rank: "JUARA 1",
-      category: "Seni & Budaya",
-      accentColor: "#F97316",
-      year: "2024"
-    },
-    {
-      studentName: "Budi Santoso",
-      studentImage: "/uploads/achievement/achievement_1770259234557_sdnixtxzwr.webp",
-      achievement: "Lari Marathon",
-      competition: '"Pekan Olahraga Pelajar 2025" Tingkat Provinsi',
-      rank: "JUARA 2",
-      category: "Olahraga",
-      accentColor: "#EF4444",
-      year: "2025"
-    },
-    {
-      studentName: "Rina Wati",
-      studentImage: "/uploads/achievement/achievement_1770601549377_5saxw8xrr2i.webp",
-      achievement: "Seni Lukis",
-      competition: '"Festival Seni Siswa Nasional 2025"',
-      rank: "JUARA 1",
-      category: "Seni & Budaya",
-      accentColor: "#8B5CF6",
-      year: "2025"
-    },
-    {
-      studentName: "Joko Susilo",
-      studentImage: "/uploads/achievement/achievement_1770601631186_pq0yr3wit0b.webp",
-      achievement: "Pidato Bahasa Arab",
-      competition: '"Musabaqah Bahasa Arab 2025" Tingkat Nasional',
-      rank: "JUARA 3",
-      category: "Seni & Budaya",
-      accentColor: "#10B981",
-      year: "2025"
-    },
-    {
-      studentName: "Dewi Sartika",
-      studentImage: "/uploads/achievement/achievement_1770601645303_qumz9y74jk.webp",
-      achievement: "Olimpiade Biologi",
-      competition: '"Olimpiade Sains Nasional 2025"',
-      rank: "JUARA 2",
-      category: "Sains",
-      accentColor: "#F59E0B",
-      year: "2025"
-    },
-    {
-      studentName: "Andi Wijaya",
-      studentImage: "/uploads/achievement/achievement_1770601668743_4hdkv8zve2a.webp",
-      achievement: "Karate",
-      competition: '"Kejuaraan Karate Pelajar 2025" Tingkat Nasional',
-      rank: "JUARA 1",
-      category: "Olahraga",
-      accentColor: "#DC2626",
-      year: "2025"
-    }
-  ] satisfies AchievementItem[];
+  const categories = useMemo(() => {
+    const counts = new Map<string, number>();
+    achievements.forEach(a => {
+      const key = a.category || 'Lainnya';
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+
+    const iconFor = (name: string) => {
+      const lower = name.toLowerCase();
+      if (lower.includes('olahraga')) return Medal;
+      if (lower.includes('tahfidz') || lower.includes('agama')) return Star;
+      if (lower.includes('seni') || lower.includes('budaya')) return Award;
+      if (lower.includes('sains') || lower.includes('akademik') || lower.includes('olimpiade') || lower.includes('matematika')) return Trophy;
+      return Star;
+    };
+
+    const items = Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([name, count]) => ({ name, count, icon: iconFor(name) }));
+
+    return [{ name: 'Semua', count: achievements.length, icon: Star }, ...items];
+  }, [achievements]);
 
   const filteredAchievements = achievements.filter(item => {
     const matchYear = selectedYear === 'Semua' || item.year === selectedYear;
@@ -230,7 +306,7 @@ export default function AchievementPage() {
         <div className="absolute top-1/2 right-1/4 w-16 h-16 bg-yellow-400/20 rounded-full blur-xl animate-pulse delay-500"></div>
 
         <div className="container-custom relative z-10">
-          <Breadcrumb items={breadcrumbItems} theme="dark" />
+          <Breadcrumb items={breadcrumbItems} />
           
           <div className="mt-8">
             <div className="inline-flex items-center gap-2 px-6 py-3 bg-white/20 backdrop-blur-sm rounded-full text-sm mb-6">

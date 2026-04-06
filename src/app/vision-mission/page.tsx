@@ -117,7 +117,7 @@ export default function VisionMissionPage() {
         <div className="absolute top-1/2 right-1/4 w-16 h-16 bg-yellow-400/20 rounded-full blur-xl animate-pulse delay-500"></div>
 
         <div className="container-custom relative z-10">
-          <Breadcrumb items={breadcrumbItems} theme="dark" />
+          <Breadcrumb items={breadcrumbItems} />
           
           <div className="mt-8">
             <div className="inline-flex items-center gap-2 px-6 py-3 bg-white/20 backdrop-blur-sm rounded-full text-sm mb-6">
@@ -385,4 +385,3 @@ export default function VisionMissionPage() {
     </div>
   );
 }
-

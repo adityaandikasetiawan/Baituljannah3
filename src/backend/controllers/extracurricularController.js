@@ -60,6 +60,10 @@ exports.getRegistrations = async (req, res) => {
     const { student_nis } = req.query;
     if (!student_nis) return res.status(400).json({ success: false, message: 'student_nis wajib diisi' });
 
+    if (req.user?.role === 'siswa' && String(req.user.username) !== String(student_nis)) {
+      return res.status(403).json({ success: false, message: 'Tidak memiliki akses' });
+    }
+
     const rows = await executeQuery(
       'SELECT id, student_nis, activity_id, created_at FROM exkul_registrations WHERE student_nis = ? ORDER BY created_at DESC, id DESC',
       [student_nis]
@@ -79,6 +83,10 @@ exports.register = async (req, res) => {
     await ensureTables();
     const { student_nis, activity_id } = req.body || {};
     if (!student_nis || !activity_id) return res.status(400).json({ success: false, message: 'student_nis dan activity_id wajib diisi' });
+
+    if (req.user?.role === 'siswa' && String(req.user.username) !== String(student_nis)) {
+      return res.status(403).json({ success: false, message: 'Tidak memiliki akses' });
+    }
 
     const id = await insert(
       'INSERT INTO exkul_registrations (student_nis, activity_id, created_at) VALUES (?, ?, NOW())',
@@ -104,6 +112,10 @@ exports.unregister = async (req, res) => {
     const { student_nis, activity_id } = req.body || {};
     if (!student_nis || !activity_id) return res.status(400).json({ success: false, message: 'student_nis dan activity_id wajib diisi' });
 
+    if (req.user?.role === 'siswa' && String(req.user.username) !== String(student_nis)) {
+      return res.status(403).json({ success: false, message: 'Tidak memiliki akses' });
+    }
+
     const affected = await deleteRow('DELETE FROM exkul_registrations WHERE student_nis = ? AND activity_id = ?', [
       student_nis,
       activity_id,
@@ -118,4 +130,3 @@ exports.unregister = async (req, res) => {
     });
   }
 };
-

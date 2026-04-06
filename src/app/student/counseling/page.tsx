@@ -15,9 +15,16 @@ const STORAGE = {
 
 const CHANNEL_NAME = 'student_portal';
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1').replace(/\/$/, '');
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/$/, '');
 
 const isoToday = () => new Date().toISOString().slice(0, 10);
+const getToken = () => {
+  try {
+    return localStorage.getItem('baituljannah_token');
+  } catch {
+    return null;
+  }
+};
 
 export default function StudentCounselingPage() {
   const { menuItems } = useNavigationMenu('student');
@@ -64,9 +71,13 @@ export default function StudentCounselingPage() {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 1200);
     try {
+      const token = getToken();
       const [cRes, bRes] = await Promise.allSettled([
         fetch(`${API_BASE_URL}/counseling/counselors`, { signal: controller.signal }),
-        fetch(`${API_BASE_URL}/counseling/bookings?student_nis=${encodeURIComponent(student.nis)}`, { signal: controller.signal }),
+        fetch(`${API_BASE_URL}/counseling/bookings?student_nis=${encodeURIComponent(student.nis)}`, {
+          signal: controller.signal,
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        }),
       ]);
 
       if (cRes.status === 'fulfilled' && cRes.value.ok) {
@@ -167,9 +178,13 @@ export default function StudentCounselingPage() {
     toast('Jadwal konseling berhasil dibooking');
 
     try {
+      const token = getToken();
       await fetch(`${API_BASE_URL}/counseling/bookings`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           student_nis: student.nis,
           counselor_id: selectedCounselorId,
@@ -198,7 +213,11 @@ export default function StudentCounselingPage() {
     toast('Booking dibatalkan');
 
     try {
-      await fetch(`${API_BASE_URL}/counseling/bookings/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const token = getToken();
+      await fetch(`${API_BASE_URL}/counseling/bookings/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
     } catch {}
   };
 

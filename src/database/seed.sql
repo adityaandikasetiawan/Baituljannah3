@@ -252,8 +252,8 @@ INSERT INTO job_postings (title, slug, type, description, requirements, departme
 -- ============================================
 
 INSERT INTO sliders (title, image, subtitle, button_text, button_url, `order`, status) VALUES
-('Selamat Datang di Baituljannah', '/uploads/sliders/welcome.jpg', 'Membangun Generasi Rabbani Berprestasi', 'Daftar Sekarang', '/ppdb', 1, 'active'),
-('Pendidikan Berkualitas', '/uploads/sliders/education.jpg', 'Kurikulum Terpadu Ilmu Umum dan Agama', 'Lihat Program', '/programs', 2, 'active');
+('Selamat Datang di Baituljannah', '/uploads/hero/hero_1769592571870_m7ehtcua18j.webp', 'Membangun Generasi Rabbani Berprestasi', 'Daftar Sekarang', '/admission', 1, 'active'),
+('Pendidikan Berkualitas', '/uploads/hero/hero_1769592838236_ttv2yfpxyb.webp', 'Kurikulum Terpadu Ilmu Umum dan Agama', 'Lihat Program', '/program', 2, 'active');
 
 INSERT INTO testimonials (name, role, content, image, rating, status) VALUES
 ('Budi Santoso', 'Wali Murid SDIT', 'Sekolah yang sangat bagus untuk perkembangan karakter anak. Guru-gurunya ramah dan profesional.', NULL, 5, 'published'),
