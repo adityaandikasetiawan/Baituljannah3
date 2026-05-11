@@ -1,5 +1,6 @@
 'use client';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Sidebar } from '../../../components/layout/Sidebar';
 import { useNavigationMenu } from '../../../hooks/useNavigationMenu';
 import { FileText, Plus, Edit, Trash2, Eye, Search, Filter, Calendar, Tag, X, Bell } from 'lucide-react';
@@ -23,6 +24,7 @@ interface NewsItem {
 }
 
 export default function AdminNewsPage() {
+  const router = useRouter();
   const { menuItems } = useNavigationMenu('admin');
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
@@ -36,13 +38,69 @@ export default function AdminNewsPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const apiBaseUrl = useMemo(() => {
-    return (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/$/, '');
+    const base = (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/$/, '');
+    if (typeof window === 'undefined') return base;
+    const hostname = window.location.hostname.toLowerCase();
+    if (
+      hostname === 'smaitbaituljannah.sch.id' ||
+      hostname === 'www.smaitbaituljannah.sch.id' ||
+      hostname === 'smpitbaituljannah.sch.id' ||
+      hostname === 'www.smpitbaituljannah.sch.id'
+    ) {
+      return 'https://baituljannah.sch.id/api/v1';
+    }
+    return base;
   }, []);
 
-  const getToken = () => {
+  const lockedUnitCode = useMemo(() => {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem('baituljannah_token');
-  };
+    const hostname = window.location.hostname.toLowerCase();
+    if (hostname === 'smpitbaituljannah.sch.id' || hostname === 'www.smpitbaituljannah.sch.id') return 'SMPIT';
+    if (hostname === 'smaitbaituljannah.sch.id' || hostname === 'www.smaitbaituljannah.sch.id') return 'SMAIT';
+    const path = window.location.pathname || '';
+    const m = path.match(/^\/(tkit|sdit|smpit|smait|slbit)\/admin(\/|$)/i);
+    if (!m?.[1]) return null;
+    return String(m[1]).toUpperCase();
+  }, []);
+
+  const getCookie = useCallback((name: string) => {
+    if (typeof document === 'undefined') return null;
+    const cookieStr = document.cookie || '';
+    const parts = cookieStr.split(';').map((p) => p.trim());
+    const prefix = `${encodeURIComponent(name)}=`;
+    for (const part of parts) {
+      if (part.startsWith(prefix)) return decodeURIComponent(part.slice(prefix.length));
+      if (part.startsWith(`${name}=`)) return decodeURIComponent(part.slice(`${name}=`.length));
+    }
+    return null;
+  }, []);
+
+  const getToken = useCallback(() => {
+    if (typeof window === 'undefined') return null;
+    const lsToken = localStorage.getItem('baituljannah_token');
+    if (lsToken) return lsToken;
+    const cookieToken = getCookie('token');
+    if (cookieToken) {
+      localStorage.setItem('baituljannah_token', cookieToken);
+      return cookieToken;
+    }
+    return null;
+  }, [getCookie]);
+
+  const getLoginPath = useCallback(() => {
+    if (typeof window === 'undefined') return '/login';
+    const hostname = window.location.hostname.toLowerCase();
+    const isUnitSubdomain =
+      hostname === 'smpitbaituljannah.sch.id' ||
+      hostname === 'www.smpitbaituljannah.sch.id' ||
+      hostname === 'smaitbaituljannah.sch.id' ||
+      hostname === 'www.smaitbaituljannah.sch.id';
+    if (isUnitSubdomain) return '/login';
+    const path = window.location.pathname || '';
+    const unitMatch = path.match(/^\/(tkit|sdit|smpit|smait|slbit)(\/|$)/i);
+    if (unitMatch?.[1]) return `/${unitMatch[1].toLowerCase()}/login`;
+    return '/login';
+  }, []);
 
   const getStoredUserName = () => {
     if (typeof window === 'undefined') return 'Admin';
@@ -58,7 +116,7 @@ export default function AdminNewsPage() {
   const [formData, setFormData] = useState<Partial<NewsItem>>({
     title: '',
     category: 'Akademik',
-    unit: 'Semua',
+    unit: lockedUnitCode || 'Semua',
     date: new Date().toISOString().split('T')[0],
     author: '',
     excerpt: '',
@@ -92,7 +150,7 @@ export default function AdminNewsPage() {
     return 'draft';
   };
 
-  const toUiNewsItem = (row: any): NewsItem => {
+  const toUiNewsItem = useCallback((row: any): NewsItem => {
     const content = String(row?.content || '');
     const excerpt = content.length > 160 ? `${content.slice(0, 160)}...` : content;
     const dateValue = row?.publish_date || row?.created_at || new Date().toISOString();
@@ -109,9 +167,9 @@ export default function AdminNewsPage() {
       status: fromApiStatus(row?.status),
       views: Number(row?.views || 0),
     };
-  };
+  }, []);
 
-  const loadNews = async () => {
+  const loadNews = useCallback(async () => {
     const token = getToken();
     if (!token) {
       setNewsList([]);
@@ -120,7 +178,8 @@ export default function AdminNewsPage() {
 
     setIsLoading(true);
     try {
-      const res = await fetch(`${apiBaseUrl}/news/manage?limit=200&sort=created_at&order=DESC`, {
+      const unitQuery = lockedUnitCode ? `&unit_sekolah=${encodeURIComponent(lockedUnitCode)}` : '';
+      const res = await fetch(`${apiBaseUrl}/news/manage?limit=200&sort=created_at&order=DESC${unitQuery}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json().catch(() => null);
@@ -139,18 +198,24 @@ export default function AdminNewsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [apiBaseUrl, getToken, lockedUnitCode, toUiNewsItem]);
 
   useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      toast.error('Token tidak ditemukan. Silakan login ulang.');
+      router.replace(getLoginPath());
+      return;
+    }
     loadNews();
-  }, []);
+  }, [getLoginPath, getToken, loadNews, router]);
 
   const handleCreate = () => {
     setModalMode('create');
     setFormData({
       title: '',
       category: 'Akademik',
-      unit: 'Semua',
+      unit: lockedUnitCode || 'Semua',
       date: new Date().toISOString().split('T')[0],
       author: getStoredUserName(),
       excerpt: '',
@@ -186,7 +251,7 @@ export default function AdminNewsPage() {
       title: String(formData.title || '').trim(),
       content: String(formData.content || ''),
       category: String(formData.category || 'Lainnya'),
-      unit_sekolah: String(formData.unit || 'Semua'),
+      unit_sekolah: String(lockedUnitCode || formData.unit || 'Semua'),
       image_url: String(formData.image || ''),
       status: toApiStatus((formData.status as NewsStatus) || 'Draft'),
       publish_date: formData.date ? String(formData.date) : null,
@@ -561,11 +626,16 @@ export default function AdminNewsPage() {
                           name="unit"
                           value={formData.unit}
                           onChange={handleInputChange}
+                          disabled={Boolean(lockedUnitCode)}
                           className="w-full px-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#1E4AB8] focus:ring-2 focus:ring-[#1E4AB8]/20"
                         >
-                          {units.map(unit => (
-                            <option key={unit}>{unit}</option>
-                          ))}
+                          {lockedUnitCode ? (
+                            <option>{lockedUnitCode}</option>
+                          ) : (
+                            units.map(unit => (
+                              <option key={unit}>{unit}</option>
+                            ))
+                          )}
                         </select>
                       </div>
                     </div>

@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
+import Image from 'next/image';
 
 export function AchievementsSection() {
   const [emblaRef, emblaApi] = useEmblaCarousel(
@@ -53,11 +54,16 @@ export function AchievementsSection() {
                 <div key={idx} className="min-w-0 basis-full sm:basis-1/2 lg:basis-1/3">
                   <div className="bg-white/10 rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-colors">
                     <div className="aspect-[4/3] overflow-hidden">
-                      <img
+                      <Image
                         src={item.image}
                         alt={item.title}
+                        width={1}
+                        height={1}
+                        sizes="(max-width: 1024px) 100vw, 33vw"
                         loading="lazy"
                         className="w-full h-full object-cover"
+                        style={{ width: '100%', height: '100%' }}
+                        unoptimized
                       />
                     </div>
                     <div className="p-6">

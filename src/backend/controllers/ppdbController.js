@@ -1,9 +1,44 @@
 const { executeQuery, getOne, insert, update } = require('../config/database');
 
+let ppdbColumnsCache = null;
+let ppdbColumnsCacheAt = 0;
+
+const getPpdbColumns = async () => {
+  const now = Date.now();
+  if (ppdbColumnsCache && now - ppdbColumnsCacheAt < 5 * 60 * 1000) return ppdbColumnsCache;
+  const rows = await executeQuery('SHOW COLUMNS FROM ppdb_registrations');
+  const cols = new Set(rows.map((r) => String(r.Field || '').toLowerCase()).filter(Boolean));
+  ppdbColumnsCache = cols;
+  ppdbColumnsCacheAt = now;
+  return cols;
+};
+
+const ensurePpdbFormJsonColumn = async () => {
+  try {
+    const cols = await getPpdbColumns();
+    if (cols.has('form_json')) return;
+    await executeQuery('ALTER TABLE ppdb_registrations ADD COLUMN form_json LONGTEXT');
+    ppdbColumnsCache = null;
+    ppdbColumnsCacheAt = 0;
+  } catch {}
+};
+
 const getSchoolUnitIdByCode = async (code) => {
   if (!code) return null;
   const row = await getOne('SELECT id FROM school_units WHERE code = ? LIMIT 1', [code]);
   return row ? Number(row.id) : null;
+};
+
+const resolveUnitCodeFromRequestHost = (req) => {
+  const forwardedHost = req.headers['x-forwarded-host'] || req.headers.host || '';
+  const hostname = String(Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost)
+    .split(',')[0]
+    .trim()
+    .split(':')[0]
+    .toLowerCase();
+  if (hostname === 'smpitbaituljannah.sch.id' || hostname === 'www.smpitbaituljannah.sch.id') return 'SMPIT';
+  if (hostname === 'smaitbaituljannah.sch.id' || hostname === 'www.smaitbaituljannah.sch.id') return 'SMAIT';
+  return null;
 };
 
 const getActiveAcademicYearId = async () => {
@@ -26,6 +61,8 @@ const toSchemaStatus = (status) => {
 // @access  Public
 exports.submitRegistration = async (req, res) => {
   try {
+    await ensurePpdbFormJsonColumn();
+    const rawBody = req.body && typeof req.body === 'object' ? req.body : {};
     const {
       // Data Siswa
       nama_lengkap,
@@ -34,6 +71,8 @@ exports.submitRegistration = async (req, res) => {
       tempat_lahir,
       tanggal_lahir,
       nik,
+      nisn,
+      agama,
       alamat,
       kota,
       provinsi,
@@ -44,16 +83,21 @@ exports.submitRegistration = async (req, res) => {
       pekerjaan_ayah,
       nama_ibu,
       pekerjaan_ibu,
+      no_hp_ayah,
+      no_hp_ibu,
       no_telp,
       email,
       
       // Data Tambahan
       asal_sekolah,
       prestasi,
-      informasi_dari
+      informasi_dari,
+      form_data
     } = req.body;
 
-    const school_unit_id = await getSchoolUnitIdByCode(jenjang);
+    const forcedUnitCode = resolveUnitCodeFromRequestHost(req);
+    const effectiveJenjang = forcedUnitCode || jenjang;
+    const school_unit_id = await getSchoolUnitIdByCode(effectiveJenjang);
     if (!school_unit_id) {
       return res.status(400).json({
         success: false,
@@ -72,34 +116,80 @@ exports.submitRegistration = async (req, res) => {
     // Generate unique registration number
     const tahun = new Date().getFullYear();
     const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const registration_number = `PPDB${tahun}${jenjang}${randomNum}`;
+    const registration_number = `PPDB${tahun}${effectiveJenjang}${randomNum}`;
 
-    // Insert registration
+    const cols = await getPpdbColumns();
+    const columns = [
+      'school_unit_id',
+      'academic_year_id',
+      'registration_number',
+      'full_name',
+      'nik',
+      'birth_place',
+      'birth_date',
+      'gender',
+      'address',
+      'phone',
+      'email',
+      'previous_school',
+      'father_name',
+      'father_occupation',
+      'father_phone',
+      'mother_name',
+      'mother_occupation',
+      'mother_phone',
+      'religion',
+      'nisn',
+      'notes',
+      'status',
+      'created_at',
+      'updated_at',
+    ].filter((c) => cols.has(String(c).toLowerCase()));
+
+    const fullForm = form_data && typeof form_data === 'object' ? form_data : rawBody;
+    const formJson = cols.has('form_json') ? JSON.stringify(fullForm) : null;
+    if (cols.has('form_json')) columns.push('form_json');
+
+    const valuesByColumn = {
+      school_unit_id,
+      academic_year_id,
+      registration_number,
+      full_name: nama_lengkap,
+      nik: nik || null,
+      birth_place: tempat_lahir || null,
+      birth_date: tanggal_lahir,
+      gender: jenis_kelamin,
+      address: alamat,
+      phone: no_telp,
+      email,
+      previous_school: asal_sekolah || null,
+      father_name: nama_ayah,
+      father_occupation: pekerjaan_ayah || null,
+      father_phone: no_hp_ayah || null,
+      mother_name: nama_ibu,
+      mother_occupation: pekerjaan_ibu || null,
+      mother_phone: no_hp_ibu || null,
+      religion: agama || 'Islam',
+      nisn: nisn || null,
+      notes: [prestasi, informasi_dari].filter(Boolean).join(' | ') || null,
+      status: 'pending',
+      form_json: formJson,
+    };
+
+    const placeholders = columns
+      .map((c) => {
+        if (c === 'created_at') return 'NOW()';
+        if (c === 'updated_at') return 'NOW()';
+        return '?';
+      })
+      .join(', ');
+    const params = columns
+      .filter((c) => c !== 'created_at' && c !== 'updated_at')
+      .map((c) => valuesByColumn[c]);
+
     const registrationId = await insert(
-      `INSERT INTO ppdb_registrations 
-        (school_unit_id, academic_year_id, registration_number, full_name, nik, birth_place, birth_date, gender,
-         address, phone, email, previous_school, father_name, father_occupation, mother_name, mother_occupation,
-         notes, status, created_at, updated_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())`,
-      [
-        school_unit_id,
-        academic_year_id,
-        registration_number,
-        nama_lengkap,
-        nik || null,
-        tempat_lahir || null,
-        tanggal_lahir,
-        jenis_kelamin,
-        alamat,
-        no_telp,
-        email,
-        asal_sekolah || null,
-        nama_ayah,
-        pekerjaan_ayah || null,
-        nama_ibu,
-        pekerjaan_ibu || null,
-        [prestasi, informasi_dari].filter(Boolean).join(' | ') || null
-      ]
+      `INSERT INTO ppdb_registrations (${columns.join(', ')}) VALUES (${placeholders})`,
+      params
     );
 
     const registration = await getOne(
@@ -205,8 +295,20 @@ exports.getAllRegistrations = async (req, res) => {
     let whereConditions = [];
     let params = [];
 
+    const forcedUnitCode = resolveUnitCodeFromRequestHost(req);
+    if (forcedUnitCode) {
+      whereConditions.push('su.code = ?');
+      params.push(forcedUnitCode);
+    } else if (req.user?.role_raw === 'admin_unit') {
+      if (!req.user.school_unit_id) {
+        return res.status(403).json({ success: false, message: 'Akun admin unit belum di-set unitnya' });
+      }
+      whereConditions.push('r.school_unit_id = ?');
+      params.push(Number(req.user.school_unit_id));
+    }
+
     // Filter by jenjang
-    if (jenjang && String(jenjang).toLowerCase() !== 'semua') {
+    if (!forcedUnitCode && req.user?.role_raw !== 'admin_unit' && jenjang && String(jenjang).toLowerCase() !== 'semua') {
       whereConditions.push('su.code = ?');
       params.push(jenjang);
     }
@@ -316,6 +418,19 @@ exports.updateRegistrationStatus = async (req, res) => {
       });
     }
 
+    const forcedUnitCode = resolveUnitCodeFromRequestHost(req);
+    if (forcedUnitCode) {
+      const forcedId = await getSchoolUnitIdByCode(forcedUnitCode);
+      if (forcedId && Number(registration.school_unit_id) !== Number(forcedId)) {
+        return res.status(403).json({ success: false, message: 'Tidak boleh mengubah data unit lain' });
+      }
+    } else if (req.user?.role_raw === 'admin_unit') {
+      if (!req.user.school_unit_id) return res.status(403).json({ success: false, message: 'Akun admin unit belum di-set unitnya' });
+      if (Number(registration.school_unit_id) !== Number(req.user.school_unit_id)) {
+        return res.status(403).json({ success: false, message: 'Tidak boleh mengubah data unit lain' });
+      }
+    }
+
     // Update status
     await update('UPDATE ppdb_registrations SET status = ?, notes = ?, updated_at = NOW() WHERE id = ?', [
       toSchemaStatus(status),
@@ -351,26 +466,48 @@ exports.updateRegistrationStatus = async (req, res) => {
 // @access  Private (Admin)
 exports.getStatistics = async (req, res) => {
   try {
-    // Total registrations
-    const totalResult = await getOne('SELECT COUNT(*) as total FROM ppdb_registrations');
-    
-    // By jenjang
+    const forcedUnitCode = resolveUnitCodeFromRequestHost(req);
+    let where = '';
+    let params = [];
+    if (forcedUnitCode) {
+      const forcedId = await getSchoolUnitIdByCode(forcedUnitCode);
+      where = 'WHERE school_unit_id = ?';
+      params = [forcedId];
+    } else if (req.user?.role_raw === 'admin_unit') {
+      if (!req.user.school_unit_id) return res.status(403).json({ success: false, message: 'Akun admin unit belum di-set unitnya' });
+      where = 'WHERE school_unit_id = ?';
+      params = [Number(req.user.school_unit_id)];
+    } else {
+      const jenjang = String(req.query?.jenjang || '').trim();
+      if (jenjang && jenjang.toLowerCase() !== 'semua') {
+        const id = await getSchoolUnitIdByCode(jenjang);
+        if (id) {
+          where = 'WHERE school_unit_id = ?';
+          params = [id];
+        }
+      }
+    }
+
+    const totalResult = await getOne(`SELECT COUNT(*) as total FROM ppdb_registrations ${where}`, params);
+
     const byJenjang = await executeQuery(
       `SELECT su.code AS jenjang, COUNT(*) as count
        FROM ppdb_registrations r
        LEFT JOIN school_units su ON r.school_unit_id = su.id
+       ${where ? where.replace('school_unit_id', 'r.school_unit_id') : ''}
        GROUP BY su.code
-       ORDER BY su.code`
+       ORDER BY su.code`,
+      params
     );
-    
-    // By status
+
     const byStatus = await executeQuery(
-      'SELECT status, COUNT(*) as count FROM ppdb_registrations GROUP BY status'
+      `SELECT status, COUNT(*) as count FROM ppdb_registrations ${where} GROUP BY status`,
+      params
     );
-    
-    // Recent registrations (last 7 days)
+
     const recentResult = await getOne(
-      'SELECT COUNT(*) as count FROM ppdb_registrations WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)'
+      `SELECT COUNT(*) as count FROM ppdb_registrations ${where ? `${where} AND` : 'WHERE'} created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)`,
+      params
     );
 
     res.status(200).json({

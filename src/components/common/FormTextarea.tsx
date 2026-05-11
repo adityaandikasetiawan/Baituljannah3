@@ -2,6 +2,7 @@ import React from 'react';
 
 interface FormTextareaProps {
   label: string;
+  name?: string;
   placeholder?: string;
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -13,6 +14,7 @@ interface FormTextareaProps {
 
 export const FormTextarea: React.FC<FormTextareaProps> = ({
   label,
+  name,
   placeholder,
   value,
   onChange,
@@ -28,6 +30,7 @@ export const FormTextarea: React.FC<FormTextareaProps> = ({
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
       <textarea
+        name={name}
         placeholder={placeholder}
         value={value}
         onChange={onChange}

@@ -2,6 +2,7 @@ import React from 'react';
 
 interface FormInputProps {
   label: string;
+  name?: string;
   type?: string;
   placeholder?: string;
   value?: string;
@@ -13,6 +14,7 @@ interface FormInputProps {
 
 export const FormInput: React.FC<FormInputProps> = ({
   label,
+  name,
   type = 'text',
   placeholder,
   value,
@@ -28,6 +30,7 @@ export const FormInput: React.FC<FormInputProps> = ({
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
       <input
+        name={name}
         type={type}
         placeholder={placeholder}
         value={value}

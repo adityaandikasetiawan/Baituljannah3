@@ -43,6 +43,7 @@ exports.protect = async (req, res, next) => {
          u.username,
          u.email,
          u.role,
+         u.school_unit_id,
          u.status,
          up.full_name
        FROM users u
@@ -72,7 +73,8 @@ exports.protect = async (req, res, next) => {
       email: user.email,
       full_name: user.full_name || user.username,
       role: normalizeRole(user.role),
-      role_raw: user.role
+      role_raw: user.role,
+      school_unit_id: user.school_unit_id == null ? null : Number(user.school_unit_id)
     };
     next();
   } catch (error) {

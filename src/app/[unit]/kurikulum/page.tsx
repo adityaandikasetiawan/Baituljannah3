@@ -7,6 +7,7 @@ import { Footer } from '../../../components/layout/Footer';
 import { getUnitConfig } from '../../../features/unit/unit-config';
 import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
 import { BookOpen, GraduationCap, CheckCircle, ArrowRight, Heart, Sparkles, Users, Palette, Music, Puzzle, Shapes, Brain, Hand, Leaf } from 'lucide-react';
+import Image from 'next/image';
 
 export default function UnitKurikulumPage({ params }: { params: Promise<{ unit: string }> }) {
   const router = useRouter();
@@ -152,7 +153,7 @@ export default function UnitKurikulumPage({ params }: { params: Promise<{ unit: 
       ],
     },
     { label: 'Karir', href: '#', onClick: () => router.push('/career') },
-    { label: 'PPDB', href: '#', onClick: () => router.push('/admission') },
+    { label: 'PPDB', href: '#', onClick: () => router.push(`/${slug}/ppdb`) },
     { label: 'Kontak', href: '#', onClick: () => router.push(`/${slug}/kontak`) }
   ];
 
@@ -186,7 +187,7 @@ export default function UnitKurikulumPage({ params }: { params: Promise<{ unit: 
 
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white mb-6">
-              <img src={config.icon} alt={config.unitName} className="w-5 h-5 object-contain" />
+              <Image src={config.icon} alt={config.unitName} width={20} height={20} className="w-5 h-5 object-contain" unoptimized />
               <span>{content.badge}</span>
             </div>
             <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight">{config.fullName}</h1>
@@ -372,7 +373,7 @@ export default function UnitKurikulumPage({ params }: { params: Promise<{ unit: 
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <button
-                  onClick={() => router.push('/admission')}
+                  onClick={() => router.push(`/${slug}/ppdb`)}
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white shadow-soft hover:shadow-strong transition-all"
                   style={{ backgroundColor: config.accentColor }}
                 >

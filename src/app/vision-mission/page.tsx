@@ -10,6 +10,14 @@ import { useNavigationMenu } from '../../hooks/useNavigationMenu';
 
 export default function VisionMissionPage() {
   const { menuItems, onNavigate } = useNavigationMenu();
+  const [assetVersion, setAssetVersion] = React.useState('1');
+
+  React.useEffect(() => {
+    const buildId = (window as any)?.__NEXT_DATA__?.buildId;
+    setAssetVersion(buildId || String(Date.now()));
+  }, []);
+
+  const withVersion = (src: string) => (src.includes('?') ? `${src}&v=${assetVersion}` : `${src}?v=${assetVersion}`);
 
   const breadcrumbItems = [
     { label: 'Beranda', onClick: () => onNavigate('main') },
@@ -19,45 +27,24 @@ export default function VisionMissionPage() {
   const missions = [
     {
       icon: BookOpen,
-      title: 'Pendidikan Berkualitas',
-      description: 'Menyelenggarakan pendidikan Islam terpadu yang berkualitas dengan mengintegrasikan kurikulum nasional dan nilai-nilai Islam',
+      title: 'Ibadah & Akhlak Islami',
+      description: 'Mendidik anak mampu beribadah dengan baik, benar, dan berakhlak islami',
       color: '#3B82F6',
       gradient: 'from-blue-500 to-cyan-600'
     },
     {
       icon: Heart,
-      title: 'Pembentukan Karakter',
-      description: 'Membentuk karakter siswa yang berakhlakul karimah, jujur, disiplin, dan bertanggung jawab berdasarkan Al-Quran dan As-Sunnah',
+      title: 'Jenjang Lebih Tinggi',
+      description: 'Mempersiapkan anak didik melanjutkan ke jenjang yang lebih tinggi',
       color: '#EF4444',
       gradient: 'from-red-500 to-rose-600'
     },
     {
       icon: Users,
-      title: 'Pengembangan Potensi',
-      description: 'Mengembangkan potensi akademik dan non-akademik siswa melalui program-program unggulan yang inovatif dan komprehensif',
+      title: 'Al-Qur’an',
+      description: 'Mendidik anak mampu membaca, menulis, dan menghafal Al-Qur’an dengan baik (1–4 juz saat lulus)',
       color: '#10B981',
       gradient: 'from-green-500 to-emerald-600'
-    },
-    {
-      icon: Award,
-      title: 'Prestasi Gemilang',
-      description: 'Mencetak siswa yang berprestasi dan kompetitif di tingkat lokal, nasional, maupun internasional',
-      color: '#F59E0B',
-      gradient: 'from-orange-500 to-amber-600'
-    },
-    {
-      icon: Shield,
-      title: 'Lingkungan Islami',
-      description: 'Menciptakan lingkungan pendidikan yang kondusif, Islami, dan mendukung perkembangan optimal siswa',
-      color: '#8B5CF6',
-      gradient: 'from-purple-500 to-indigo-600'
-    },
-    {
-      icon: TrendingUp,
-      title: 'Kemitraan Strategis',
-      description: 'Membangun kemitraan dengan orang tua, masyarakat, dan stakeholder untuk mendukung pencapaian tujuan pendidikan',
-      color: '#14B8A6',
-      gradient: 'from-teal-500 to-cyan-600'
     }
   ];
 
@@ -139,7 +126,7 @@ export default function VisionMissionPage() {
             <div className="relative">
               <div className="relative rounded-3xl overflow-hidden shadow-strong">
                 <ImageWithFallback
-                  src="https://images.unsplash.com/photo-1643429096345-9de0d2ab7e7c"
+                  src={withVersion('/uploads/images/vision-mission/visi-misi.jpg')}
                   alt="Vision Baituljannah"
                   className="w-full h-[500px] object-cover"
                 />
@@ -175,7 +162,7 @@ export default function VisionMissionPage() {
                 <div className="relative">
                   <Star className="w-12 h-12 text-blue-600 mb-4" />
                   <p className="text-2xl text-gray-900 leading-relaxed italic">
-                    "Menjadi lembaga pendidikan Islam terpadu yang unggul, inovatif, dan berkarakter Qur'ani dalam mencetak generasi pemimpin masa depan"
+                    "Mempersiapkan anak menjadi sholeh dan unggul"
                   </p>
                 </div>
               </div>
@@ -226,7 +213,7 @@ export default function VisionMissionPage() {
             </div>
             <h2 className="text-4xl lg:text-5xl mb-4 text-gray-900">Misi Yayasan Baituljannah</h2>
             <p className="text-gray-600 text-lg max-w-3xl mx-auto leading-relaxed">
-              Enam pilar misi yang menjadi panduan dalam mencapai visi pendidikan kami
+              Tiga pilar misi yang menjadi panduan dalam mencapai visi pendidikan kami
             </p>
           </div>
 
@@ -264,47 +251,6 @@ export default function VisionMissionPage() {
                       className="absolute bottom-0 right-0 w-20 h-20 rounded-full blur-2xl opacity-0 group-hover:opacity-20 transition-opacity"
                       style={{ backgroundColor: mission.color }}
                     ></div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Goals Section */}
-      <section className="section-padding bg-white">
-        <div className="container-custom">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 rounded-full text-sm mb-6">
-              <Sparkles className="w-4 h-4" />
-              <span>Strategic Goals</span>
-            </div>
-            <h2 className="text-4xl lg:text-5xl mb-4 text-gray-900">Tujuan Strategis</h2>
-            <p className="text-gray-600 text-lg max-w-3xl mx-auto leading-relaxed">
-              Target pencapaian yang menjadi fokus utama dalam mewujudkan visi dan misi kami
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {goals.map((goal, index) => {
-              const Icon = goal.icon;
-              return (
-                <div 
-                  key={index}
-                  className="group bg-gradient-to-br from-[#1E4AB8] to-[#8B5CF6] rounded-3xl p-8 text-white shadow-strong hover:scale-105 transition-all duration-300 relative overflow-hidden"
-                >
-                  <div className="absolute inset-0 islamic-pattern opacity-10"></div>
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
-                  
-                  <div className="relative">
-                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6">
-                      <Icon className="w-8 h-8 text-white" />
-                    </div>
-                    
-                    <p className="text-3xl mb-2">{goal.stats}</p>
-                    <h3 className="text-xl mb-3">{goal.title}</h3>
-                    <p className="text-white/90">{goal.description}</p>
                   </div>
                 </div>
               );

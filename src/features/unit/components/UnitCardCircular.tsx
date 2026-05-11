@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import Image from 'next/image';
 
 interface UnitCardCircularProps {
   name: string;
@@ -39,10 +40,13 @@ export const UnitCardCircular: React.FC<UnitCardCircularProps> = ({
         onClick={onClick}
       >
         {resolvedIconSrc && !didIconError ? (
-          <img
+          <Image
             src={resolvedIconSrc}
             alt={name}
+            width={128}
+            height={128}
             className={`w-full h-full object-contain ${imageClassName || ''}`}
+            unoptimized
             onError={() => setDidIconError(true)}
           />
         ) : (

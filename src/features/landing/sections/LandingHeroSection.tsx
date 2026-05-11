@@ -1,6 +1,5 @@
 import React from 'react';
 import { HeroCarousel } from '../../landing/components/HeroCarousel';
-import { Sparkles, Trophy, GraduationCap, Target } from 'lucide-react';
 
 export function LandingHeroSection() {
   const heroSlides = [
@@ -42,14 +41,7 @@ export function LandingHeroSection() {
     },
   ];
 
-  const stats = [
-    { icon: Sparkles, label: 'Guru Berkualitas', value: '80+' },
-    { icon: Trophy, label: 'Prestasi Akademik', value: '120+' },
-    { icon: GraduationCap, label: 'Siswa Aktif', value: '1.200+' },
-    { icon: Target, label: 'Program Unggulan', value: '15+' },
-  ];
-
   return (
-    <HeroCarousel slides={heroSlides} stats={stats} />
+    <HeroCarousel slides={heroSlides} />
   );
 }

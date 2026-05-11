@@ -83,6 +83,9 @@ const extracurricularRoutes = require('./routes/extracurricular');
 const counselingRoutes = require('./routes/counseling');
 const slidersRoutes = require('./routes/sliders');
 const achievementsRoutes = require('./routes/achievements');
+const galleryRoutes = require('./routes/gallery');
+const unitPagesRoutes = require('./routes/unit-pages');
+const programsRoutes = require('./routes/programs');
 
 app.use(`/api/${config.apiVersion}/auth`, authRoutes);
 app.use(`/api/${config.apiVersion}/news`, newsRoutes);
@@ -93,6 +96,9 @@ app.use(`/api/${config.apiVersion}/extracurricular`, extracurricularRoutes);
 app.use(`/api/${config.apiVersion}/counseling`, counselingRoutes);
 app.use(`/api/${config.apiVersion}/sliders`, slidersRoutes);
 app.use(`/api/${config.apiVersion}/achievements`, achievementsRoutes);
+app.use(`/api/${config.apiVersion}/gallery`, galleryRoutes);
+app.use(`/api/${config.apiVersion}/unit-pages`, unitPagesRoutes);
+app.use(`/api/${config.apiVersion}/programs`, programsRoutes);
 
 // Welcome route
 app.get('/', (req, res) => {
@@ -110,7 +116,8 @@ app.get('/', (req, res) => {
       extracurricular: `/api/${config.apiVersion}/extracurricular`,
       counseling: `/api/${config.apiVersion}/counseling`,
       sliders: `/api/${config.apiVersion}/sliders`,
-      achievements: `/api/${config.apiVersion}/achievements`
+      achievements: `/api/${config.apiVersion}/achievements`,
+      unitPages: `/api/${config.apiVersion}/unit-pages`
     }
   });
 });

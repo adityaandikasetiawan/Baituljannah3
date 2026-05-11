@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, ArrowRight } from 'lucide-react';
 import { useNavigationMenu } from '../../../hooks/useNavigationMenu';
+import Image from 'next/image';
 
 export function NewsSection() {
   const { onNavigate } = useNavigationMenu();
@@ -52,11 +53,16 @@ export function NewsSection() {
             {news.length > 0 && (
               <div className="group cursor-pointer" onClick={() => onNavigate('news')}>
                 <div className="relative overflow-hidden rounded-2xl mb-4 aspect-[4/3] bg-white">
-                  <img
+                  <Image
                     src={news[0].image}
                     alt={news[0].title}
+                    width={1}
+                    height={1}
+                    sizes="(max-width: 1024px) 100vw, 40vw"
                     loading="lazy"
                     className="w-full h-full object-contain bg-white"
+                    style={{ width: '100%', height: '100%' }}
+                    unoptimized
                   />
                   <div className="absolute top-4 left-4">
                     <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/90 text-[#1E4AB8] shadow-sm">
@@ -88,11 +94,16 @@ export function NewsSection() {
                 onClick={() => onNavigate('news')}
               >
                 <div className="w-full sm:w-48 aspect-video rounded-xl overflow-hidden shrink-0 bg-white">
-                  <img
+                  <Image
                     src={item.image}
                     alt={item.title}
+                    width={1}
+                    height={1}
+                    sizes="(max-width: 640px) 100vw, 192px"
                     loading="lazy"
                     className="w-full h-full object-contain bg-white"
+                    style={{ width: '100%', height: '100%' }}
+                    unoptimized
                   />
                 </div>
                 <div>

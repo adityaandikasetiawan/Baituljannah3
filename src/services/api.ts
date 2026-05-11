@@ -4,7 +4,7 @@
  */
 
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1').replace(/\/$/, '');
 
 // Storage keys
 const TOKEN_KEY = 'baituljannah_token';
@@ -189,10 +189,10 @@ export const api = {
   // AUTHENTICATION
   // ============================================
   auth: {
-    login: async (email: string, password: string) => {
+    login: async (email: string, password: string, portal?: string) => {
       const response = await request('/auth/login', {
         method: 'POST',
-        body: { email, password },
+        body: { email, password, portal },
       });
       if (response.success && response.data) {
         setTokens(response.data.token, response.data.refresh_token);

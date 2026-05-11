@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Sidebar } from '../../../components/layout/Sidebar';
 import { useNavigationMenu } from '../../../hooks/useNavigationMenu';
-import { Image as ImageIcon, Plus, Edit, Trash2, Search, Filter, Calendar, X, Check, Upload, Grid, List, Download } from 'lucide-react';
+import { Image as ImageIcon, Plus, Edit, Trash2, Search, Filter, Calendar, X, Check, Upload, Grid, List } from 'lucide-react';
 import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
+import { Toaster, toast } from 'sonner';
 
 interface GalleryItem {
   id: number;
@@ -12,13 +14,15 @@ interface GalleryItem {
   category: string;
   unit: string;
   date: string;
-  photographer: string;
-  description: string;
+  keterangan: string;
   image: string;
-  downloads: number;
+  status: 'Published' | 'Draft';
+  uploadedByName: string;
+  views: number;
 }
 
 export default function AdminGalleryPage() {
+  const router = useRouter();
   const { menuItems } = useNavigationMenu('admin');
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
@@ -27,95 +31,186 @@ export default function AdminGalleryPage() {
   const [filterCategory, setFilterCategory] = useState('Semua');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState('');
 
   const accentColor = '#1E4AB8';
 
-  const [galleryList, setGalleryList] = useState<GalleryItem[]>([
-    {
-      id: 1,
-      title: 'Upacara Bendera Senin Pagi',
-      category: 'Kegiatan',
-      unit: 'Semua Unit',
-      date: '2024-12-02',
-      photographer: 'Admin Yayasan',
-      description: 'Upacara bendera rutin setiap hari Senin pagi di lapangan utama',
-      image: 'https://images.unsplash.com/photo-1740493430383-a0bfff9550a5',
-      downloads: 45
-    },
-    {
-      id: 2,
-      title: 'Pembelajaran di Kelas',
-      category: 'Akademik',
-      unit: 'SDIT',
-      date: '2024-11-28',
-      photographer: 'Admin SDIT',
-      description: 'Suasana pembelajaran aktif di kelas 3 SDIT',
-      image: 'https://images.unsplash.com/photo-1758270705799-12efda48d4f4',
-      downloads: 32
-    },
-    {
-      id: 3,
-      title: 'Pertandingan Futsal Antar Kelas',
-      category: 'Olahraga',
-      unit: 'SMPIT',
-      date: '2024-11-25',
-      photographer: 'Admin SMPIT',
-      description: 'Final pertandingan futsal antar kelas SMPIT',
-      image: 'https://images.unsplash.com/photo-1759200135568-566eb9ecaa81',
-      downloads: 67
-    },
-    {
-      id: 4,
-      title: 'Praktek Lab Sains',
-      category: 'Akademik',
-      unit: 'SMAIT',
-      date: '2024-11-20',
-      photographer: 'Admin SMAIT',
-      description: 'Siswa sedang melakukan eksperimen di laboratorium sains',
-      image: 'https://images.unsplash.com/photo-1605781645799-c9c7d820b4ac',
-      downloads: 28
-    },
-    {
-      id: 5,
-      title: 'Kegiatan Tahfidz',
-      category: 'Keagamaan',
-      unit: 'SDIT',
-      date: '2024-11-15',
-      photographer: 'Admin SDIT',
-      description: 'Siswa sedang muroja\'ah hafalan bersama ustadz',
-      image: 'https://images.unsplash.com/photo-1643429096345-9de0d2ab7e7c',
-      downloads: 89
-    },
-    {
-      id: 6,
-      title: 'Perpustakaan Sekolah',
-      category: 'Fasilitas',
-      unit: 'Yayasan',
-      date: '2024-11-10',
-      photographer: 'Admin Yayasan',
-      description: 'Perpustakaan modern dengan koleksi lengkap',
-      image: 'https://images.unsplash.com/photo-1595315343110-9b445a960442',
-      downloads: 51
+  const apiBaseUrl = useMemo(() => {
+    const base = (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/$/, '');
+    if (typeof window === 'undefined') return base;
+    const hostname = window.location.hostname.toLowerCase();
+    if (
+      hostname === 'smaitbaituljannah.sch.id' ||
+      hostname === 'www.smaitbaituljannah.sch.id' ||
+      hostname === 'smpitbaituljannah.sch.id' ||
+      hostname === 'www.smpitbaituljannah.sch.id'
+    ) {
+      return 'https://baituljannah.sch.id/api/v1';
     }
-  ]);
+    return base;
+  }, []);
 
-  const [formData, setFormData] = useState<Partial<GalleryItem>>({
+  const lockedUnitCode = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    const hostname = window.location.hostname.toLowerCase();
+    if (hostname === 'smpitbaituljannah.sch.id' || hostname === 'www.smpitbaituljannah.sch.id') return 'SMPIT';
+    if (hostname === 'smaitbaituljannah.sch.id' || hostname === 'www.smaitbaituljannah.sch.id') return 'SMAIT';
+    const path = window.location.pathname || '';
+    const m = path.match(/^\/(tkit|sdit|smpit|smait|slbit)\/admin(\/|$)/i);
+    if (!m?.[1]) return null;
+    return String(m[1]).toUpperCase();
+  }, []);
+
+  const getCookie = useCallback((name: string) => {
+    if (typeof document === 'undefined') return null;
+    const cookieStr = document.cookie || '';
+    const parts = cookieStr.split(';').map((p) => p.trim());
+    const prefix = `${encodeURIComponent(name)}=`;
+    for (const part of parts) {
+      if (part.startsWith(prefix)) {
+        return decodeURIComponent(part.slice(prefix.length));
+      }
+      if (part.startsWith(`${name}=`)) {
+        return decodeURIComponent(part.slice(`${name}=`.length));
+      }
+    }
+    return null;
+  }, []);
+
+  const getToken = useCallback(() => {
+    if (typeof window === 'undefined') return null;
+    const lsToken = localStorage.getItem('baituljannah_token');
+    if (lsToken) return lsToken;
+    const cookieToken = getCookie('token');
+    if (cookieToken) {
+      localStorage.setItem('baituljannah_token', cookieToken);
+      return cookieToken;
+    }
+    return null;
+  }, [getCookie]);
+
+  const getLoginPath = useCallback(() => {
+    if (typeof window === 'undefined') return '/login';
+    const hostname = window.location.hostname.toLowerCase();
+    const isUnitSubdomain =
+      hostname === 'smpitbaituljannah.sch.id' ||
+      hostname === 'www.smpitbaituljannah.sch.id' ||
+      hostname === 'smaitbaituljannah.sch.id' ||
+      hostname === 'www.smaitbaituljannah.sch.id';
+    if (isUnitSubdomain) return '/login';
+    const path = window.location.pathname || '';
+    const unitMatch = path.match(/^\/(tkit|sdit|smpit|smait|slbit)(\/|$)/i);
+    if (unitMatch?.[1]) return `/${unitMatch[1].toLowerCase()}/login`;
+    return '/login';
+  }, []);
+
+  const getStoredUserName = () => {
+    if (typeof window === 'undefined') return 'Admin';
+    try {
+      const userStr = localStorage.getItem('baituljannah_user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      return user?.full_name || user?.username || 'Admin';
+    } catch {
+      return 'Admin';
+    }
+  };
+
+  const [galleryList, setGalleryList] = useState<GalleryItem[]>([]);
+
+  const [formData, setFormData] = useState({
     title: '',
     category: 'Kegiatan',
-    unit: 'Semua Unit',
+    unit: lockedUnitCode || 'Semua',
     date: new Date().toISOString().split('T')[0],
-    photographer: 'Admin Yayasan',
-    description: '',
-    image: ''
+    keterangan: '',
+    status: 'Draft' as 'Published' | 'Draft'
   });
 
-  const categories = ['Semua', 'Akademik', 'Keagamaan', 'Olahraga', 'Kegiatan', 'Fasilitas', 'Prestasi'];
-  // const units = ['Semua Unit', 'TKIT', 'SDIT', 'SMPIT', 'SMAIT', 'SLBIT', 'Yayasan']; // Used in options
+  const categories = ['Semua', 'Akademik', 'Keagamaan', 'Olahraga', 'Kegiatan', 'Fasilitas', 'Prestasi', 'Lainnya'];
+
+  const fromApiStatus = (status: string | null | undefined): 'Published' | 'Draft' => {
+    if (status === 'published') return 'Published';
+    return 'Draft';
+  };
+
+  const isAllowedImageFile = (file: File) => {
+    const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+    if (file.type && allowedTypes.has(file.type)) return true;
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    const allowedExt = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif']);
+    return allowedExt.has(ext);
+  };
+
+  const toApiStatus = (status: 'Published' | 'Draft'): string => {
+    return status === 'Published' ? 'published' : 'draft';
+  };
+
+  const loadGallery = useCallback(async () => {
+    const token = getToken();
+    if (!token) {
+      setGalleryList([]);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const unitQuery = lockedUnitCode ? `&unit_code=${encodeURIComponent(lockedUnitCode)}` : '';
+      const res = await fetch(`${apiBaseUrl}/gallery/manage?limit=200`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.success) {
+        throw new Error(json?.message || 'Gagal memuat data galeri');
+      }
+      const rows = Array.isArray(json?.data) ? json.data : [];
+      setGalleryList(
+        rows.map((row: any) => {
+          const dateValue = row?.event_date || row?.created_at || new Date().toISOString();
+          return {
+            id: Number(row?.id),
+            title: String(row?.title || ''),
+            category: String(row?.category || 'Lainnya'),
+            unit: String(row?.unit_code || 'Semua'),
+            date: String(dateValue).split('T')[0],
+            keterangan: String(row?.keterangan || row?.description || ''),
+            image: String(row?.image_url || ''),
+            status: fromApiStatus(row?.status),
+            uploadedByName: String(row?.uploaded_by_name || 'Admin'),
+            views: Number(row?.views || 0),
+          } satisfies GalleryItem;
+        })
+      );
+    } catch (e: any) {
+      toast.error(e?.message || 'Gagal memuat data galeri');
+      setGalleryList([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [apiBaseUrl, getToken, lockedUnitCode]);
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      toast.error('Token tidak ditemukan. Silakan login ulang.');
+      router.replace(getLoginPath());
+      return;
+    }
+    loadGallery();
+  }, [getLoginPath, getToken, loadGallery, router]);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const filteredGallery = galleryList.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.description.toLowerCase().includes(searchQuery.toLowerCase());
+                         item.keterangan.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = filterCategory === 'Semua' || item.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
@@ -125,92 +220,141 @@ export default function AdminGalleryPage() {
     setFormData({
       title: '',
       category: 'Kegiatan',
-      unit: 'Semua Unit',
+      unit: lockedUnitCode || 'Semua',
       date: new Date().toISOString().split('T')[0],
-      photographer: 'Admin Yayasan',
-      description: '',
-      image: 'https://images.unsplash.com/photo-1740493430383-a0bfff9550a5'
+      keterangan: '',
+      status: 'Draft'
     });
+    setSelectedFile(null);
+    setPreviewUrl('');
     setShowModal(true);
   };
 
   const handleEdit = (item: GalleryItem) => {
     setModalMode('edit');
     setSelectedImage(item);
-    setFormData(item);
+    setFormData({
+      title: item.title,
+      category: item.category,
+      unit: item.unit,
+      date: item.date,
+      keterangan: item.keterangan,
+      status: item.status,
+    });
+    setSelectedFile(null);
+    setPreviewUrl(item.image || '');
     setShowModal(true);
   };
 
   const handleView = (item: GalleryItem) => {
     setModalMode('view');
     setSelectedImage(item);
-    setFormData(item);
     setShowModal(true);
   };
 
-  const handleSave = () => {
-    if (modalMode === 'create') {
-      const newItem: GalleryItem = {
-        ...formData as GalleryItem,
-        id: Math.max(...galleryList.map(i => i.id), 0) + 1,
-        downloads: 0
-      };
-      setGalleryList([newItem, ...galleryList]);
-    } else if (modalMode === 'edit' && selectedImage) {
-      setGalleryList(galleryList.map(item => 
-        item.id === selectedImage.id ? { ...formData as GalleryItem, id: selectedImage.id, downloads: selectedImage.downloads } : item
-      ));
+  const handleSave = async () => {
+    const token = getToken();
+    if (!token) return toast.error('Token tidak ditemukan. Silakan login ulang.');
+
+    const title = String(formData.title || '').trim();
+    if (!title) return toast.error('Judul foto wajib diisi');
+    if (modalMode === 'create' && !selectedFile) return toast.error('File gambar wajib diupload');
+
+    if (selectedFile) {
+      if (!isAllowedImageFile(selectedFile)) return toast.error('Format file tidak didukung. Gunakan JPG/PNG/WEBP/GIF.');
+      if (selectedFile.size > 10 * 1024 * 1024) return toast.error('Ukuran file maksimal 10MB');
     }
-    setShowModal(false);
-    setSelectedImage(null);
+
+    setIsLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append('title', title);
+      fd.append('category', formData.category || 'Lainnya');
+      fd.append('unit_code', lockedUnitCode || formData.unit || 'Semua');
+      fd.append('event_date', formData.date || '');
+      fd.append('status', toApiStatus(formData.status));
+      fd.append('keterangan', formData.keterangan || '');
+      if (selectedFile) fd.append('image', selectedFile);
+
+      const url =
+        modalMode === 'create'
+          ? `${apiBaseUrl}/gallery`
+          : `${apiBaseUrl}/gallery/${selectedImage?.id}`;
+
+      const res = await fetch(url, {
+        method: modalMode === 'create' ? 'POST' : 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json?.success) throw new Error(json?.message || 'Gagal menyimpan galeri');
+
+      toast.success(modalMode === 'create' ? 'Galeri berhasil dibuat' : 'Galeri berhasil diperbarui');
+      setShowModal(false);
+      setSelectedImage(null);
+      setSelectedFile(null);
+      setPreviewUrl('');
+      await loadGallery();
+    } catch (e: any) {
+      toast.error(e?.message || 'Gagal menyimpan galeri');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDelete = (id: number) => {
-    setGalleryList(galleryList.filter(item => item.id !== id));
-    setShowDeleteConfirm(null);
+  const handleDelete = async (id: number) => {
+    const token = getToken();
+    if (!token) return toast.error('Token tidak ditemukan. Silakan login ulang.');
+
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${apiBaseUrl}/gallery/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.success) throw new Error(json?.message || 'Gagal menghapus galeri');
+      toast.success('Galeri berhasil dihapus');
+      setShowDeleteConfirm(null);
+      await loadGallery();
+    } catch (e: any) {
+      toast.error(e?.message || 'Gagal menghapus galeri');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Simulate upload
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 10;
-        setUploadProgress(progress);
-        if (progress >= 100) {
-          clearInterval(interval);
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setFormData(prev => ({ ...prev, image: reader.result as string }));
-            setUploadProgress(0);
-          };
-          reader.readAsDataURL(file);
-        }
-      }, 200);
+      if (!isAllowedImageFile(file)) return toast.error('Format file tidak didukung. Gunakan JPG/PNG/WEBP/GIF.');
+      if (file.size > 10 * 1024 * 1024) return toast.error('Ukuran file maksimal 10MB');
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
     }
   };
 
   const stats = [
     { label: 'Total Foto', value: galleryList.length, color: 'from-blue-500 to-blue-600' },
     { label: 'Kategori', value: categories.length - 1, color: 'from-green-500 to-green-600' },
-    { label: 'Total Downloads', value: galleryList.reduce((sum, i) => sum + i.downloads, 0), color: 'from-purple-500 to-purple-600' },
+    { label: 'Published', value: galleryList.filter((i) => i.status === 'Published').length, color: 'from-green-500 to-green-600' },
     { label: 'Bulan Ini', value: galleryList.filter(i => new Date(i.date).getMonth() === new Date().getMonth()).length, color: 'from-orange-500 to-orange-600' }
   ];
 
   return (
     <div className="flex min-h-screen bg-gray-50">
+      <Toaster position="top-right" richColors />
       <Sidebar 
         menuItems={menuItems} 
-        siteName="Admin Panel" 
-        userName="Admin Utama"
+        accentColor={accentColor}
+        userName={getStoredUserName()}
         userRole="Super Admin"
       />
 
@@ -380,17 +524,14 @@ export default function AdminGalleryPage() {
                             </span>
                           </div>
                           <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-                          <p className="text-gray-600 text-sm mb-3">{item.description}</p>
+                          <p className="text-gray-600 text-sm mb-3">{item.keterangan}</p>
                           <div className="flex items-center gap-4 text-xs text-gray-500">
                             <div className="flex items-center gap-1">
                               <Calendar className="w-4 h-4" />
                               <span>{new Date(item.date).toLocaleDateString('id-ID')}</span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Download className="w-4 h-4" />
-                              <span>{item.downloads} downloads</span>
-                            </div>
-                            <span>Foto: {item.photographer}</span>
+                            <span>Upload: {item.uploadedByName}</span>
+                            <span>Views: {item.views}</span>
                           </div>
                         </div>
                       </div>
@@ -469,10 +610,10 @@ export default function AdminGalleryPage() {
                       </span>
                     </div>
                     <h3 className="text-2xl font-bold mb-2">{selectedImage.title}</h3>
-                    <p className="text-gray-600 leading-relaxed mb-4">{selectedImage.description}</p>
+                    <p className="text-gray-600 leading-relaxed mb-4">{selectedImage.keterangan}</p>
                     <div className="flex items-center gap-4 text-sm text-gray-500 border-t pt-4">
                       <Calendar className="w-4 h-4" />
-                      {new Date(selectedImage.date).toLocaleDateString('id-ID')} • {selectedImage.photographer}
+                      {new Date(selectedImage.date).toLocaleDateString('id-ID')} • {selectedImage.uploadedByName}
                     </div>
                   </div>
                 </div>
@@ -497,22 +638,11 @@ export default function AdminGalleryPage() {
                         <p className="text-gray-700 mb-1">Click to upload atau drag and drop</p>
                         <p className="text-sm text-gray-500">PNG, JPG, GIF up to 10MB</p>
                       </label>
-                      {uploadProgress > 0 && uploadProgress < 100 && (
-                        <div className="mt-4">
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="bg-[#1E4AB8] h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${uploadProgress}%` }}
-                            ></div>
-                          </div>
-                          <p className="text-sm text-gray-600 mt-2">Uploading... {uploadProgress}%</p>
-                        </div>
-                      )}
                     </div>
-                    {formData.image && (
+                    {(previewUrl || (modalMode === 'edit' && selectedImage?.image)) && (
                       <div className="mt-4 rounded-2xl overflow-hidden">
                         <ImageWithFallback
-                          src={formData.image}
+                          src={previewUrl || selectedImage?.image || ''}
                           alt="Preview"
                           className="w-full h-64 object-cover"
                         />
@@ -552,28 +682,59 @@ export default function AdminGalleryPage() {
                         name="unit"
                         value={formData.unit}
                         onChange={handleInputChange}
+                        disabled={Boolean(lockedUnitCode)}
                         className="w-full px-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#1E4AB8] focus:ring-2 focus:ring-[#1E4AB8]/20 bg-white"
                       >
-                        <option value="Semua Unit">Semua Unit</option>
-                        <option value="TKIT">TKIT</option>
-                        <option value="SDIT">SDIT</option>
-                        <option value="SMPIT">SMPIT</option>
-                        <option value="SMAIT">SMAIT</option>
-                        <option value="SLBIT">SLBIT</option>
-                        <option value="Yayasan">Yayasan</option>
+                        {lockedUnitCode ? (
+                          <option value={lockedUnitCode}>{lockedUnitCode}</option>
+                        ) : (
+                          <>
+                            <option value="Semua">Semua</option>
+                            <option value="TKIT">TKIT</option>
+                            <option value="SDIT">SDIT</option>
+                            <option value="SMPIT">SMPIT</option>
+                            <option value="SMAIT">SMAIT</option>
+                            <option value="SLBIT">SLBIT</option>
+                            <option value="Yayasan">Yayasan</option>
+                          </>
+                        )}
                       </select>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">Deskripsi</label>
+                    <label className="block text-sm font-medium mb-2">Tanggal Kegiatan</label>
+                    <input
+                      type="date"
+                      name="date"
+                      value={formData.date}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#1E4AB8] focus:ring-2 focus:ring-[#1E4AB8]/20"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Status</label>
+                    <select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#1E4AB8] focus:ring-2 focus:ring-[#1E4AB8]/20 bg-white"
+                    >
+                      <option value="Draft">Draft</option>
+                      <option value="Published">Published</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Keterangan</label>
                     <textarea
-                      name="description"
-                      value={formData.description}
+                      name="keterangan"
+                      value={formData.keterangan}
                       onChange={handleInputChange}
                       rows={4}
                       className="w-full px-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#1E4AB8] focus:ring-2 focus:ring-[#1E4AB8]/20"
-                      placeholder="Deskripsi foto..."
+                      placeholder="Tambahkan keterangan untuk foto..."
                     />
                   </div>
                 </>
@@ -590,7 +751,8 @@ export default function AdminGalleryPage() {
               {modalMode !== 'view' && (
                 <button
                   onClick={handleSave}
-                  className="flex-1 px-6 py-3 bg-[#1E4AB8] text-white rounded-xl hover:bg-[#1a3d9a] transition-colors flex items-center justify-center gap-2"
+                  disabled={isLoading}
+                  className="flex-1 px-6 py-3 bg-[#1E4AB8] text-white rounded-xl hover:bg-[#1a3d9a] disabled:opacity-60 transition-colors flex items-center justify-center gap-2"
                 >
                   <Check className="w-5 h-5" />
                   <span>{modalMode === 'create' ? 'Upload Foto' : 'Simpan Perubahan'}</span>
@@ -632,4 +794,3 @@ export default function AdminGalleryPage() {
     </div>
   );
 }
-

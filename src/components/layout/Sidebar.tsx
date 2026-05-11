@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LucideIcon, ChevronDown, LogOut, Menu, X } from 'lucide-react';
+import Image from 'next/image';
 
 interface MenuItem {
   label: string;
@@ -15,8 +16,9 @@ interface MenuItem {
 interface SidebarProps {
   menuItems: MenuItem[];
   accentColor?: string;
-  userRole: string;
-  userName: string;
+  userRole?: string;
+  userName?: string;
+  siteName?: string;
   logo?: string;
   panelTitle?: string;
   panelSubtitle?: string;
@@ -25,16 +27,18 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({
   menuItems,
   accentColor = '#1E4AB8',
-  userRole,
-  userName,
+  userRole = 'Admin',
+  userName = 'Admin',
+  siteName,
   logo,
-  panelTitle = 'Admin Panel',
+  panelTitle = siteName || 'Admin Panel',
   panelSubtitle = 'Baituljannah'
 }) => {
   const router = useRouter();
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [didLogoError, setDidLogoError] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(true);
 
   const resolvedLogoSrc = useMemo(() => {
     const input = logo?.trim();
@@ -49,16 +53,132 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setDidLogoError(false);
   }, [resolvedLogoSrc]);
 
+  useEffect(() => {
+    const pathname = window.location.pathname || '';
+    const unitRoleMatch = pathname.match(/^\/(tkit|sdit|smpit|smait|slbit)\/(admin|teacher|student|parent)(\/|$)/i);
+    const sectionMatch = pathname.match(/^\/(admin|teacher|student|parent)(\/|$)/i);
+    const roleKey = (unitRoleMatch?.[2] || sectionMatch?.[1] || '').toLowerCase();
+    const requiredRole =
+      roleKey === 'admin' ? 'admin' : roleKey === 'teacher' ? 'teacher' : roleKey === 'student' ? 'student' : roleKey === 'parent' ? 'parent' : null;
+
+    if (!requiredRole) {
+      setIsAuthorized(true);
+      return;
+    }
+
+    const getCookie = (name: string) => {
+      const cookieStr = document.cookie || '';
+      const parts = cookieStr.split(';').map((p) => p.trim());
+      const prefix = `${encodeURIComponent(name)}=`;
+      for (const part of parts) {
+        if (part.startsWith(prefix)) return decodeURIComponent(part.slice(prefix.length));
+        if (part.startsWith(`${name}=`)) return decodeURIComponent(part.slice(`${name}=`.length));
+      }
+      return null;
+    };
+
+    const token = localStorage.getItem('baituljannah_token') || getCookie('token');
+    const role = (getCookie('role') || '').toLowerCase();
+    if (!token || role !== requiredRole) {
+      const hostname = window.location.hostname.toLowerCase();
+      const isUnitSubdomain =
+        hostname === 'smpitbaituljannah.sch.id' ||
+        hostname === 'www.smpitbaituljannah.sch.id' ||
+        hostname === 'smaitbaituljannah.sch.id' ||
+        hostname === 'www.smaitbaituljannah.sch.id';
+      const unitMatch = pathname.match(/^\/(tkit|sdit|smpit|smait|slbit)(\/|$)/i);
+      const loginPath = isUnitSubdomain ? '/login' : unitMatch?.[1] ? `/${unitMatch[1].toLowerCase()}/login` : '/login';
+
+      try {
+        localStorage.removeItem('baituljannah_token');
+        localStorage.removeItem('baituljannah_user');
+      } catch {}
+
+      const expires = 'expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      const base = `path=/; ${expires}; SameSite=Lax`;
+      const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `role=; ${base}${secure}`;
+      document.cookie = `token=; ${base}${secure}`;
+      document.cookie = `role=; ${base}; Domain=.baituljannah.sch.id${secure}`;
+      document.cookie = `token=; ${base}; Domain=.baituljannah.sch.id${secure}`;
+
+      setIsAuthorized(false);
+      router.replace(loginPath);
+      return;
+    }
+
+    setIsAuthorized(true);
+  }, [router]);
+
+  useEffect(() => {
+    const shouldReload = (message: string) => {
+      const msg = message.toLowerCase();
+      return msg.includes('chunkloaderror') || msg.includes('failed to load chunk') || msg.includes('loading chunk');
+    };
+
+    const reloadOnce = () => {
+      const key = `chunk-reload:${window.location.pathname}`;
+      try {
+        if (sessionStorage.getItem(key)) return;
+        sessionStorage.setItem(key, '1');
+      } catch {}
+      window.location.reload();
+    };
+
+    const onError = (event: ErrorEvent) => {
+      const name = String((event as any)?.error?.name || '');
+      const msg = String((event as any)?.error?.message || event.message || '');
+      if (name === 'ChunkLoadError' || shouldReload(msg)) reloadOnce();
+    };
+
+    const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const reason = (event as any)?.reason;
+      const name = String(reason?.name || '');
+      const msg = String(reason?.message || reason || '');
+      if (name === 'ChunkLoadError' || shouldReload(msg)) reloadOnce();
+    };
+
+    window.addEventListener('error', onError);
+    window.addEventListener('unhandledrejection', onUnhandledRejection);
+    return () => {
+      window.removeEventListener('error', onError);
+      window.removeEventListener('unhandledrejection', onUnhandledRejection);
+    };
+  }, []);
+
   const toggleSubmenu = (label: string) => {
     setOpenSubmenu(openSubmenu === label ? null : label);
   };
 
   const handleLogout = () => {
-    document.cookie = 'role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+    const hostname = window.location.hostname.toLowerCase();
+    const isUnitSubdomain =
+      hostname === 'smpitbaituljannah.sch.id' ||
+      hostname === 'www.smpitbaituljannah.sch.id' ||
+      hostname === 'smaitbaituljannah.sch.id' ||
+      hostname === 'www.smaitbaituljannah.sch.id';
+    const pathname = window.location.pathname || '';
+    const unitMatch = pathname.match(/^\/(tkit|sdit|smpit|smait|slbit)(\/|$)/i);
+    const loginPath = isUnitSubdomain ? '/login' : unitMatch?.[1] ? `/${unitMatch[1].toLowerCase()}/login` : '/login';
+
+    try {
+      localStorage.removeItem('baituljannah_token');
+      localStorage.removeItem('baituljannah_user');
+    } catch {}
+
+    const expires = 'expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    const base = `path=/; ${expires}; SameSite=Lax`;
+    const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = `role=; ${base}${secure}`;
+    document.cookie = `token=; ${base}${secure}`;
+    document.cookie = `role=; ${base}; Domain=.baituljannah.sch.id${secure}`;
+    document.cookie = `token=; ${base}; Domain=.baituljannah.sch.id${secure}`;
     setIsMobileMenuOpen(false);
-    router.replace('/login');
+    router.replace(loginPath);
     router.refresh();
   };
+
+  if (!isAuthorized) return null;
 
   const SidebarContent = () => (
     <>
@@ -69,10 +189,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {didLogoError ? (
               <span className="text-white text-lg">🕌</span>
             ) : (
-              <img
+              <Image
                 src={resolvedLogoSrc}
                 alt="Baituljannah"
+                width={40}
+                height={40}
                 className="w-full h-full object-contain p-1"
+                unoptimized
                 onError={() => setDidLogoError(true)}
               />
             )}

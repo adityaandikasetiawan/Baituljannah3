@@ -161,17 +161,18 @@ export default function StudentExtracurricularPage() {
 
     try {
       const token = getToken();
-      const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
       if (isNowRegistered) {
         await fetch(`${API_BASE_URL}/extracurricular/registrations`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...authHeader },
+          headers,
           body: JSON.stringify({ student_nis: student.nis, activity_id: activityId }),
         });
       } else {
         await fetch(`${API_BASE_URL}/extracurricular/registrations`, {
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json', ...authHeader },
+          headers,
           body: JSON.stringify({ student_nis: student.nis, activity_id: activityId }),
         });
       }

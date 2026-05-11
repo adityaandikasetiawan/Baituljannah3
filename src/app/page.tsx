@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
@@ -426,10 +427,14 @@ export default function Home() {
           <div className="flex h-full">
             {heroSlides.map((slide, index) => (
               <div key={index} className="relative flex-[0_0_100%] min-w-0 h-full">
-                <img
+                <Image
                   src={slide.image}
                   alt={slide.title}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="100vw"
+                  className="object-cover"
+                  priority={index === 0}
+                  unoptimized
                 />
               </div>
             ))}
@@ -481,9 +486,9 @@ export default function Home() {
               <div key={u.n} className="flex flex-col items-center gap-4">
                 <div
                   onClick={() => onNavigate(u.u)}
-                  className="w-28 h-28 md:w-32 md:h-32 flex items-center justify-center transition-all duration-300 hover:scale-110 cursor-pointer"
+                  className="relative w-28 h-28 md:w-32 md:h-32 flex items-center justify-center transition-all duration-300 hover:scale-110 cursor-pointer"
                 >
-                  <img src={u.i} alt={u.n} className="w-full h-full object-contain drop-shadow-lg" />
+                  <Image src={u.i} alt={u.n} fill sizes="128px" className="object-contain drop-shadow-lg" unoptimized />
                 </div>
                 <div className="text-center">
                   <h3 className="text-white text-base md:text-lg mb-3">{u.n}</h3>
@@ -639,11 +644,13 @@ export default function Home() {
               {news.length > 0 && (
                 <div className="group cursor-pointer" onClick={() => onNavigate('news')}>
                   <div className="relative overflow-hidden rounded-2xl mb-4 aspect-[4/3]">
-                    <img 
-                      src={news[0].image} 
+                    <Image
+                      src={news[0].image}
                       alt={news[0].title}
-                      loading="lazy"
-                      className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 40vw"
+                      className="object-cover transform group-hover:scale-110 transition-transform duration-700"
+                      unoptimized
                     />
                     <div className="absolute top-4 left-4">
                       <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/90 text-[#1E4AB8] shadow-sm">
@@ -674,12 +681,14 @@ export default function Home() {
                   className="group flex flex-col sm:flex-row gap-6 p-4 rounded-2xl hover:bg-gray-50 transition-colors cursor-pointer"
                   onClick={() => onNavigate('news')}
                 >
-                  <div className="w-full sm:w-48 aspect-video rounded-xl overflow-hidden shrink-0">
-                    <img 
-                      src={item.image} 
+                  <div className="relative w-full sm:w-48 aspect-video rounded-xl overflow-hidden shrink-0">
+                    <Image
+                      src={item.image}
                       alt={item.title}
-                      loading="lazy"
-                      className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                      fill
+                      sizes="192px"
+                      className="object-cover transform group-hover:scale-110 transition-transform duration-700"
+                      unoptimized
                     />
                   </div>
                   <div>

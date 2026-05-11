@@ -12,6 +12,16 @@ export default function UnitGuruStaffPage({ params }: { params: Promise<{ unit: 
   const router = useRouter();
   const { unit: slug } = React.use(params);
   const config = getUnitConfig(slug);
+  const apiBaseUrl = React.useMemo(() => {
+    const base = (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/$/, '');
+    if (typeof window === 'undefined') return base;
+    const hostname = window.location.hostname.toLowerCase();
+    if (hostname === 'smaitbaituljannah.sch.id' || hostname === 'www.smaitbaituljannah.sch.id') {
+      return 'https://baituljannah.sch.id/api/v1';
+    }
+    return base;
+  }, []);
+  const [cmsContent, setCmsContent] = React.useState<any | null>(null);
   const isAsrama = slug === 'asrama';
   const staffMenuLabel = isAsrama ? 'Musyrif & Musyrifah' : 'Guru & Staff';
   const curriculumMenuLabel = isAsrama ? 'Program' : 'Kurikulum';
@@ -30,9 +40,26 @@ export default function UnitGuruStaffPage({ params }: { params: Promise<{ unit: 
       ],
     },
     { label: 'Karir', href: '#', onClick: () => router.push('/career') },
-    { label: 'PPDB', href: '#', onClick: () => router.push('/admission') },
+    { label: 'PPDB', href: '#', onClick: () => router.push(`/${slug}/ppdb`) },
     { label: 'Kontak', href: '#', onClick: () => router.push(`/${slug}/kontak`) }
   ];
+
+  React.useEffect(() => {
+    const unitCode = String(slug || '').trim().toUpperCase();
+    if (!unitCode || unitCode === 'ASRAMA') {
+      setCmsContent(null);
+      return;
+    }
+    const controller = new AbortController();
+    fetch(`${apiBaseUrl}/unit-pages?unit_code=${encodeURIComponent(unitCode)}&page_key=guru-staff`, { signal: controller.signal })
+      .then(async (res) => {
+        const json = await res.json().catch(() => null);
+        if (!res.ok || !json?.success) throw new Error(json?.message || 'Gagal memuat CMS');
+        setCmsContent(json?.data?.content || null);
+      })
+      .catch(() => setCmsContent(null));
+    return () => controller.abort();
+  }, [apiBaseUrl, slug]);
 
   if (!config) return null;
 
@@ -231,7 +258,7 @@ export default function UnitGuruStaffPage({ params }: { params: Promise<{ unit: 
     },
   };
 
-  const team =
+  const baseTeam =
     teamByUnit[slug] ??
     ({
       leaders: [
@@ -256,6 +283,25 @@ export default function UnitGuruStaffPage({ params }: { params: Promise<{ unit: 
         { title: 'Kolaboratif', desc: 'Komunikasi dan sinergi sekolah, orang tua, dan siswa.', icon: Users },
       ],
     } as const);
+  const team = (() => {
+    if (!cmsContent || typeof cmsContent !== 'object') return baseTeam;
+    const nextLeaders = Array.isArray(cmsContent?.leaders) ? cmsContent.leaders : baseTeam.leaders;
+    const nextTeachers = Array.isArray(cmsContent?.teachers) ? cmsContent.teachers : baseTeam.teachers;
+    const nextValues = Array.isArray(cmsContent?.values)
+      ? baseTeam.values.map((v: any, idx: number) => {
+          const o = cmsContent.values[idx];
+          if (!o || typeof o !== 'object') return v;
+          return {
+            ...v,
+            title: typeof o.title === 'string' ? o.title : v.title,
+            desc: typeof o.desc === 'string' ? o.desc : v.desc,
+          };
+        })
+      : baseTeam.values;
+    return { leaders: nextLeaders, teachers: nextTeachers, values: nextValues };
+  })();
+
+  
 
   return (
     <div className="min-h-screen bg-white">
@@ -324,7 +370,7 @@ export default function UnitGuruStaffPage({ params }: { params: Promise<{ unit: 
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {team.leaders.map((leader) => (
+            {team.leaders.map((leader: any) => (
               <div key={leader.name} className="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden">
                 <div className="aspect-[16/10] bg-gray-100 overflow-hidden">
                   <ImageWithFallback src={leader.image} alt={leader.name} className="w-full h-full object-cover" />
@@ -358,7 +404,7 @@ export default function UnitGuruStaffPage({ params }: { params: Promise<{ unit: 
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {team.teachers.map((t) => (
+            {team.teachers.map((t: any) => (
               <div key={t.name} className="bg-white rounded-2xl p-7 shadow-soft border border-gray-100 hover:shadow-strong transition-all">
                 <div
                   className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
@@ -380,7 +426,7 @@ export default function UnitGuruStaffPage({ params }: { params: Promise<{ unit: 
       <section className="section-padding">
         <div className="container-custom">
           <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {team.values.map((item) => (
+            {team.values.map((item: any) => (
               <div key={item.title} className="bg-white rounded-2xl p-7 shadow-soft border border-gray-100">
                 <div
                   className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"

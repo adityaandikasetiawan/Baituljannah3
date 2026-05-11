@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
+import Image from 'next/image';
 
 interface UnitHeroCarouselProps {
   unitName: string;
@@ -9,6 +10,7 @@ interface UnitHeroCarouselProps {
   icon: string;
   slug?: string;
   onCtaClick?: () => void;
+  cmsSlides?: Array<{ image?: string; badge?: string; title?: string; description?: string }>;
 }
 
 export const UnitHeroCarousel: React.FC<UnitHeroCarouselProps> = ({
@@ -17,7 +19,8 @@ export const UnitHeroCarousel: React.FC<UnitHeroCarouselProps> = ({
   accentColor,
   icon,
   slug,
-  onCtaClick = () => {}
+  onCtaClick = () => {},
+  cmsSlides = []
 }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [didIconError, setDidIconError] = useState(false);
@@ -39,10 +42,13 @@ export const UnitHeroCarousel: React.FC<UnitHeroCarouselProps> = ({
   const defaultBadge = (
     <span className="inline-flex items-center gap-2">
       {resolvedIconSrc && !didIconError ? (
-        <img
+        <Image
           src={resolvedIconSrc}
           alt={unitName}
+          width={20}
+          height={20}
           className="w-5 h-5 object-contain"
+          unoptimized
           onError={() => setDidIconError(true)}
         />
       ) : (
@@ -142,7 +148,22 @@ export const UnitHeroCarousel: React.FC<UnitHeroCarouselProps> = ({
     ];
   };
 
-  const slides = getSlides();
+  const baseSlides = getSlides();
+  const slides =
+    Array.isArray(cmsSlides) && cmsSlides.length > 0
+      ? baseSlides.map((base, index) => {
+          const override = cmsSlides[index];
+          if (!override || typeof override !== 'object') return base;
+          return {
+            ...base,
+            image: typeof override.image === 'string' && override.image.trim() ? override.image : base.image,
+            badge: typeof override.badge === 'string' && override.badge.trim() ? override.badge : base.badge,
+            title: typeof override.title === 'string' && override.title.trim() ? override.title : base.title,
+            description:
+              typeof override.description === 'string' && override.description.trim() ? override.description : base.description,
+          };
+        })
+      : baseSlides;
 
   // Auto-play
   useEffect(() => {

@@ -14,6 +14,18 @@ const getSchoolUnitIdByCode = async (code) => {
   return row ? Number(row.id) : null;
 };
 
+const resolveUnitCodeFromRequestHost = (req) => {
+  const forwardedHost = req.headers['x-forwarded-host'] || req.headers.host || '';
+  const hostname = String(Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost)
+    .split(',')[0]
+    .trim()
+    .split(':')[0]
+    .toLowerCase();
+  if (hostname === 'smpitbaituljannah.sch.id' || hostname === 'www.smpitbaituljannah.sch.id') return 'SMPIT';
+  if (hostname === 'smaitbaituljannah.sch.id' || hostname === 'www.smaitbaituljannah.sch.id') return 'SMAIT';
+  return null;
+};
+
 const ensureUniqueSlug = async (base, excludeId) => {
   const cleaned = slugify(base) || `news-${Date.now()}`;
   const params = excludeId ? [cleaned, excludeId] : [cleaned];
@@ -130,12 +142,24 @@ exports.getAllNewsManage = async (req, res) => {
     const whereConditions = [];
     const params = [];
 
+    const forcedUnitCode = resolveUnitCodeFromRequestHost(req);
+    if (forcedUnitCode) {
+      whereConditions.push('su.code = ?');
+      params.push(forcedUnitCode);
+    } else if (req.user?.role_raw === 'admin_unit') {
+      if (!req.user.school_unit_id) {
+        return res.status(403).json({ success: false, message: 'Akun admin unit belum di-set unitnya' });
+      }
+      whereConditions.push('n.school_unit_id = ?');
+      params.push(Number(req.user.school_unit_id));
+    }
+
     if (category) {
       whereConditions.push('n.category = ?');
       params.push(category);
     }
 
-    if (unit_sekolah && String(unit_sekolah).toLowerCase() !== 'semua') {
+    if (!forcedUnitCode && req.user?.role_raw !== 'admin_unit' && unit_sekolah && String(unit_sekolah).toLowerCase() !== 'semua') {
       whereConditions.push('su.code = ?');
       params.push(unit_sekolah);
     }
@@ -254,7 +278,14 @@ exports.createNews = async (req, res) => {
 
     const slug = await ensureUniqueSlug(title, null);
     const excerpt = String(content || '').length > 200 ? `${String(content).slice(0, 200)}...` : String(content || '');
-    const schoolUnitId = await getSchoolUnitIdByCode(unit_sekolah);
+    const forcedUnitCode = resolveUnitCodeFromRequestHost(req);
+    let schoolUnitId = await getSchoolUnitIdByCode(unit_sekolah);
+    if (forcedUnitCode) {
+      schoolUnitId = await getSchoolUnitIdByCode(forcedUnitCode);
+    } else if (req.user?.role_raw === 'admin_unit') {
+      if (!req.user.school_unit_id) return res.status(403).json({ success: false, message: 'Akun admin unit belum di-set unitnya' });
+      schoolUnitId = Number(req.user.school_unit_id);
+    }
     const publishedAt = status === 'published' ? (publish_date ? new Date(publish_date) : new Date()) : null;
 
     const newsId = await insert(
@@ -309,8 +340,21 @@ exports.updateNews = async (req, res) => {
     const { id } = req.params;
     const { title, content, category, unit_sekolah, image_url, status, publish_date } = req.body;
 
-    const existing = await getOne('SELECT id, author_id, title, status, published_at FROM news WHERE id = ?', [id]);
+    const existing = await getOne('SELECT id, author_id, school_unit_id, title, status, published_at FROM news WHERE id = ?', [id]);
     if (!existing) return res.status(404).json({ success: false, message: 'Berita tidak ditemukan' });
+
+    const forcedUnitCode = resolveUnitCodeFromRequestHost(req);
+    if (forcedUnitCode) {
+      const forcedId = await getSchoolUnitIdByCode(forcedUnitCode);
+      if (forcedId && Number(existing.school_unit_id) !== Number(forcedId)) {
+        return res.status(403).json({ success: false, message: 'Tidak boleh mengubah data unit lain' });
+      }
+    } else if (req.user?.role_raw === 'admin_unit') {
+      if (!req.user.school_unit_id) return res.status(403).json({ success: false, message: 'Akun admin unit belum di-set unitnya' });
+      if (Number(existing.school_unit_id) !== Number(req.user.school_unit_id)) {
+        return res.status(403).json({ success: false, message: 'Tidak boleh mengubah data unit lain' });
+      }
+    }
 
     if (req.user.role !== 'admin' && Number(existing.author_id) !== Number(req.user.id)) {
       return res.status(403).json({ success: false, message: 'Anda tidak memiliki akses untuk mengupdate berita ini' });
@@ -338,7 +382,12 @@ exports.updateNews = async (req, res) => {
       params.push(category || null);
     }
     if (unit_sekolah !== undefined) {
-      const schoolUnitId = await getSchoolUnitIdByCode(unit_sekolah);
+      let schoolUnitId = await getSchoolUnitIdByCode(unit_sekolah);
+      if (forcedUnitCode) {
+        schoolUnitId = await getSchoolUnitIdByCode(forcedUnitCode);
+      } else if (req.user?.role_raw === 'admin_unit') {
+        schoolUnitId = req.user.school_unit_id == null ? null : Number(req.user.school_unit_id);
+      }
       updates.push('school_unit_id = ?');
       params.push(schoolUnitId);
     }
@@ -400,8 +449,22 @@ exports.updateNews = async (req, res) => {
 exports.deleteNews = async (req, res) => {
   try {
     const { id } = req.params;
-    const row = await getOne('SELECT id FROM news WHERE id = ?', [id]);
+    const row = await getOne('SELECT id, school_unit_id FROM news WHERE id = ?', [id]);
     if (!row) return res.status(404).json({ success: false, message: 'Berita tidak ditemukan' });
+
+    const forcedUnitCode = resolveUnitCodeFromRequestHost(req);
+    if (forcedUnitCode) {
+      const forcedId = await getSchoolUnitIdByCode(forcedUnitCode);
+      if (forcedId && Number(row.school_unit_id) !== Number(forcedId)) {
+        return res.status(403).json({ success: false, message: 'Tidak boleh menghapus data unit lain' });
+      }
+    } else if (req.user?.role_raw === 'admin_unit') {
+      if (!req.user.school_unit_id) return res.status(403).json({ success: false, message: 'Akun admin unit belum di-set unitnya' });
+      if (Number(row.school_unit_id) !== Number(req.user.school_unit_id)) {
+        return res.status(403).json({ success: false, message: 'Tidak boleh menghapus data unit lain' });
+      }
+    }
+
     await deleteRow('DELETE FROM news WHERE id = ?', [id]);
     res.status(200).json({ success: true, message: 'Berita berhasil dihapus', data: {} });
   } catch (error) {

@@ -9,6 +9,7 @@ import { FormTextarea } from '../../components/common/FormTextarea';
 import { FormSelect } from '../../components/common/FormSelect';
 import { MapPin, Phone, Mail, Clock, Send, MessageCircle } from 'lucide-react';
 import { useNavigationMenu } from '../../hooks/useNavigationMenu';
+import Image from 'next/image';
 
 export default function ContactPage() {
   const { onNavigate, menuItems } = useNavigationMenu();
@@ -30,35 +31,35 @@ export default function ContactPage() {
     {
       icon: MapPin,
       title: 'Alamat',
-      details: ['Jl. Pendidikan No. 123', 'Kota Bandung, Jawa Barat 40123'],
+      details: ['Jl. Pramuka No.43, Kemiling Permai', 'Kec. Kemiling, Kota Bandar Lampung, Lampung 35153'],
       color: '#1E4AB8'
     },
     {
       icon: Phone,
       title: 'Telepon',
-      details: ['(022) 1234-5678', '+62 812-3456-7890'],
+      details: ['(0721) 273781'],
       color: '#10B981'
     },
     {
       icon: Mail,
       title: 'Email',
-      details: ['info@baituljannah.sch.id', 'admin@baituljannah.sch.id'],
+      details: ['- (belum ada email khusus)'],
       color: '#F97316'
     },
     {
       icon: Clock,
       title: 'Jam Operasional',
-      details: ['Senin - Jumat: 07:00 - 16:00', 'Sabtu: 07:00 - 13:00'],
+      details: ['Senin - Jumat: 07:00 - 16:00'],
       color: '#8B5CF6'
     }
   ];
 
   const units = [
-    { name: 'TKIT Baituljannah', phone: '(022) 1234-5601', email: 'tkit@baituljannah.sch.id' },
-    { name: 'SDIT Baituljannah', phone: '(022) 1234-5602', email: 'sdit@baituljannah.sch.id' },
-    { name: 'SMPIT Baituljannah', phone: '(022) 1234-5603', email: 'smpit@baituljannah.sch.id' },
-    { name: 'SMAIT Baituljannah', phone: '(022) 1234-5604', email: 'smait@baituljannah.sch.id' },
-    { name: 'SLBIT Baituljannah', phone: '(022) 1234-5605', email: 'slbit@baituljannah.sch.id' }
+    { name: 'TKIT Baituljannah', phone: '(0721) 273781', email: '-' },
+    { name: 'SDIT Baituljannah', phone: '(0721) 273781', email: '-' },
+    { name: 'SMPIT Baituljannah', phone: '(0721) 273781', email: '-' },
+    { name: 'SMAIT Baituljannah', phone: '(0721) 273781', email: '-' },
+    { name: 'SLBIT Baituljannah', phone: '(0721) 273781', email: '-' }
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -96,10 +97,15 @@ export default function ContactPage() {
         {/* Hero Section */}
         <section className="relative py-20 bg-blue-900 text-white overflow-hidden">
           <div className="absolute inset-0 z-0">
-            <img 
-              src="https://images.unsplash.com/photo-1423666639041-f56000c27a9a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" 
-              alt="Contact Background" 
+            <Image
+              src="https://images.unsplash.com/photo-1423666639041-f56000c27a9a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80"
+              alt="Contact Background"
+              width={1}
+              height={1}
+              sizes="100vw"
               className="w-full h-full object-cover opacity-20"
+              style={{ width: '100%', height: '100%' }}
+              unoptimized
             />
             <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 to-indigo-900/80"></div>
           </div>
@@ -256,7 +262,7 @@ export default function ContactPage() {
                 {/* Google Map */}
                 <div className="bg-white rounded-2xl shadow-lg p-2 border border-gray-100 h-80 overflow-hidden">
                   <iframe 
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.362148003456!2d107.6181!3d-6.9147!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwNTQnNTIuOSJTIDEwN8KwMzcnMDUuMiJF!5e0!3m2!1sen!2sid!4v1620000000000!5m2!1sen!2sid" 
+                    src="https://www.google.com/maps?q=Jl.%20Pramuka%20No.43%2C%20Kemiling%20Permai%2C%20Kec.%20Kemiling%2C%20Kota%20Bandar%20Lampung%2C%20Lampung%2035153&output=embed" 
                     width="100%" 
                     height="100%" 
                     style={{ border: 0, borderRadius: '1rem' }} 

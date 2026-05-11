@@ -30,6 +30,16 @@ export const UnitSchoolClient: React.FC<UnitSchoolClientProps> = ({
 }) => {
   const { onNavigate } = useNavigationMenu();
   const slug = (unitSlug || unitName || '').toString().trim().toLowerCase();
+  const apiBaseUrl = React.useMemo(() => {
+    const base = (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/$/, '');
+    if (typeof window === 'undefined') return base;
+    const hostname = window.location.hostname.toLowerCase();
+    if (hostname === 'smaitbaituljannah.sch.id' || hostname === 'www.smaitbaituljannah.sch.id') {
+      return 'https://baituljannah.sch.id/api/v1';
+    }
+    return base;
+  }, []);
+  const [homeCmsContent, setHomeCmsContent] = React.useState<any | null>(null);
   const unitLogo = (() => {
     const input = icon?.trim();
     if (!input) return undefined;
@@ -42,6 +52,23 @@ export const UnitSchoolClient: React.FC<UnitSchoolClientProps> = ({
   const isAsrama = slug === 'asrama';
   const isSMP = slug === 'smpit';
   const isSMA = slug === 'smait';
+
+  React.useEffect(() => {
+    const unitCode = String(slug || '').trim().toUpperCase();
+    if (!unitCode || unitCode === 'ASRAMA') {
+      setHomeCmsContent(null);
+      return;
+    }
+    const controller = new AbortController();
+    fetch(`${apiBaseUrl}/unit-pages?unit_code=${encodeURIComponent(unitCode)}&page_key=home`, { signal: controller.signal })
+      .then(async (res) => {
+        const json = await res.json().catch(() => null);
+        if (!res.ok || !json?.success) throw new Error(json?.message || 'Gagal memuat CMS Home');
+        setHomeCmsContent(json?.data?.content || null);
+      })
+      .catch(() => setHomeCmsContent(null));
+    return () => controller.abort();
+  }, [apiBaseUrl, slug]);
 
   const menuItems = [
     { label: 'Beranda', href: '#', onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
@@ -292,6 +319,100 @@ export const UnitSchoolClient: React.FC<UnitSchoolClientProps> = ({
   };
 
   const profileImages = getProfileImages();
+  const homeContent = homeCmsContent && typeof homeCmsContent === 'object' ? homeCmsContent : {};
+
+  const about = {
+    badge: String(homeContent?.about?.badge || 'Tentang Kami'),
+    title: String(homeContent?.about?.title || `Profil ${unitName}`),
+    description:
+      String(homeContent?.about?.description || '').trim() ||
+      `${fullName} adalah lembaga pendidikan Islam terpadu yang berkomitmen untuk memberikan pendidikan berkualitas dengan mengintegrasikan kurikulum nasional dan nilai-nilai Islam. Kami fokus pada pengembangan kognitif, afektif, dan psikomotorik siswa secara seimbang.`,
+    features: [
+      {
+        title: String(homeContent?.about?.features?.[0]?.title || 'Kurikulum Terintegrasi'),
+        description:
+          String(homeContent?.about?.features?.[0]?.description || '').trim() ||
+          'Menggabungkan kurikulum nasional dengan pendidikan agama Islam yang komprehensif',
+        icon: BookOpen,
+      },
+      {
+        title: String(homeContent?.about?.features?.[1]?.title || 'Tenaga Pendidik Profesional'),
+        description:
+          String(homeContent?.about?.features?.[1]?.description || '').trim() ||
+          'Guru-guru berkualifikasi dan berpengalaman dalam pendidikan Islam terpadu',
+        icon: Users,
+      },
+      {
+        title: String(homeContent?.about?.features?.[2]?.title || 'Fasilitas Lengkap'),
+        description:
+          String(homeContent?.about?.features?.[2]?.description || '').trim() ||
+          'Gedung modern, laboratorium, perpustakaan, dan fasilitas pendukung lainnya',
+        icon: Award,
+      },
+    ],
+  };
+
+  const sectionPrograms = {
+    badge: String(homeContent?.programs?.badge || 'Program Unggulan'),
+    title: String(homeContent?.programs?.title || 'Program Unggulan Kami'),
+    description:
+      String(homeContent?.programs?.description || '').trim() ||
+      'Program-program dirancang khusus untuk mengembangkan potensi siswa secara maksimal',
+    items: Array.isArray(homeContent?.programs?.items)
+      ? programs.map((base, index) => ({
+          ...base,
+          title: String(homeContent?.programs?.items?.[index]?.title || base.title),
+          description: String(homeContent?.programs?.items?.[index]?.description || base.description),
+        }))
+      : programs,
+  };
+
+  const facilitiesSection = {
+    badge: String(homeContent?.facilities?.badge || 'Fasilitas'),
+    title: String(homeContent?.facilities?.title || 'Fasilitas Lengkap & Modern'),
+    description:
+      String(homeContent?.facilities?.description || '').trim() ||
+      'Didukung fasilitas terbaik untuk mendukung proses belajar mengajar',
+  };
+
+  const facilitiesItems = [
+    {
+      title: String(homeContent?.facilities?.items?.[0]?.title || 'Ruang Kelas'),
+      description:
+        String(homeContent?.facilities?.items?.[0]?.description || '').trim() ||
+        'Ruang kelas ber-AC dengan kapasitas 25-30 siswa, dilengkapi smart TV dan sound system',
+      image: String(homeContent?.facilities?.items?.[0]?.image || 'https://images.unsplash.com/photo-1558443957-d056622df610'),
+      icon: Building,
+      iconBg: accentColor,
+    },
+    {
+      title: String(homeContent?.facilities?.items?.[1]?.title || 'Perpustakaan'),
+      description:
+        String(homeContent?.facilities?.items?.[1]?.description || '').trim() ||
+        'Koleksi 5000+ buku, ruang baca nyaman, dan sistem peminjaman digital',
+      image: String(homeContent?.facilities?.items?.[1]?.image || 'https://images.unsplash.com/photo-1595315343110-9b445a960442'),
+      icon: Library,
+      iconBg: '#2563eb',
+    },
+    {
+      title: String(homeContent?.facilities?.items?.[2]?.title || 'Laboratorium'),
+      description:
+        String(homeContent?.facilities?.items?.[2]?.description || '').trim() ||
+        'Lab Komputer, Sains, dan Bahasa dengan peralatan modern dan lengkap',
+      image: String(homeContent?.facilities?.items?.[2]?.image || 'https://images.unsplash.com/photo-1605781645799-c9c7d820b4ac'),
+      icon: Microscope,
+      iconBg: '#9333ea',
+    },
+    {
+      title: String(homeContent?.facilities?.items?.[3]?.title || 'Lapangan'),
+      description:
+        String(homeContent?.facilities?.items?.[3]?.description || '').trim() ||
+        'Lapangan olahraga multifungsi untuk futsal, basket, voli, dan badminton',
+      image: String(homeContent?.facilities?.items?.[3]?.image || 'https://images.unsplash.com/photo-1649182462992-ea644b7f8155'),
+      icon: Trophy,
+      iconBg: '#16a34a',
+    },
+  ];
 
   return (
     <div className="min-h-screen">
@@ -322,6 +443,7 @@ export const UnitSchoolClient: React.FC<UnitSchoolClientProps> = ({
         icon={icon}
         slug={slug}
         onCtaClick={() => onNavigate('admission')}
+        cmsSlides={Array.isArray(homeContent?.heroSlides) ? homeContent.heroSlides : []}
       />
 
       {/* About Section */}
@@ -336,49 +458,23 @@ export const UnitSchoolClient: React.FC<UnitSchoolClientProps> = ({
 
             <div>
               <div className="inline-block px-4 py-2 rounded-full text-sm mb-4" style={{ backgroundColor: `${accentColor}20`, color: accentColor }}>
-                Tentang Kami
+                {about.badge}
               </div>
-              <h2 className="mb-4">Profil {unitName}</h2>
-              <p className="text-gray-600 mb-6">
-                {fullName} adalah lembaga pendidikan Islam terpadu yang berkomitmen untuk memberikan 
-                pendidikan berkualitas dengan mengintegrasikan kurikulum nasional dan nilai-nilai Islam. 
-                Kami fokus pada pengembangan kognitif, afektif, dan psikomotorik siswa secara seimbang.
-              </p>
+              <h2 className="mb-4">{about.title}</h2>
+              <p className="text-gray-600 mb-6">{about.description}</p>
 
               <div className="space-y-4 mb-8">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: accentColor }}>
-                    <BookOpen className="w-4 h-4 text-white" />
+                {about.features.map((f, idx) => (
+                  <div key={`${f.title}-${idx}`} className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: accentColor }}>
+                      {React.createElement(f.icon, { className: 'w-4 h-4 text-white' })}
+                    </div>
+                    <div>
+                      <h5 className="mb-1">{f.title}</h5>
+                      <p className="text-gray-600 text-sm">{f.description}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h5 className="mb-1">Kurikulum Terintegrasi</h5>
-                    <p className="text-gray-600 text-sm">
-                      Menggabungkan kurikulum nasional dengan pendidikan agama Islam yang komprehensif
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: accentColor }}>
-                    <Users className="w-4 h-4 text-white" />
-                  </div>
-                  <div>
-                    <h5 className="mb-1">Tenaga Pendidik Profesional</h5>
-                    <p className="text-gray-600 text-sm">
-                      Guru-guru berkualifikasi dan berpengalaman dalam pendidikan Islam terpadu
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: accentColor }}>
-                    <Award className="w-4 h-4 text-white" />
-                  </div>
-                  <div>
-                    <h5 className="mb-1">Fasilitas Lengkap</h5>
-                    <p className="text-gray-600 text-sm">
-                      Gedung modern, laboratorium, perpustakaan, dan fasilitas pendukung lainnya
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
@@ -390,16 +486,14 @@ export const UnitSchoolClient: React.FC<UnitSchoolClientProps> = ({
         <div className="container-custom">
           <div className="text-center mb-12">
             <div className="inline-block px-4 py-2 rounded-full text-sm mb-4" style={{ backgroundColor: `${accentColor}20`, color: accentColor }}>
-              Program Unggulan
+              {sectionPrograms.badge}
             </div>
-            <h2 className="mb-4">Program Unggulan Kami</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Program-program dirancang khusus untuk mengembangkan potensi siswa secara maksimal
-            </p>
+            <h2 className="mb-4">{sectionPrograms.title}</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">{sectionPrograms.description}</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {programs.map((program, index) => (
+            {sectionPrograms.items.map((program, index) => (
               <ProgramCard key={index} {...program} />
             ))}
           </div>
@@ -689,106 +783,34 @@ export const UnitSchoolClient: React.FC<UnitSchoolClientProps> = ({
         <div className="container-custom">
           <div className="text-center mb-12">
             <div className="inline-block px-4 py-2 rounded-full text-sm mb-4" style={{ backgroundColor: `${accentColor}20`, color: accentColor }}>
-              Fasilitas
+              {facilitiesSection.badge}
             </div>
-            <h2 className="mb-4">Fasilitas Lengkap & Modern</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Didukung fasilitas terbaik untuk mendukung proses belajar mengajar
-            </p>
+            <h2 className="mb-4">{facilitiesSection.title}</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">{facilitiesSection.description}</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Ruang Kelas */}
-            <div className="group bg-white rounded-3xl overflow-hidden shadow-soft hover:shadow-strong transition-all duration-300">
-              <div className="relative h-48 overflow-hidden">
-                <ImageWithFallback
-                  src="https://images.unsplash.com/photo-1558443957-d056622df610"
-                  alt="Ruang Kelas"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2" style={{ backgroundColor: accentColor }}>
-                    <Building className="w-5 h-5 text-white" />
+            {facilitiesItems.map((item, index) => (
+              <div key={`${item.title}-${index}`} className="group bg-white rounded-3xl overflow-hidden shadow-soft hover:shadow-strong transition-all duration-300">
+                <div className="relative h-48 overflow-hidden">
+                  <ImageWithFallback
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2" style={{ backgroundColor: item.iconBg }}>
+                      {React.createElement(item.icon, { className: 'w-5 h-5 text-white' })}
+                    </div>
+                    <h4 className="text-white text-lg">{item.title}</h4>
                   </div>
-                  <h4 className="text-white text-lg">Ruang Kelas</h4>
+                </div>
+                <div className="p-6">
+                  <p className="text-gray-600 text-sm">{item.description}</p>
                 </div>
               </div>
-              <div className="p-6">
-                <p className="text-gray-600 text-sm">
-                  Ruang kelas ber-AC dengan kapasitas 25-30 siswa, dilengkapi smart TV dan sound system
-                </p>
-              </div>
-            </div>
-
-            {/* Perpustakaan */}
-            <div className="group bg-white rounded-3xl overflow-hidden shadow-soft hover:shadow-strong transition-all duration-300">
-              <div className="relative h-48 overflow-hidden">
-                <ImageWithFallback
-                  src="https://images.unsplash.com/photo-1595315343110-9b445a960442"
-                  alt="Perpustakaan"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center mb-2">
-                    <Library className="w-5 h-5 text-white" />
-                  </div>
-                  <h4 className="text-white text-lg">Perpustakaan</h4>
-                </div>
-              </div>
-              <div className="p-6">
-                <p className="text-gray-600 text-sm">
-                  Koleksi 5000+ buku, ruang baca nyaman, dan sistem peminjaman digital
-                </p>
-              </div>
-            </div>
-
-            {/* Laboratorium */}
-            <div className="group bg-white rounded-3xl overflow-hidden shadow-soft hover:shadow-strong transition-all duration-300">
-              <div className="relative h-48 overflow-hidden">
-                <ImageWithFallback
-                  src="https://images.unsplash.com/photo-1605781645799-c9c7d820b4ac"
-                  alt="Laboratorium"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center mb-2">
-                    <Microscope className="w-5 h-5 text-white" />
-                  </div>
-                  <h4 className="text-white text-lg">Laboratorium</h4>
-                </div>
-              </div>
-              <div className="p-6">
-                <p className="text-gray-600 text-sm">
-                  Lab Komputer, Sains, dan Bahasa dengan peralatan modern dan lengkap
-                </p>
-              </div>
-            </div>
-
-            {/* Lapangan Olahraga */}
-            <div className="group bg-white rounded-3xl overflow-hidden shadow-soft hover:shadow-strong transition-all duration-300">
-              <div className="relative h-48 overflow-hidden">
-                <ImageWithFallback
-                  src="https://images.unsplash.com/photo-1649182462992-ea644b7f8155"
-                  alt="Lapangan"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <div className="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center mb-2">
-                    <Trophy className="w-5 h-5 text-white" />
-                  </div>
-                  <h4 className="text-white text-lg">Lapangan</h4>
-                </div>
-              </div>
-              <div className="p-6">
-                <p className="text-gray-600 text-sm">
-                  Lapangan olahraga multifungsi untuk futsal, basket, voli, dan badminton
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>

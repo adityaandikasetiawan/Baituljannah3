@@ -5,12 +5,20 @@ import React from 'react';
 import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { Breadcrumb } from '../../components/layout/Breadcrumb';
-import { Users, Award, BookOpen, Heart, Target, Building2, GraduationCap, Shield, Sparkles, CheckCircle, Star, Zap } from 'lucide-react';
+import { Award, BookOpen, Heart, Target, Building2, Shield, Sparkles, CheckCircle, Star, Zap } from 'lucide-react';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { useNavigationMenu } from '../../hooks/useNavigationMenu';
 
 export default function AboutPage() {
   const { menuItems, onNavigate } = useNavigationMenu();
+  const [assetVersion, setAssetVersion] = React.useState('1');
+
+  React.useEffect(() => {
+    const buildId = (window as any)?.__NEXT_DATA__?.buildId;
+    setAssetVersion(buildId || String(Date.now()));
+  }, []);
+
+  const withVersion = (src: string) => (src.includes('?') ? `${src}&v=${assetVersion}` : `${src}?v=${assetVersion}`);
 
   const breadcrumbItems = [
     { label: 'Beranda', onClick: () => onNavigate('main') },
@@ -48,13 +56,6 @@ export default function AboutPage() {
     }
   ];
 
-  const statistics = [
-    { number: '2000+', label: 'Siswa Aktif', icon: Users, gradient: 'from-blue-500 to-cyan-600' },
-    { number: '200+', label: 'Tenaga Pendidik', icon: GraduationCap, gradient: 'from-green-500 to-emerald-600' },
-    { number: '15+', label: 'Tahun Pengalaman', icon: Award, gradient: 'from-orange-500 to-amber-600' },
-    { number: '5', label: 'Unit Sekolah', icon: Building2, gradient: 'from-purple-500 to-indigo-600' }
-  ];
-
   const facilities = [
     {
       title: 'Ruang Kelas Modern',
@@ -69,8 +70,8 @@ export default function AboutPage() {
       color: '#10B981'
     },
     {
-      title: 'Perpustakaan Digital',
-      description: 'Perpustakaan dengan koleksi buku lengkap dan akses e-library untuk pembelajaran mandiri',
+      title: 'Kolam Renang',
+      description: 'Kolam Renang yang mendukung kegiatan olahraga serta pengembangan prestasi siswa di bidang renang.',
       icon: BookOpen,
       color: '#8B5CF6'
     },
@@ -129,32 +130,6 @@ export default function AboutPage() {
         </div>
       </div>
 
-      {/* Stats Section */}
-      <section className="py-12 bg-white shadow-md">
-        <div className="container-custom">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {statistics.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <div 
-                  key={index}
-                  className="group relative bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 shadow-soft hover:shadow-strong transition-all duration-300"
-                >
-                  <div className={`absolute top-4 right-4 w-12 h-12 rounded-xl bg-gradient-to-br ${stat.gradient} opacity-20 group-hover:opacity-30 transition-opacity`}></div>
-                  <div className="relative">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center mb-4`}>
-                      <Icon className="w-6 h-6 text-white" />
-                    </div>
-                    <p className="text-3xl mb-1">{stat.number}</p>
-                    <p className="text-sm text-gray-600">{stat.label}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
       {/* About Content */}
       <section className="section-padding">
         <div className="container-custom">
@@ -203,7 +178,7 @@ export default function AboutPage() {
             <div className="relative">
               <div className="relative rounded-3xl overflow-hidden shadow-strong">
                 <ImageWithFallback
-                  src="https://images.unsplash.com/photo-1699210260060-236da96bc52d"
+                  src={withVersion('/uploads/images/about_section/baituljnnah1.png')}
                   alt="Gedung Baituljannah"
                   className="w-full h-[500px] object-cover"
                 />
@@ -316,15 +291,15 @@ export default function AboutPage() {
           <div className="grid md:grid-cols-2 gap-6 mt-12">
             <div className="rounded-2xl overflow-hidden shadow-lg">
               <ImageWithFallback
-                src="https://images.unsplash.com/photo-1522134939204-9b9957145632"
+                src={withVersion('/uploads/images/about_section/about1.webp')}
                 alt="Pembelajaran di Kelas"
                 className="w-full h-80 object-cover hover:scale-105 transition-transform duration-500"
               />
             </div>
             <div className="rounded-2xl overflow-hidden shadow-lg">
               <ImageWithFallback
-                src="https://images.unsplash.com/photo-1759494706685-7ca176de7e6b"
-                alt="Perpustakaan Modern"
+                src={withVersion('/uploads/images/about_section/baituljnnah3.jpeg')}
+                alt="Lapangan Upacara Yang Luas"
                 className="w-full h-80 object-cover hover:scale-105 transition-transform duration-500"
               />
             </div>

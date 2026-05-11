@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { Breadcrumb } from '../../components/layout/Breadcrumb';
@@ -24,8 +25,8 @@ function AchievementCard(props: Omit<AchievementItem, 'year'>) {
       <div className="h-2" style={{ backgroundColor: props.accentColor }} />
       <div className="p-6">
         <div className="flex items-center gap-4 mb-5">
-          <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
-            <img src={props.studentImage} alt={props.studentName} className="w-full h-full object-cover" />
+          <div className="relative w-14 h-14 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
+            <Image src={props.studentImage} alt={props.studentName} fill sizes="56px" className="object-cover" unoptimized />
           </div>
           <div className="min-w-0">
             <p className="text-lg text-gray-900 truncate">{props.studentName}</p>

@@ -1,425 +1,589 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Sidebar } from '../../../components/layout/Sidebar';
 import { useNavigationMenu } from '../../../hooks/useNavigationMenu';
-import { 
-  Award, Plus, Edit, Trash2, Search, Filter, X, Check, 
-  Users, Clock, DollarSign, Target 
-} from 'lucide-react';
+import { Award, Plus, Edit, Trash2, Search, Filter, X, Check, Upload } from 'lucide-react';
+import { Toaster, toast } from 'sonner';
+
+type ProgramStatus = 'active' | 'inactive';
 
 interface ProgramItem {
   id: number;
   title: string;
-  category: string;
-  unit: string;
-  description: string;
-  duration: string;
-  capacity: number;
-  enrolled: number;
-  fee: string;
-  instructor: string;
-  status: 'Active' | 'Inactive';
-  benefits: string[];
+  slug: string;
+  description: string | null;
+  icon: string | null;
+  image_url: string | null;
+  category: string | null;
+  status: ProgramStatus;
+  unit_code: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export default function AdminProgramsPage() {
+  const router = useRouter();
   const { menuItems } = useNavigationMenu('admin');
+  const accentColor = '#1E4AB8';
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedProgram, setSelectedProgram] = useState<ProgramItem | null>(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('Semua');
+  const [filterStatus, setFilterStatus] = useState<'Semua' | ProgramStatus>('Semua');
+  const [filterUnitCode, setFilterUnitCode] = useState('Semua');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const [programList, setProgramList] = useState<ProgramItem[]>([
-    {
-      id: 1,
-      title: 'Program Tahfidz 30 Juz',
-      category: 'Keagamaan',
-      unit: 'SMAIT',
-      description: 'Program intensif menghafal Al-Quran 30 juz dengan bimbingan ustadz berpengalaman',
-      duration: '3 Tahun',
-      capacity: 30,
-      enrolled: 25,
-      fee: 'Gratis (Termasuk SPP)',
-      instructor: 'Ustadz Ahmad',
-      status: 'Active',
-      benefits: ['Hafal 30 Juz Al-Quran', 'Sanad resmi', 'Sertifikat wisuda', 'Ijazah tahfidz']
-    },
-    {
-      id: 2,
-      title: 'Klub Olimpiade Sains',
-      category: 'Akademik',
-      unit: 'SMPIT',
-      description: 'Pembinaan siswa berprestasi untuk mengikuti olimpiade sains tingkat nasional dan internasional',
-      duration: '1 Tahun',
-      capacity: 20,
-      enrolled: 18,
-      fee: 'Rp 500.000/bulan',
-      instructor: 'Tim Olimpiade',
-      status: 'Active',
-      benefits: ['Pembinaan intensif', 'Try out rutin', 'Pelatihan dari ahli', 'Kesempatan ikut OSN']
-    },
-    {
-      id: 3,
-      title: 'English Club',
-      category: 'Bahasa',
-      unit: 'Semua Unit',
-      description: 'Program pengembangan kemampuan bahasa Inggris melalui conversation dan activities',
-      duration: '6 Bulan',
-      capacity: 25,
-      enrolled: 22,
-      fee: 'Rp 300.000/bulan',
-      instructor: 'Native Speaker',
-      status: 'Active',
-      benefits: ['Speaking practice', 'Grammar workshop', 'TOEFL preparation', 'Certificate']
-    },
-    {
-      id: 4,
-      title: 'Futsal Academy',
-      category: 'Olahraga',
-      unit: 'SMPIT',
-      description: 'Pelatihan futsal profesional untuk siswa yang berminat mengembangkan bakat olahraga',
-      duration: '1 Tahun',
-      capacity: 16,
-      enrolled: 16,
-      fee: 'Rp 400.000/bulan',
-      instructor: 'Coach Budi',
-      status: 'Active',
-      benefits: ['Latihan 2x seminggu', 'Turnamen rutin', 'Jersey & equipment', 'Pelatih berlisensi']
-    },
-    {
-      id: 5,
-      title: 'Robotika & Programming',
-      category: 'Teknologi',
-      unit: 'SMAIT',
-      description: 'Program belajar robotika dan programming untuk siswa SMA',
-      duration: '1 Tahun',
-      capacity: 15,
-      enrolled: 12,
-      fee: 'Rp 600.000/bulan',
-      instructor: 'Mr. Rizki',
-      status: 'Active',
-      benefits: ['Belajar coding', 'Project robotika', 'Kompetisi', 'Sertifikat']
-    },
-    {
-      id: 6,
-      title: 'Public Speaking & Leadership',
-      category: 'Keterampilan',
-      unit: 'SMAIT',
-      description: 'Program pengembangan kemampuan berbicara di depan umum dan kepemimpinan',
-      duration: '3 Bulan',
-      capacity: 20,
-      enrolled: 15,
-      fee: 'Rp 350.000/bulan',
-      instructor: 'Ustadzah Fatimah',
-      status: 'Inactive',
-      benefits: ['Public speaking skills', 'Leadership training', 'Presentation skills', 'Networking']
+  const apiBaseUrl = useMemo(() => {
+    const base = (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/$/, '');
+    if (typeof window === 'undefined') return base;
+    const hostname = window.location.hostname.toLowerCase();
+    if (
+      hostname === 'smaitbaituljannah.sch.id' ||
+      hostname === 'www.smaitbaituljannah.sch.id' ||
+      hostname === 'smpitbaituljannah.sch.id' ||
+      hostname === 'www.smpitbaituljannah.sch.id'
+    ) {
+      return 'https://baituljannah.sch.id/api/v1';
     }
-  ]);
+    return base;
+  }, []);
 
-  const [formData, setFormData] = useState<Partial<ProgramItem>>({
+  const lockedUnitCode = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    const hostname = window.location.hostname.toLowerCase();
+    if (hostname === 'smpitbaituljannah.sch.id' || hostname === 'www.smpitbaituljannah.sch.id') return 'SMPIT';
+    if (hostname === 'smaitbaituljannah.sch.id' || hostname === 'www.smaitbaituljannah.sch.id') return 'SMAIT';
+    const path = window.location.pathname || '';
+    const m = path.match(/^\/(tkit|sdit|smpit|smait|slbit)\/admin(\/|$)/i);
+    if (!m?.[1]) return null;
+    return String(m[1]).toUpperCase();
+  }, []);
+
+  useEffect(() => {
+    if (!lockedUnitCode) return;
+    setFilterUnitCode(lockedUnitCode);
+  }, [lockedUnitCode]);
+
+  const unitOptions = ['Semua', 'TKIT', 'SDIT', 'SMPIT', 'SMAIT', 'SLBIT'];
+  const categoryOptions = ['Semua', 'Akademik', 'Keagamaan', 'Bahasa', 'Olahraga', 'Teknologi', 'Keterampilan', 'Seni'];
+
+  const getCookie = useCallback((name: string) => {
+    if (typeof document === 'undefined') return null;
+    const cookieStr = document.cookie || '';
+    const parts = cookieStr.split(';').map((p) => p.trim());
+    const prefix = `${encodeURIComponent(name)}=`;
+    for (const part of parts) {
+      if (part.startsWith(prefix)) return decodeURIComponent(part.slice(prefix.length));
+      if (part.startsWith(`${name}=`)) return decodeURIComponent(part.slice(`${name}=`.length));
+    }
+    return null;
+  }, []);
+
+  const getToken = useCallback(() => {
+    if (typeof window === 'undefined') return null;
+    const lsToken = localStorage.getItem('baituljannah_token');
+    if (lsToken) return lsToken;
+    const cookieToken = getCookie('token');
+    if (cookieToken) {
+      localStorage.setItem('baituljannah_token', cookieToken);
+      return cookieToken;
+    }
+    return null;
+  }, [getCookie]);
+
+  const getLoginPath = useCallback(() => {
+    if (typeof window === 'undefined') return '/login';
+    const hostname = window.location.hostname.toLowerCase();
+    const isUnitSubdomain =
+      hostname === 'smpitbaituljannah.sch.id' ||
+      hostname === 'www.smpitbaituljannah.sch.id' ||
+      hostname === 'smaitbaituljannah.sch.id' ||
+      hostname === 'www.smaitbaituljannah.sch.id';
+    if (isUnitSubdomain) return '/login';
+    const path = window.location.pathname || '';
+    const unitMatch = path.match(/^\/(tkit|sdit|smpit|smait|slbit)(\/|$)/i);
+    if (unitMatch?.[1]) return `/${unitMatch[1].toLowerCase()}/login`;
+    return '/login';
+  }, []);
+
+  const [programList, setProgramList] = useState<ProgramItem[]>([]);
+  const getStoredUserName = () => {
+    if (typeof window === 'undefined') return 'Admin';
+    try {
+      const userStr = localStorage.getItem('baituljannah_user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      return user?.full_name || user?.username || 'Admin';
+    } catch {
+      return 'Admin';
+    }
+  };
+  const userRoleLabel = lockedUnitCode ? `Admin ${lockedUnitCode}` : 'Super Admin';
+
+  const [formData, setFormData] = useState<{
+    title: string;
+    slug: string;
+    category: string;
+    unit_code: string;
+    status: ProgramStatus;
+    icon: string;
+    image_url: string;
+    description: string;
+  }>({
     title: '',
-    category: 'Akademik',
-    unit: 'Semua Unit',
+    slug: '',
+    category: '',
+    unit_code: lockedUnitCode || 'Semua',
+    status: 'active',
+    icon: '',
+    image_url: '',
     description: '',
-    duration: '',
-    capacity: 0,
-    enrolled: 0,
-    fee: '',
-    instructor: '',
-    status: 'Active',
-    benefits: ['']
   });
 
-  const categories = ['Semua', 'Akademik', 'Keagamaan', 'Bahasa', 'Olahraga', 'Teknologi', 'Keterampilan', 'Seni'];
-  const units = ['Semua Unit', 'TKIT', 'SDIT', 'SMPIT', 'SMAIT', 'SLBIT'];
+  useEffect(() => {
+    if (!lockedUnitCode) return;
+    setFormData((prev) => ({ ...prev, unit_code: lockedUnitCode }));
+  }, [lockedUnitCode]);
 
-  const filteredPrograms = programList.filter(program => {
-    const matchesSearch = program.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         program.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = filterCategory === 'Semua' || program.category === filterCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const loadPrograms = useCallback(async () => {
+    const token = getToken();
+    if (!token) {
+      toast.error('Token tidak ditemukan. Silakan login ulang.');
+      router.replace(getLoginPath());
+      return;
+    }
 
-  const handleCreate = () => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) params.set('search', searchQuery.trim());
+      if (filterCategory !== 'Semua') params.set('category', filterCategory);
+      if (filterStatus !== 'Semua') params.set('status', filterStatus);
+      if (lockedUnitCode) params.set('unit_code', lockedUnitCode);
+      else if (filterUnitCode !== 'Semua') params.set('unit_code', filterUnitCode);
+
+      const res = await fetch(`${apiBaseUrl}/programs/manage?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) throw new Error(json?.message || 'Gagal memuat program');
+      setProgramList(Array.isArray(json?.data) ? json.data : []);
+    } catch (e: any) {
+      toast.error(e?.message || 'Gagal memuat program');
+      setProgramList([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [apiBaseUrl, filterCategory, filterStatus, filterUnitCode, getLoginPath, getToken, lockedUnitCode, router, searchQuery]);
+
+  useEffect(() => {
+    loadPrograms();
+  }, [loadPrograms]);
+
+  const openCreate = () => {
     setModalMode('create');
+    setSelectedProgram(null);
     setFormData({
       title: '',
-      category: 'Akademik',
-      unit: 'Semua Unit',
+      slug: '',
+      category: '',
+      unit_code: lockedUnitCode || filterUnitCode || 'Semua',
+      status: 'active',
+      icon: '',
+      image_url: '',
       description: '',
-      duration: '',
-      capacity: 0,
-      enrolled: 0,
-      fee: '',
-      instructor: '',
-      status: 'Active',
-      benefits: ['']
     });
     setShowModal(true);
   };
 
-  const handleEdit = (program: ProgramItem) => {
+  const openEdit = (program: ProgramItem) => {
     setModalMode('edit');
     setSelectedProgram(program);
-    setFormData(program);
+    setFormData({
+      title: program.title || '',
+      slug: program.slug || '',
+      category: program.category || '',
+      unit_code: program.unit_code || 'Semua',
+      status: program.status || 'active',
+      icon: program.icon || '',
+      image_url: program.image_url || '',
+      description: program.description || '',
+    });
     setShowModal(true);
   };
 
-  const handleSave = () => {
-    if (modalMode === 'create') {
-      const newProgram: ProgramItem = {
-        ...formData as ProgramItem,
-        id: Math.max(...programList.map(p => p.id), 0) + 1
-      };
-      setProgramList([...programList, newProgram]);
-    } else if (modalMode === 'edit' && selectedProgram) {
-      setProgramList(programList.map(program => 
-        program.id === selectedProgram.id ? { ...formData as ProgramItem, id: selectedProgram.id } : program
-      ));
+  const saveProgram = async () => {
+    const token = getToken();
+    if (!token) {
+      toast.error('Token tidak ditemukan. Silakan login ulang.');
+      router.replace(getLoginPath());
+      return;
     }
-    setShowModal(false);
-    setSelectedProgram(null);
+
+    const payload = {
+      title: formData.title.trim(),
+      slug: formData.slug.trim() || undefined,
+      category: formData.category.trim() || undefined,
+      unit_code: lockedUnitCode || formData.unit_code,
+      status: formData.status,
+      icon: formData.icon.trim() || undefined,
+      image_url: formData.image_url.trim() || undefined,
+      description: formData.description.trim() || undefined,
+    };
+
+    if (!payload.title) {
+      toast.error('Title wajib diisi');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const isEdit = modalMode === 'edit' && selectedProgram;
+      const res = await fetch(isEdit ? `${apiBaseUrl}/programs/${selectedProgram.id}` : `${apiBaseUrl}/programs`, {
+        method: isEdit ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) throw new Error(json?.message || 'Gagal menyimpan program');
+      toast.success('Program berhasil disimpan');
+      setShowModal(false);
+      await loadPrograms();
+    } catch (e: any) {
+      toast.error(e?.message || 'Gagal menyimpan program');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDelete = () => {
-    if (showDeleteConfirm) {
-      setProgramList(programList.filter(p => p.id !== showDeleteConfirm));
+  const confirmDelete = async (id: number) => {
+    const token = getToken();
+    if (!token) {
+      toast.error('Token tidak ditemukan. Silakan login ulang.');
+      router.replace(getLoginPath());
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${apiBaseUrl}/programs/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) throw new Error(json?.message || 'Gagal menghapus program');
+      toast.success('Program berhasil dihapus');
       setShowDeleteConfirm(null);
+      await loadPrograms();
+    } catch (e: any) {
+      toast.error(e?.message || 'Gagal menghapus program');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const addBenefit = () => {
-    setFormData({ ...formData, benefits: [...(formData.benefits || []), ''] });
-  };
+  const uploadImage = async (file: File) => {
+    const token = getToken();
+    if (!token) {
+      toast.error('Token tidak ditemukan. Silakan login ulang.');
+      router.replace(getLoginPath());
+      return;
+    }
 
-  const updateBenefit = (index: number, value: string) => {
-    const newBenefits = [...(formData.benefits || [])];
-    newBenefits[index] = value;
-    setFormData({ ...formData, benefits: newBenefits });
+    setIsUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const res = await fetch(`${apiBaseUrl}/programs/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) throw new Error(json?.message || 'Gagal upload gambar');
+      const url = String(json?.data?.url || '').trim();
+      if (!url) throw new Error('Upload berhasil tapi URL kosong');
+      setFormData((prev) => ({ ...prev, image_url: url }));
+      toast.success('Gambar berhasil diupload');
+    } catch (e: any) {
+      toast.error(e?.message || 'Gagal upload gambar');
+    } finally {
+      setIsUploading(false);
+    }
   };
-
-  const removeBenefit = (index: number) => {
-    const newBenefits = (formData.benefits || ['']).filter((_, i) => i !== index);
-    setFormData({ ...formData, benefits: newBenefits.length > 0 ? newBenefits : [''] });
-  };
-
-  const stats = [
-    { label: 'Total Program', value: programList.length, color: 'from-blue-500 to-blue-600', icon: Award },
-    { label: 'Program Aktif', value: programList.filter(p => p.status === 'Active').length, color: 'from-green-500 to-green-600', icon: Target },
-    { label: 'Total Peserta', value: programList.reduce((sum, p) => sum + p.enrolled, 0), color: 'from-purple-500 to-purple-600', icon: Users },
-    { label: 'Kapasitas Tersisa', value: programList.reduce((sum, p) => sum + (p.capacity - p.enrolled), 0), color: 'from-orange-500 to-orange-600', icon: Users }
-  ];
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <Sidebar menuItems={menuItems} />
+      <Toaster position="top-right" richColors />
+      <Sidebar menuItems={menuItems} accentColor={accentColor} userRole={userRoleLabel} userName={getStoredUserName()} />
 
       <main className="flex-1 ml-64 p-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-start justify-between gap-6 mb-8">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Manajemen Program</h1>
-              <p className="text-gray-600">Kelola semua program ekstrakurikuler dan unggulan</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Manajemen Program</h1>
+              <p className="text-gray-600">CRUD Program untuk portal admin (terkunci per unit jika di subdomain).</p>
             </div>
             <button
-              onClick={handleCreate}
-              className="bg-[#1E4AB8] text-white px-6 py-3 rounded-xl hover:bg-[#1a3d9a] transition-colors flex items-center gap-2 shadow-lg"
+              type="button"
+              onClick={openCreate}
+              className="px-4 py-2 rounded-xl bg-[#1E4AB8] hover:bg-[#163b93] text-white flex items-center gap-2 disabled:opacity-60"
+              disabled={isLoading}
             >
-              <Plus className="w-5 h-5" />
-              <span>Tambah Program</span>
+              <Plus className="w-4 h-4" />
+              Tambah Program
             </button>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {stats.map((stat, idx) => {
-              const Icon = stat.icon;
-              return (
-                <div key={idx} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center mb-4`}>
-                    <Icon className="w-6 h-6 text-white" />
-                  </div>
-                  <p className="text-2xl font-bold mb-1">{stat.value}</p>
-                  <p className="text-sm text-gray-600">{stat.label}</p>
+          <div className="bg-white rounded-2xl shadow-soft border border-gray-100 p-6 mb-6">
+            <div className="grid md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Cari</label>
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Cari judul/deskripsi..."
+                    className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:border-[#1E4AB8]"
+                  />
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Filters */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="md:col-span-2 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Cari program..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#1E4AB8] focus:ring-2 focus:ring-[#1E4AB8]/20"
-                />
               </div>
 
-              <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 bg-white">
-                <Filter className="w-5 h-5 text-gray-400" />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="w-full py-2 bg-transparent outline-none text-gray-600"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#1E4AB8]"
                 >
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                  {categoryOptions.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
                   ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value as any)}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#1E4AB8]"
+                >
+                  <option value="Semua">Semua</option>
+                  <option value="active">Aktif</option>
+                  <option value="inactive">Nonaktif</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Unit</label>
+                <select
+                  value={filterUnitCode}
+                  onChange={(e) => setFilterUnitCode(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#1E4AB8]"
+                  disabled={Boolean(lockedUnitCode)}
+                >
+                  {lockedUnitCode ? (
+                    <option value={lockedUnitCode}>{lockedUnitCode}</option>
+                  ) : (
+                    unitOptions.map((u) => (
+                      <option key={u} value={u}>
+                        {u}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
             </div>
           </div>
 
-          {/* Program Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPrograms.map(program => (
-              <div key={program.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium mb-2 inline-block ${
-                      program.status === 'Active' 
-                        ? 'bg-green-100 text-green-700' 
-                        : 'bg-red-100 text-red-700'
-                    }`}>
-                      {program.status}
-                    </span>
-                    <h3 className="text-xl font-bold text-gray-900">{program.title}</h3>
-                    <p className="text-sm text-[#1E4AB8] font-medium">{program.category}</p>
-                  </div>
-                  <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-                    <Award className="w-5 h-5 text-[#1E4AB8]" />
-                  </div>
-                </div>
-
-                <div className="space-y-4 mb-6">
-                  <p className="text-gray-600 text-sm line-clamp-2">{program.description}</p>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">{program.duration}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Users className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">{program.enrolled}/{program.capacity} peserta</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <DollarSign className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">{program.fee}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Target className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">{program.unit}</span>
-                    </div>
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div>
-                    <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                      <span>Kapasitas</span>
-                      <span>{Math.round((program.enrolled / program.capacity) * 100)}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-[#1E4AB8] h-2 rounded-full transition-all"
-                        style={{ width: `${(program.enrolled / program.capacity) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 border-t border-gray-100 pt-4">
-                  <button
-                    onClick={() => handleEdit(program)}
-                    className="flex-1 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors flex items-center justify-center gap-2 font-medium"
-                  >
-                    <Edit className="w-4 h-4" />
-                    <span>Edit</span>
-                  </button>
-                  <button
-                    onClick={() => setShowDeleteConfirm(program.id)}
-                    className="flex-1 px-4 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2 font-medium"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span>Hapus</span>
-                  </button>
-                </div>
+          <div className="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-gray-700">
+                <Filter className="w-4 h-4" />
+                <span className="font-medium">Daftar Program</span>
               </div>
-            ))}
+              {isLoading ? <span className="text-sm text-gray-500">Memuat...</span> : null}
+            </div>
+
+            <div className="divide-y divide-gray-100">
+              {programList.length === 0 ? (
+                <div className="p-8 text-center text-gray-600">Belum ada program.</div>
+              ) : (
+                programList.map((p) => (
+                  <div key={p.id} className="p-6 flex items-start justify-between gap-6">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900 truncate">{p.title}</h3>
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full ${
+                            p.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          {p.status === 'active' ? 'Aktif' : 'Nonaktif'}
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-600 flex flex-wrap gap-3">
+                        <span className="inline-flex items-center gap-2">
+                          <Award className="w-4 h-4" />
+                          {p.category || '-'}
+                        </span>
+                        <span>Unit: {p.unit_code || 'Semua'}</span>
+                        <span className="text-gray-400">Slug: {p.slug}</span>
+                      </div>
+                      {p.description ? <p className="text-sm text-gray-600 mt-3">{p.description}</p> : null}
+                      {p.image_url ? (
+                        <a className="text-sm text-[#1E4AB8] hover:underline mt-2 inline-block" href={p.image_url} target="_blank">
+                          Lihat gambar
+                        </a>
+                      ) : null}
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => openEdit(p)}
+                        className="px-3 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 flex items-center gap-2"
+                      >
+                        <Edit className="w-4 h-4" />
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowDeleteConfirm(p.id)}
+                        className="px-3 py-2 rounded-xl border border-red-200 hover:bg-red-50 text-red-700 flex items-center gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-
-          {filteredPrograms.length === 0 && (
-            <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
-              <Award className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-600">Tidak ada program yang ditemukan</p>
-            </div>
-          )}
         </div>
-      </main>
 
-      {/* Create/Edit Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl my-8">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {modalMode === 'create' ? 'Tambah Program Baru' : 'Edit Program'}
-              </h2>
-              <button 
-                onClick={() => setShowModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <X className="w-6 h-6 text-gray-500" />
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-              {/* Form Content */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Nama Program</label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#1E4AB8]"
-                    placeholder="Contoh: Program Tahfidz"
-                  />
+        {showModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl shadow-strong w-full max-w-2xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="font-semibold text-gray-900">{modalMode === 'create' ? 'Tambah Program' : 'Edit Program'}</h2>
+                <button type="button" onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-700">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                    <input
+                      value={formData.title}
+                      onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#1E4AB8]"
+                      placeholder="Judul program"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Slug (opsional)</label>
+                    <input
+                      value={formData.slug}
+                      onChange={(e) => setFormData((p) => ({ ...p, slug: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#1E4AB8]"
+                      placeholder="contoh: tahfidz-quran"
+                    />
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
-                    <select
+                    <input
                       value={formData.category}
-                      onChange={(e) => setFormData({...formData, category: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#1E4AB8] bg-white"
-                    >
-                      {categories.filter(c => c !== 'Semua').map(c => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
+                      onChange={(e) => setFormData((p) => ({ ...p, category: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#1E4AB8]"
+                      placeholder="mis. Akademik"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Unit</label>
                     <select
-                      value={formData.unit}
-                      onChange={(e) => setFormData({...formData, unit: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#1E4AB8] bg-white"
+                      value={lockedUnitCode || formData.unit_code}
+                      onChange={(e) => setFormData((p) => ({ ...p, unit_code: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#1E4AB8]"
+                      disabled={Boolean(lockedUnitCode)}
                     >
-                      {units.map(u => (
-                        <option key={u} value={u}>{u}</option>
-                      ))}
+                      {lockedUnitCode ? (
+                        <option value={lockedUnitCode}>{lockedUnitCode}</option>
+                      ) : (
+                        unitOptions.map((u) => (
+                          <option key={u} value={u}>
+                            {u}
+                          </option>
+                        ))
+                      )}
                     </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData((p) => ({ ...p, status: e.target.value as ProgramStatus }))}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#1E4AB8]"
+                    >
+                      <option value="active">Aktif</option>
+                      <option value="inactive">Nonaktif</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Icon (opsional)</label>
+                    <input
+                      value={formData.icon}
+                      onChange={(e) => setFormData((p) => ({ ...p, icon: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#1E4AB8]"
+                      placeholder="mis. BookOpen"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Image URL</label>
+                    <div className="flex gap-2">
+                      <input
+                        value={formData.image_url}
+                        onChange={(e) => setFormData((p) => ({ ...p, image_url: e.target.value }))}
+                        className="flex-1 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#1E4AB8]"
+                        placeholder="/uploads/programs/..."
+                      />
+                      <label
+                        className={`px-4 py-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 flex items-center gap-2 cursor-pointer ${
+                          isUploading ? 'opacity-60' : ''
+                        }`}
+                      >
+                        <Upload className="w-4 h-4" />
+                        Upload
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={isUploading}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) uploadImage(f);
+                            e.currentTarget.value = '';
+                          }}
+                        />
+                      </label>
+                    </div>
                   </div>
                 </div>
 
@@ -427,150 +591,63 @@ export default function AdminProgramsPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Deskripsi</label>
                   <textarea
                     value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    rows={3}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#1E4AB8]"
-                    placeholder="Deskripsi singkat program..."
+                    onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
+                    className="w-full min-h-[140px] border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-[#1E4AB8]"
+                    placeholder="Deskripsi program"
                   />
                 </div>
+              </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Durasi</label>
-                    <input
-                      type="text"
-                      value={formData.duration}
-                      onChange={(e) => setFormData({...formData, duration: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#1E4AB8]"
-                      placeholder="Contoh: 1 Tahun"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Biaya</label>
-                    <input
-                      type="text"
-                      value={formData.fee}
-                      onChange={(e) => setFormData({...formData, fee: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#1E4AB8]"
-                      placeholder="Contoh: Gratis"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Kapasitas</label>
-                    <input
-                      type="number"
-                      value={formData.capacity}
-                      onChange={(e) => setFormData({...formData, capacity: parseInt(e.target.value)})}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#1E4AB8]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Instruktur</label>
-                    <input
-                      type="text"
-                      value={formData.instructor}
-                      onChange={(e) => setFormData({...formData, instructor: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#1E4AB8]"
-                      placeholder="Nama instruktur"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({...formData, status: e.target.value as 'Active' | 'Inactive'})}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#1E4AB8] bg-white"
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Benefit Program</label>
-                  <div className="space-y-2">
-                    {formData.benefits?.map((benefit, index) => (
-                      <div key={index} className="flex gap-2">
-                        <input
-                          type="text"
-                          value={benefit}
-                          onChange={(e) => updateBenefit(index, e.target.value)}
-                          className="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#1E4AB8]"
-                          placeholder="Benefit program"
-                        />
-                        <button
-                          onClick={() => removeBenefit(index)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    ))}
-                    <button
-                      onClick={addBenefit}
-                      className="text-[#1E4AB8] text-sm font-medium hover:underline flex items-center gap-1"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Tambah Benefit
-                    </button>
-                  </div>
-                </div>
+              <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700"
+                  disabled={isLoading}
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={saveProgram}
+                  className="px-4 py-2 rounded-xl bg-[#1E4AB8] hover:bg-[#163b93] text-white flex items-center gap-2 disabled:opacity-60"
+                  disabled={isLoading}
+                >
+                  <Check className="w-4 h-4" />
+                  Simpan
+                </button>
               </div>
             </div>
+          </div>
+        )}
 
-            <div className="p-6 border-t border-gray-200 flex gap-4">
-              <button
-                onClick={() => setShowModal(false)}
-                className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleSave}
-                className="flex-1 px-6 py-3 bg-[#1E4AB8] text-white rounded-xl hover:bg-[#1a3d9a] transition-colors flex items-center justify-center gap-2 font-medium"
-              >
-                <Check className="w-5 h-5" />
-                <span>{modalMode === 'create' ? 'Tambah Program' : 'Simpan Perubahan'}</span>
-              </button>
+        {showDeleteConfirm != null && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl shadow-strong w-full max-w-md p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Hapus program?</h3>
+              <p className="text-gray-600 mb-6">Tindakan ini tidak bisa dibatalkan.</p>
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(null)}
+                  className="px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700"
+                  disabled={isLoading}
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => confirmDelete(showDeleteConfirm)}
+                  className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white disabled:opacity-60"
+                  disabled={isLoading}
+                >
+                  Hapus
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trash2 className="w-8 h-8 text-red-600" />
-            </div>
-            <h3 className="text-xl font-bold text-center mb-2">Hapus Program?</h3>
-            <p className="text-gray-600 text-center mb-6">
-              Program yang dihapus tidak dapat dikembalikan. Apakah Anda yakin?
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowDeleteConfirm(null)}
-                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleDelete}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium"
-              >
-                Ya, Hapus
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        )}
+      </main>
     </div>
   );
 }
-

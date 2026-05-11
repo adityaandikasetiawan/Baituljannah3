@@ -69,6 +69,33 @@ const buildWhere = (query, values) => {
   return where.length ? `WHERE ${where.join(' AND ')}` : '';
 };
 
+const resolveUnitCodeFromRequestHost = (req) => {
+  const forwardedHost = req.headers['x-forwarded-host'] || req.headers.host || '';
+  const hostname = String(Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost)
+    .split(',')[0]
+    .trim()
+    .split(':')[0]
+    .toLowerCase();
+  if (hostname === 'smpitbaituljannah.sch.id' || hostname === 'www.smpitbaituljannah.sch.id') return 'SMPIT';
+  if (hostname === 'smaitbaituljannah.sch.id' || hostname === 'www.smaitbaituljannah.sch.id') return 'SMAIT';
+  return null;
+};
+
+const getEffectiveSchoolUnitId = async (req, schoolUnitIdFromBodyOrQuery) => {
+  const forcedUnitCode = resolveUnitCodeFromRequestHost(req);
+  if (forcedUnitCode) {
+    const row = await getOne('SELECT id FROM school_units WHERE code = ? LIMIT 1', [forcedUnitCode]);
+    return row ? Number(row.id) : null;
+  }
+
+  if (req.user?.role_raw === 'admin_unit') {
+    return req.user.school_unit_id == null ? null : Number(req.user.school_unit_id);
+  }
+
+  if (schoolUnitIdFromBodyOrQuery == null || schoolUnitIdFromBodyOrQuery === '') return null;
+  return Number(schoolUnitIdFromBodyOrQuery);
+};
+
 exports.getAchievementsPublic = async (req, res) => {
   try {
     const limit = Math.min(Math.max(parseInt(req.query.limit || '12', 10), 1), 50);
@@ -76,7 +103,11 @@ exports.getAchievementsPublic = async (req, res) => {
     const offset = (page - 1) * limit;
 
     const values = [];
-    const whereClause = buildWhere({ ...req.query, status: 'published' }, values);
+    const forcedSchoolUnitId = await getEffectiveSchoolUnitId(req, req.query.school_unit_id);
+    const whereClause = buildWhere(
+      { ...req.query, status: 'published', school_unit_id: forcedSchoolUnitId ?? req.query.school_unit_id },
+      values
+    );
 
     const rows = await executeQuery(
       `SELECT id, school_unit_id, title, description, category, level, \`rank\`, student_name, teacher_name, achievement_date, image_url, certificate_url, status
@@ -99,8 +130,16 @@ exports.getAchievementsManage = async (req, res) => {
     const page = Math.max(parseInt(req.query.page || '1', 10), 1);
     const offset = (page - 1) * limit;
 
+    const forcedSchoolUnitId = await getEffectiveSchoolUnitId(req, req.query.school_unit_id);
+    if (req.user?.role_raw === 'admin_unit' && !forcedSchoolUnitId) {
+      return res.status(403).json({ success: false, message: 'Akun admin unit belum di-set unitnya' });
+    }
+
     const values = [];
-    const whereClause = buildWhere(req.query, values);
+    const whereClause = buildWhere(
+      forcedSchoolUnitId != null ? { ...req.query, school_unit_id: forcedSchoolUnitId } : req.query,
+      values
+    );
 
     const rows = await executeQuery(
       `SELECT *
@@ -134,6 +173,11 @@ exports.createAchievement = async (req, res) => {
       status
     } = req.body;
 
+    const forcedSchoolUnitId = await getEffectiveSchoolUnitId(req, school_unit_id);
+    if (req.user?.role_raw === 'admin_unit' && !forcedSchoolUnitId) {
+      return res.status(403).json({ success: false, message: 'Akun admin unit belum di-set unitnya' });
+    }
+
     if (!title || !String(title).trim()) return res.status(400).json({ success: false, message: 'Title wajib diisi' });
     if (!level) return res.status(400).json({ success: false, message: 'Level wajib diisi' });
 
@@ -144,7 +188,7 @@ exports.createAchievement = async (req, res) => {
        (school_unit_id, title, description, category, level, \`rank\`, student_name, teacher_name, achievement_date, image_url, certificate_url, status, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
       [
-        school_unit_id ? Number(school_unit_id) : null,
+        forcedSchoolUnitId,
         String(title).trim(),
         description && String(description).trim() ? String(description).trim() : null,
         category && String(category).trim() ? String(category).trim() : null,
@@ -172,8 +216,16 @@ exports.updateAchievement = async (req, res) => {
     const existing = await getOne('SELECT * FROM achievements WHERE id = ?', [id]);
     if (!existing) return res.status(404).json({ success: false, message: 'Prestasi tidak ditemukan' });
 
+    const forcedSchoolUnitId = await getEffectiveSchoolUnitId(req, existing.school_unit_id);
+    if (req.user?.role_raw === 'admin_unit' && !forcedSchoolUnitId) {
+      return res.status(403).json({ success: false, message: 'Akun admin unit belum di-set unitnya' });
+    }
+    if (forcedSchoolUnitId != null && Number(existing.school_unit_id) !== Number(forcedSchoolUnitId)) {
+      return res.status(403).json({ success: false, message: 'Tidak boleh mengubah data unit lain' });
+    }
+
     const next = {
-      school_unit_id: req.body.school_unit_id !== undefined ? (req.body.school_unit_id ? Number(req.body.school_unit_id) : null) : existing.school_unit_id,
+      school_unit_id: forcedSchoolUnitId,
       title: req.body.title !== undefined ? String(req.body.title).trim() : existing.title,
       description: req.body.description !== undefined ? (req.body.description ? String(req.body.description).trim() : null) : existing.description,
       category: req.body.category !== undefined ? (req.body.category ? String(req.body.category).trim() : null) : existing.category,
@@ -222,8 +274,18 @@ exports.updateAchievement = async (req, res) => {
 exports.deleteAchievement = async (req, res) => {
   try {
     const { id } = req.params;
+    const existing = await getOne('SELECT id, school_unit_id FROM achievements WHERE id = ?', [id]);
+    if (!existing) return res.status(404).json({ success: false, message: 'Prestasi tidak ditemukan' });
+
+    const forcedSchoolUnitId = await getEffectiveSchoolUnitId(req, existing.school_unit_id);
+    if (req.user?.role_raw === 'admin_unit' && !forcedSchoolUnitId) {
+      return res.status(403).json({ success: false, message: 'Akun admin unit belum di-set unitnya' });
+    }
+    if (forcedSchoolUnitId != null && Number(existing.school_unit_id) !== Number(forcedSchoolUnitId)) {
+      return res.status(403).json({ success: false, message: 'Tidak boleh menghapus data unit lain' });
+    }
+
     const affected = await deleteRow('DELETE FROM achievements WHERE id = ?', [id]);
-    if (!affected) return res.status(404).json({ success: false, message: 'Prestasi tidak ditemukan' });
     res.status(200).json({ success: true, message: 'Prestasi berhasil dihapus' });
   } catch {
     res.status(500).json({ success: false, message: 'Gagal menghapus prestasi' });

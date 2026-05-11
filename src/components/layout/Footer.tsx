@@ -1,5 +1,6 @@
 import React from 'react';
-import { Facebook, Instagram, Youtube, Mail, Phone, MapPin, Twitter } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Mail, Phone, MapPin, Music2 } from 'lucide-react';
+import Image from 'next/image';
 
 interface FooterProps {
   logo?: string;
@@ -7,6 +8,7 @@ interface FooterProps {
   siteTagline?: string;
   accentColor?: string;
   onNavigate?: (page: string) => void;
+  menuItems?: any;
 }
 
 export const Footer: React.FC<FooterProps> = ({ logo, siteName, siteTagline = 'Sekolahnya Para Juara', accentColor = '#1E4AB8', onNavigate = () => {} }) => {
@@ -27,11 +29,7 @@ export const Footer: React.FC<FooterProps> = ({ logo, siteName, siteTagline = 'S
           <div>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center">
-                <img 
-                  src={resolvedLogoSrc} 
-                  alt={siteName} 
-                  className="w-full h-full object-contain"
-                />
+                <Image src={resolvedLogoSrc} alt={siteName} width={48} height={48} className="w-full h-full object-contain" unoptimized />
               </div>
               <div>
                 <h3 className="text-base md:text-lg font-semibold">{siteName}</h3>
@@ -108,24 +106,19 @@ export const Footer: React.FC<FooterProps> = ({ logo, siteName, siteTagline = 'S
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-400 text-sm leading-relaxed">Jl. Pendidikan Islam No. 123, Jakarta Selatan 12345</span>
+                <span className="text-gray-400 text-sm leading-relaxed">Jl. Pramuka No.43, Kemiling Permai, Kec. Kemiling, Kota Bandar Lampung, Lampung 35153</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 <div>
-                  <a href="tel:+622112345678" className="text-gray-400 hover:text-white text-sm block transition-colors">
-                    (021) 1234-5678
-                  </a>
-                  <a href="tel:+628123456789" className="text-gray-400 hover:text-white text-sm block transition-colors">
-                    0812-3456-789
+                  <a href="tel:0721273781" className="text-gray-400 hover:text-white text-sm block transition-colors">
+                    (0721) 273781
                   </a>
                 </div>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                <a href="mailto:info@baituljannah.sch.id" className="text-gray-400 hover:text-white text-sm transition-colors">
-                  info@baituljannah.sch.id
-                </a>
+                <span className="text-gray-400 text-sm">- (belum ada email khusus)</span>
               </li>
             </ul>
 
@@ -133,7 +126,6 @@ export const Footer: React.FC<FooterProps> = ({ logo, siteName, siteTagline = 'S
             <div className="mt-4 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
               <p className="text-xs text-gray-400 mb-1">Jam Operasional:</p>
               <p className="text-sm text-white">Senin - Jumat: 07:00 - 16:00</p>
-              <p className="text-sm text-white">Sabtu: 07:00 - 12:00</p>
             </div>
           </div>
 
@@ -142,7 +134,7 @@ export const Footer: React.FC<FooterProps> = ({ logo, siteName, siteTagline = 'S
             <h4 className="text-base md:text-lg font-semibold mb-4">Follow Us</h4>
             <div className="flex flex-wrap gap-3 mb-6">
               <a 
-                href="https://facebook.com" 
+                href="https://www.facebook.com/share/18b2DkbgrE/" 
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-lg bg-gray-800 hover:bg-blue-600 flex items-center justify-center transition-all transform hover:scale-110 hover:-translate-y-1 shadow-lg"
@@ -150,7 +142,7 @@ export const Footer: React.FC<FooterProps> = ({ logo, siteName, siteTagline = 'S
                 <Facebook className="w-5 h-5" />
               </a>
               <a 
-                href="https://instagram.com" 
+                href="https://www.instagram.com/baituljannahislamicschool?igsh=MWdyOTl0MWJicm42YQ==" 
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-lg bg-gray-800 hover:bg-gradient-to-br hover:from-purple-600 hover:to-pink-600 flex items-center justify-center transition-all transform hover:scale-110 hover:-translate-y-1 shadow-lg"
@@ -158,7 +150,7 @@ export const Footer: React.FC<FooterProps> = ({ logo, siteName, siteTagline = 'S
                 <Instagram className="w-5 h-5" />
               </a>
               <a 
-                href="https://youtube.com" 
+                href="https://youtube.com/@baituljannahislamicschool?si=7PCsnrV2_bPQGwY4" 
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-lg bg-gray-800 hover:bg-red-600 flex items-center justify-center transition-all transform hover:scale-110 hover:-translate-y-1 shadow-lg"
@@ -166,12 +158,12 @@ export const Footer: React.FC<FooterProps> = ({ logo, siteName, siteTagline = 'S
                 <Youtube className="w-5 h-5" />
               </a>
               <a 
-                href="https://twitter.com" 
+                href="https://www.tiktok.com/@yayasanbaituljannah?_r=1&_t=ZS-95Iq1j6JXTL" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-lg bg-gray-800 hover:bg-sky-500 flex items-center justify-center transition-all transform hover:scale-110 hover:-translate-y-1 shadow-lg"
+                className="w-10 h-10 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-all transform hover:scale-110 hover:-translate-y-1 shadow-lg"
               >
-                <Twitter className="w-5 h-5" />
+                <Music2 className="w-5 h-5" />
               </a>
             </div>
 

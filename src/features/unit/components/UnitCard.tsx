@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ArrowRight, Users, BookOpen, Award } from 'lucide-react';
+import Image from 'next/image';
 
 interface UnitCardProps {
   name: string;
@@ -47,10 +48,13 @@ export const UnitCard: React.FC<UnitCardProps> = ({
             style={{ color: color }}
           >
             {resolvedIconSrc && !didIconError ? (
-              <img
+              <Image
                 src={resolvedIconSrc}
                 alt={name}
+                width={40}
+                height={40}
                 className="w-10 h-10 object-contain"
+                unoptimized
                 onError={() => setDidIconError(true)}
               />
             ) : (

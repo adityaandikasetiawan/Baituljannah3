@@ -20,14 +20,11 @@ exports.validate = (req, res, next) => {
 exports.loginRules = [
   body('email')
     .trim()
-    .isEmail()
-    .withMessage('Email tidak valid')
-    .normalizeEmail(),
+    .notEmpty()
+    .withMessage('Email / Username / NIS wajib diisi'),
   body('password')
     .notEmpty()
     .withMessage('Password wajib diisi')
-    .isLength({ min: 6 })
-    .withMessage('Password minimal 6 karakter')
 ];
 
 // Register validation rules

@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { Menu, X, ChevronDown, Globe } from 'lucide-react';
+import Image from 'next/image';
 
 type MenuIcon = string | LucideIcon;
 
@@ -15,13 +16,15 @@ interface MenuItem {
 
 interface NavbarProps {
   logo?: string;
-  siteName: string;
+  siteName?: string;
   siteTagline?: string;
   accentColor?: string;
   menuItems: MenuItem[];
+  activePage?: string;
+  onNavigate?: (page: string) => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ logo, siteName, siteTagline = 'Islamic Education', accentColor = '#1E4AB8', menuItems }) => {
+export const Navbar: React.FC<NavbarProps> = ({ logo, siteName = 'Baituljannah', siteTagline = 'Islamic Education', accentColor = '#1E4AB8', menuItems }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [language, setLanguage] = useState<'id' | 'en'>('id');
@@ -141,7 +144,7 @@ export const Navbar: React.FC<NavbarProps> = ({ logo, siteName, siteTagline = 'I
   const renderSubmenuIcon = (icon?: MenuIcon) => {
     if (!icon) return null;
     if (typeof icon === 'string') {
-      return <img src={icon} alt="" className="w-5 h-5 object-contain" />;
+      return <Image src={icon} alt="" width={20} height={20} className="w-5 h-5 object-contain" unoptimized />;
     }
     const Icon = icon;
     return <Icon className="w-5 h-5" />;
@@ -157,10 +160,13 @@ export const Navbar: React.FC<NavbarProps> = ({ logo, siteName, siteTagline = 'I
               {didLogoError ? (
                 <span className="text-xl md:text-2xl">🕌</span>
               ) : (
-                <img
+                <Image
                   src={resolvedLogoSrc}
                   alt={displaySiteName}
+                  width={48}
+                  height={48}
                   className="w-full h-full object-contain"
+                  unoptimized
                   onError={() => setDidLogoError(true)}
                 />
               )}

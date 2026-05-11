@@ -12,6 +12,16 @@ export default function UnitKontakPage({ params }: { params: Promise<{ unit: str
   const router = useRouter();
   const { unit: slug } = React.use(params);
   const config = getUnitConfig(slug);
+  const apiBaseUrl = React.useMemo(() => {
+    const base = (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/$/, '');
+    if (typeof window === 'undefined') return base;
+    const hostname = window.location.hostname.toLowerCase();
+    if (hostname === 'smaitbaituljannah.sch.id' || hostname === 'www.smaitbaituljannah.sch.id') {
+      return 'https://baituljannah.sch.id/api/v1';
+    }
+    return base;
+  }, []);
+  const [cmsContent, setCmsContent] = React.useState<any | null>(null);
   const isAsrama = slug === 'asrama';
   const staffMenuLabel = isAsrama ? 'Musyrif & Musyrifah' : 'Guru & Staff';
   const curriculumMenuLabel = isAsrama ? 'Program' : 'Kurikulum';
@@ -30,9 +40,26 @@ export default function UnitKontakPage({ params }: { params: Promise<{ unit: str
       ],
     },
     { label: 'Karir', href: '#', onClick: () => router.push('/career') },
-    { label: 'PPDB', href: '#', onClick: () => router.push('/admission') },
+    { label: 'PPDB', href: '#', onClick: () => router.push(`/${slug}/ppdb`) },
     { label: 'Kontak', href: '#', onClick: () => router.push(`/${slug}/kontak`) }
   ];
+
+  React.useEffect(() => {
+    const unitCode = String(slug || '').trim().toUpperCase();
+    if (!unitCode || unitCode === 'ASRAMA') {
+      setCmsContent(null);
+      return;
+    }
+    const controller = new AbortController();
+    fetch(`${apiBaseUrl}/unit-pages?unit_code=${encodeURIComponent(unitCode)}&page_key=kontak`, { signal: controller.signal })
+      .then(async (res) => {
+        const json = await res.json().catch(() => null);
+        if (!res.ok || !json?.success) throw new Error(json?.message || 'Gagal memuat CMS');
+        setCmsContent(json?.data?.content || null);
+      })
+      .catch(() => setCmsContent(null));
+    return () => controller.abort();
+  }, [apiBaseUrl, slug]);
 
   if (!config) return null;
 
@@ -43,57 +70,62 @@ export default function UnitKontakPage({ params }: { params: Promise<{ unit: str
     { phone: string; email: string; whatsapp?: string; addressLines: string[]; hours: string[] }
   > = {
     tkit: {
-      phone: '(022) 1234-5601',
-      email: 'tkit@baituljannah.sch.id',
-      whatsapp: '+6281234567890',
-      addressLines: ['Jl. Pendidikan No. 123', 'Kota Bandung, Jawa Barat 40123'],
-      hours: ['Senin - Jumat: 07:00 - 16:00', 'Sabtu: 07:00 - 13:00'],
+      phone: '(0721) 273781',
+      email: '-',
+      addressLines: ['Jl. Pramuka No.43, Kemiling Permai', 'Kec. Kemiling, Kota Bandar Lampung, Lampung 35153'],
+      hours: ['Senin - Jumat: 07:00 - 16:00'],
     },
     sdit: {
-      phone: '(022) 1234-5602',
-      email: 'sdit@baituljannah.sch.id',
-      whatsapp: '+6281234567890',
-      addressLines: ['Jl. Pendidikan No. 123', 'Kota Bandung, Jawa Barat 40123'],
-      hours: ['Senin - Jumat: 07:00 - 16:00', 'Sabtu: 07:00 - 13:00'],
+      phone: '(0721) 273781',
+      email: '-',
+      addressLines: ['Jl. Pramuka No.43, Kemiling Permai', 'Kec. Kemiling, Kota Bandar Lampung, Lampung 35153'],
+      hours: ['Senin - Jumat: 07:00 - 16:00'],
     },
     smpit: {
-      phone: '(022) 1234-5603',
-      email: 'smpit@baituljannah.sch.id',
-      whatsapp: '+6281234567890',
-      addressLines: ['Jl. Pendidikan No. 123', 'Kota Bandung, Jawa Barat 40123'],
-      hours: ['Senin - Jumat: 07:00 - 16:00', 'Sabtu: 07:00 - 13:00'],
+      phone: '(0721) 273781',
+      email: '-',
+      addressLines: ['Jl. Pramuka No.43, Kemiling Permai', 'Kec. Kemiling, Kota Bandar Lampung, Lampung 35153'],
+      hours: ['Senin - Jumat: 07:00 - 16:00'],
     },
     smait: {
-      phone: '(022) 1234-5604',
-      email: 'smait@baituljannah.sch.id',
-      whatsapp: '+6281234567890',
-      addressLines: ['Jl. Pendidikan No. 123', 'Kota Bandung, Jawa Barat 40123'],
-      hours: ['Senin - Jumat: 07:00 - 16:00', 'Sabtu: 07:00 - 13:00'],
+      phone: '(0721) 273781',
+      email: '-',
+      addressLines: ['Jl. Pramuka No.43, Kemiling Permai', 'Kec. Kemiling, Kota Bandar Lampung, Lampung 35153'],
+      hours: ['Senin - Jumat: 07:00 - 16:00'],
     },
     slbit: {
-      phone: '(022) 1234-5605',
-      email: 'slbit@baituljannah.sch.id',
-      whatsapp: '+6281234567890',
-      addressLines: ['Jl. Pendidikan No. 123', 'Kota Bandung, Jawa Barat 40123'],
-      hours: ['Senin - Jumat: 07:00 - 16:00', 'Sabtu: 07:00 - 13:00'],
+      phone: '(0721) 273781',
+      email: '-',
+      addressLines: ['Jl. Pramuka No.43, Kemiling Permai', 'Kec. Kemiling, Kota Bandar Lampung, Lampung 35153'],
+      hours: ['Senin - Jumat: 07:00 - 16:00'],
     },
     asrama: {
-      phone: '(022) 1234-5606',
-      email: 'asrama@baituljannah.sch.id',
-      whatsapp: '+6281234567890',
-      addressLines: ['Jl. Pendidikan No. 123', 'Kota Bandung, Jawa Barat 40123'],
-      hours: ['Senin - Jumat: 07:00 - 16:00', 'Sabtu: 07:00 - 13:00'],
+      phone: '(0721) 273781',
+      email: '-',
+      addressLines: ['Jl. Pramuka No.43, Kemiling Permai', 'Kec. Kemiling, Kota Bandar Lampung, Lampung 35153'],
+      hours: ['Senin - Jumat: 07:00 - 16:00'],
     },
   };
 
-  const c = unitContacts[slug] ?? {
-    phone: '(022) 1234-5678',
-    email: `info@${slug}.baituljannah.sch.id`,
-    addressLines: ['Jl. Pendidikan No. 123', 'Kota Bandung, Jawa Barat 40123'],
-    hours: ['Senin - Jumat: 07:00 - 16:00', 'Sabtu: 07:00 - 13:00'],
+  const baseContact = unitContacts[slug] ?? {
+    phone: '(0721) 273781',
+    email: '-',
+    addressLines: ['Jl. Pramuka No.43, Kemiling Permai', 'Kec. Kemiling, Kota Bandar Lampung, Lampung 35153'],
+    hours: ['Senin - Jumat: 07:00 - 16:00'],
   };
 
+  const c = (() => {
+    if (!cmsContent || typeof cmsContent !== 'object') return baseContact;
+    return {
+      ...baseContact,
+      ...cmsContent,
+      addressLines: Array.isArray(cmsContent?.addressLines) ? cmsContent.addressLines : baseContact.addressLines,
+      hours: Array.isArray(cmsContent?.hours) ? cmsContent.hours : baseContact.hours,
+    };
+  })();
+
   const whatsappHref = c.whatsapp ? `https://wa.me/${c.whatsapp.replace(/[^\d]/g, '')}` : undefined;
+  const phoneHref = c.phone.replace(/[^\d+]/g, '');
   const visitTipByUnit: Record<string, { title: string; desc: string }> = {
     tkit: {
       title: 'Tips kunjungan TK',
@@ -120,7 +152,16 @@ export default function UnitKontakPage({ params }: { params: Promise<{ unit: str
       desc: 'Konfirmasi jadwal kunjungan dan perizinan terlebih dahulu agar layanan lebih optimal.',
     },
   };
-  const visitTip = visitTipByUnit[slug];
+  const visitTip = (() => {
+    const base = visitTipByUnit[slug];
+    if (!cmsContent || typeof cmsContent !== 'object') return base;
+    const t = cmsContent?.visitTip;
+    if (!t || typeof t !== 'object') return base;
+    const title = typeof t.title === 'string' ? t.title : base?.title;
+    const desc = typeof t.desc === 'string' ? t.desc : base?.desc;
+    if (!title && !desc) return base;
+    return { title: title || '', desc: desc || '' };
+  })();
 
   return (
     <div className="min-h-screen bg-white">
@@ -157,7 +198,7 @@ export default function UnitKontakPage({ params }: { params: Promise<{ unit: str
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
-                href={`tel:${c.phone}`}
+                href={`tel:${phoneHref}`}
                 className="px-8 py-3 bg-white text-gray-900 font-semibold rounded-full hover:bg-opacity-90 transition-all inline-flex items-center justify-center gap-2"
               >
                 <Phone className="w-4 h-4" />
@@ -175,7 +216,7 @@ export default function UnitKontakPage({ params }: { params: Promise<{ unit: str
                 </a>
               )}
               <button
-                onClick={() => router.push('/admission')}
+                onClick={() => router.push(`/${slug}/ppdb`)}
                 className="px-8 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-full hover:bg-white/10 transition-all inline-flex items-center justify-center gap-2"
               >
                 <ArrowRight className="w-4 h-4" />
@@ -200,7 +241,7 @@ export default function UnitKontakPage({ params }: { params: Promise<{ unit: str
                 </div>
               </div>
               <div className="text-sm text-gray-600 leading-relaxed">
-                {c.addressLines.map((line) => (
+                {c.addressLines.map((line: any) => (
                   <div key={line}>{line}</div>
                 ))}
               </div>
@@ -245,9 +286,15 @@ export default function UnitKontakPage({ params }: { params: Promise<{ unit: str
                   <p className="text-xs text-gray-500">Respon di jam kerja</p>
                 </div>
               </div>
-              <a href={`mailto:${c.email}`} className="text-sm font-semibold break-words" style={{ color: config.accentColor }}>
-                {c.email}
-              </a>
+              {c.email === '-' ? (
+                <div className="text-sm font-semibold break-words" style={{ color: config.accentColor }}>
+                  - (belum ada email khusus)
+                </div>
+              ) : (
+                <a href={`mailto:${c.email}`} className="text-sm font-semibold break-words" style={{ color: config.accentColor }}>
+                  {c.email}
+                </a>
+              )}
             </div>
 
             <div className="bg-white rounded-2xl p-7 shadow-soft border border-gray-100">
@@ -261,7 +308,7 @@ export default function UnitKontakPage({ params }: { params: Promise<{ unit: str
                 </div>
               </div>
               <div className="text-sm text-gray-600 leading-relaxed">
-                {c.hours.map((line) => (
+                {c.hours.map((line: any) => (
                   <div key={line}>{line}</div>
                 ))}
               </div>
@@ -297,7 +344,7 @@ export default function UnitKontakPage({ params }: { params: Promise<{ unit: str
 
             <div className="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden min-h-[320px]">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.362148003456!2d107.6181!3d-6.9147!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwNTQnNTIuOSJTIDEwN8KwMzcnMDUuMiJF!5e0!3m2!1sen!2sid!4v1620000000000!5m2!1sen!2sid"
+                src="https://www.google.com/maps?q=Jl.%20Pramuka%20No.43%2C%20Kemiling%20Permai%2C%20Kec.%20Kemiling%2C%20Kota%20Bandar%20Lampung%2C%20Lampung%2035153&output=embed"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}

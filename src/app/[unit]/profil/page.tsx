@@ -8,11 +8,22 @@ import { getUnitConfig } from '../../../features/unit/unit-config';
 import { UnitProfileCarousel } from '../../../features/unit/components/UnitProfileCarousel';
 import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
 import { ArrowRight, Award, BookOpen, Calendar, CheckCircle2, Heart, Sparkles, Users } from 'lucide-react';
+import Image from 'next/image';
 
 export default function UnitProfilPage({ params }: { params: Promise<{ unit: string }> }) {
   const router = useRouter();
   const { unit: slug } = React.use(params);
   const config = getUnitConfig(slug);
+  const apiBaseUrl = React.useMemo(() => {
+    const base = (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/$/, '');
+    if (typeof window === 'undefined') return base;
+    const hostname = window.location.hostname.toLowerCase();
+    if (hostname === 'smaitbaituljannah.sch.id' || hostname === 'www.smaitbaituljannah.sch.id') {
+      return 'https://baituljannah.sch.id/api/v1';
+    }
+    return base;
+  }, []);
+  const [cmsContent, setCmsContent] = React.useState<any | null>(null);
   const isAsrama = slug === 'asrama';
   const staffMenuLabel = isAsrama ? 'Musyrif & Musyrifah' : 'Guru & Staff';
   const curriculumMenuLabel = isAsrama ? 'Program' : 'Kurikulum';
@@ -124,13 +135,49 @@ export default function UnitProfilPage({ params }: { params: Promise<{ unit: str
       ],
     },
     { label: 'Karir', href: '#', onClick: () => router.push('/career') },
-    { label: 'PPDB', href: '#', onClick: () => router.push('/admission') },
+    { label: 'PPDB', href: '#', onClick: () => router.push(`/${slug}/ppdb`) },
     { label: 'Kontak', href: '#', onClick: () => router.push(`/${slug}/kontak`) }
   ];
 
+  React.useEffect(() => {
+    const unitCode = String(slug || '').trim().toUpperCase();
+    if (!unitCode || unitCode === 'ASRAMA') {
+      setCmsContent(null);
+      return;
+    }
+    const controller = new AbortController();
+    fetch(`${apiBaseUrl}/unit-pages?unit_code=${encodeURIComponent(unitCode)}&page_key=profil`, { signal: controller.signal })
+      .then(async (res) => {
+        const json = await res.json().catch(() => null);
+        if (!res.ok || !json?.success) throw new Error(json?.message || 'Gagal memuat CMS');
+        setCmsContent(json?.data?.content || null);
+      })
+      .catch(() => setCmsContent(null));
+    return () => controller.abort();
+  }, [apiBaseUrl, slug]);
+
   if (!config) return null;
 
-  const content = getProfileContent(slug);
+  const baseContent = getProfileContent(slug);
+  const content = (() => {
+    if (!cmsContent || typeof cmsContent !== 'object') return baseContent;
+    const mergedStrengths = Array.isArray(cmsContent?.strengths)
+      ? baseContent.strengths.map((s: any, idx: number) => {
+          const override = cmsContent.strengths[idx];
+          if (!override || typeof override !== 'object') return s;
+          return {
+            ...s,
+            title: typeof override.title === 'string' ? override.title : s.title,
+            description: typeof override.description === 'string' ? override.description : s.description,
+          };
+        })
+      : baseContent.strengths;
+    return {
+      ...baseContent,
+      ...cmsContent,
+      strengths: mergedStrengths,
+    };
+  })();
 
   return (
     <div className="min-h-screen bg-white">
@@ -162,7 +209,7 @@ export default function UnitProfilPage({ params }: { params: Promise<{ unit: str
 
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white mb-6">
-              <img src={config.icon} alt={config.unitName} className="w-5 h-5 object-contain" />
+              <Image src={config.icon} alt={config.unitName} width={20} height={20} className="w-5 h-5 object-contain" unoptimized />
               <span>{content.badge}</span>
             </div>
 
@@ -189,7 +236,7 @@ export default function UnitProfilPage({ params }: { params: Promise<{ unit: str
               <p className="text-gray-600 mb-6">{config.description}</p>
 
               <div className="grid sm:grid-cols-2 gap-4">
-                {content.strengths.map((s) => (
+                {content.strengths.map((s: any) => (
                   <div key={s.title} className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100">
                     <div
                       className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
@@ -241,7 +288,7 @@ export default function UnitProfilPage({ params }: { params: Promise<{ unit: str
                 <h3 className="text-2xl">Misi</h3>
               </div>
               <ul className="space-y-3">
-                {content.missions.map((m) => (
+                {content.missions.map((m: any) => (
                   <li key={m} className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: config.accentColor }} />
                     <span className="text-gray-700">{m}</span>
@@ -269,7 +316,7 @@ export default function UnitProfilPage({ params }: { params: Promise<{ unit: str
               </p>
 
               <div className="space-y-4">
-                {content.routine.map((item) => (
+                {content.routine.map((item: any) => (
                   <div key={`${item.time}-${item.title}`} className="bg-white rounded-2xl p-6 shadow-soft border border-gray-100">
                     <div className="flex items-start gap-4">
                       <div className="w-16 text-sm font-bold" style={{ color: config.accentColor }}>
@@ -297,7 +344,7 @@ export default function UnitProfilPage({ params }: { params: Promise<{ unit: str
                 Lingkungan belajar yang aman dan bersih membantu proses pembelajaran lebih fokus dan menyenangkan.
               </p>
               <ul className="space-y-3 mb-10">
-                {content.facilities.map((f) => (
+                {content.facilities.map((f: any) => (
                   <li key={f} className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: config.accentColor }} />
                     <span className="text-gray-700">{f}</span>
@@ -307,7 +354,7 @@ export default function UnitProfilPage({ params }: { params: Promise<{ unit: str
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <button
-                  onClick={() => router.push('/admission')}
+                  onClick={() => router.push(`/${slug}/ppdb`)}
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white shadow-soft hover:shadow-strong transition-all"
                   style={{ backgroundColor: config.accentColor }}
                 >

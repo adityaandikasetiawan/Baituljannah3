@@ -13,6 +13,16 @@ export default function UnitGaleriPage({ params }: { params: Promise<{ unit: str
   const { unit: slug } = React.use(params);
   const config = getUnitConfig(slug);
   const [activeCategory, setActiveCategory] = React.useState('Semua');
+  const apiBaseUrl = React.useMemo(() => {
+    const base = (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/$/, '');
+    if (typeof window === 'undefined') return base;
+    const hostname = window.location.hostname.toLowerCase();
+    if (hostname === 'smaitbaituljannah.sch.id' || hostname === 'www.smaitbaituljannah.sch.id') {
+      return 'https://baituljannah.sch.id/api/v1';
+    }
+    return base;
+  }, []);
+  const [dbItems, setDbItems] = React.useState<{ title: string; category: string; src: string }[] | null>(null);
   const isAsrama = slug === 'asrama';
   const staffMenuLabel = isAsrama ? 'Musyrif & Musyrifah' : 'Guru & Staff';
   const curriculumMenuLabel = isAsrama ? 'Program' : 'Kurikulum';
@@ -31,9 +41,38 @@ export default function UnitGaleriPage({ params }: { params: Promise<{ unit: str
       ],
     },
     { label: 'Karir', href: '#', onClick: () => router.push('/career') },
-    { label: 'PPDB', href: '#', onClick: () => router.push('/admission') },
+    { label: 'PPDB', href: '#', onClick: () => router.push(`/${slug}/ppdb`) },
     { label: 'Kontak', href: '#', onClick: () => router.push(`/${slug}/kontak`) }
   ];
+
+  React.useEffect(() => {
+    const unitCode = String(slug || '').trim().toUpperCase();
+    if (!unitCode || unitCode === 'ASRAMA') {
+      setDbItems(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    fetch(`${apiBaseUrl}/gallery?unit_code=${encodeURIComponent(unitCode)}&limit=100`, { signal: controller.signal })
+      .then(async (res) => {
+        const json = await res.json();
+        if (!res.ok || !json?.success) throw new Error(json?.message || 'Gagal memuat galeri');
+        const rows = Array.isArray(json?.data) ? json.data : [];
+        const mapped = rows
+          .map((row: any) => ({
+            title: String(row?.title || ''),
+            category: String(row?.category || 'Semua'),
+            src: String(row?.image_url || ''),
+          }))
+          .filter((it: any) => it.title && it.src);
+        setDbItems(mapped);
+      })
+      .catch(() => {
+        setDbItems(null);
+      });
+
+    return () => controller.abort();
+  }, [apiBaseUrl, slug]);
 
   if (!config) return null;
 
@@ -123,7 +162,7 @@ export default function UnitGaleriPage({ params }: { params: Promise<{ unit: str
     },
   };
 
-  const items =
+  const fallbackItems =
     galleryByUnit[slug]?.items ??
     [
       { title: 'Dokumentasi Kegiatan', category: 'Semua', src: heroImage },
@@ -135,6 +174,8 @@ export default function UnitGaleriPage({ params }: { params: Promise<{ unit: str
       { title: 'Kegiatan Keislaman', category: 'Semua', src: heroImage },
       { title: 'Momen Kebersamaan', category: 'Semua', src: heroImage },
     ];
+
+  const items = dbItems && dbItems.length ? dbItems : fallbackItems;
 
   const categories = Array.from(new Set(items.map((it) => it.category)));
   const categoryChips = ['Semua', ...categories];

@@ -20,6 +20,7 @@ CREATE TABLE users (
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('super_admin', 'admin_unit', 'guru', 'siswa', 'orang_tua') NOT NULL,
+    school_unit_id INT NULL,
     status ENUM('active', 'inactive', 'suspended') DEFAULT 'active',
     email_verified BOOLEAN DEFAULT FALSE,
     email_verification_token VARCHAR(255),
@@ -31,6 +32,7 @@ CREATE TABLE users (
     INDEX idx_email (email),
     INDEX idx_username (username),
     INDEX idx_role (role),
+    INDEX idx_school_unit_id (school_unit_id),
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -544,6 +546,7 @@ CREATE TABLE ppdb_registrations (
     photo_url VARCHAR(255),
     birth_certificate_url VARCHAR(255),
     family_card_url VARCHAR(255),
+    form_json LONGTEXT,
     status ENUM('pending', 'verified', 'accepted', 'rejected', 'enrolled') DEFAULT 'pending',
     notes TEXT,
     verified_by INT,
@@ -653,6 +656,7 @@ CREATE TABLE gallery (
     school_unit_id INT,
     title VARCHAR(200) NOT NULL,
     description TEXT,
+    keterangan TEXT,
     image_url VARCHAR(255) NOT NULL,
     thumbnail_url VARCHAR(255),
     category VARCHAR(50),
@@ -815,6 +819,22 @@ CREATE TABLE activity_logs (
 -- ============================================
 -- 14. CMS CONTENT
 -- ============================================
+
+CREATE TABLE unit_page_contents (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    school_unit_id INT NOT NULL,
+    page_key VARCHAR(50) NOT NULL,
+    status ENUM('draft', 'published') DEFAULT 'published',
+    content_json LONGTEXT NOT NULL,
+    updated_by INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_unit_page (school_unit_id, page_key),
+    INDEX idx_page_key (page_key),
+    INDEX idx_unit (school_unit_id),
+    FOREIGN KEY (school_unit_id) REFERENCES school_units(id) ON DELETE CASCADE,
+    FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE sliders (
     id INT AUTO_INCREMENT PRIMARY KEY,

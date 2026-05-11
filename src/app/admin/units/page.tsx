@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Sidebar } from '../../../components/layout/Sidebar';
 import { useNavigationMenu } from '../../../hooks/useNavigationMenu';
 import { Building, Plus, Edit, Eye, School, Users, GraduationCap, X, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
@@ -189,9 +190,9 @@ export default function AdminUnitsPage() {
             {units.map((unit) => (
               <div key={unit.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all group">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 overflow-hidden" style={{ backgroundColor: `${unit.color}20`, color: unit.color }}>
+                  <div className="relative w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 overflow-hidden" style={{ backgroundColor: `${unit.color}20`, color: unit.color }}>
                     {unit.icon ? (
-                      <img src={unit.icon} alt={unit.name} className="w-8 h-8 object-contain" />
+                      <Image src={unit.icon} alt={unit.name} fill sizes="48px" className="object-contain p-2" unoptimized />
                     ) : (
                       <School className="w-6 h-6" />
                     )}
@@ -414,4 +415,3 @@ export default function AdminUnitsPage() {
     </div>
   );
 }
-

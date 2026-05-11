@@ -8,10 +8,65 @@ import {
 
 export type UserRole = 'public' | 'student' | 'parent' | 'teacher' | 'admin';
 
+type NavigationSubmenuItem = {
+  label: string;
+  labelEn?: string;
+  icon?: any;
+  href: string;
+  onClick?: () => void;
+};
+
+type NavigationMenuItem = {
+  label: string;
+  labelEn?: string;
+  icon: any;
+  href: string;
+  onClick?: () => void;
+  submenu?: NavigationSubmenuItem[];
+};
+
 export const useNavigationMenu = (role: UserRole = 'public') => {
   const router = useRouter();
+  const portalOrigin = 'https://baituljannah.sch.id';
+  const hostname = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+  const unitSubdomainToSlug: Record<string, string> = {
+    'smpitbaituljannah.sch.id': 'smpit',
+    'www.smpitbaituljannah.sch.id': 'smpit',
+    'smaitbaituljannah.sch.id': 'smait',
+    'www.smaitbaituljannah.sch.id': 'smait',
+  };
+  const unitSlugFromHost = unitSubdomainToSlug[hostname];
+  const unitSlugFromPath = typeof window !== 'undefined'
+    ? (window.location.pathname || '').match(/^\/(tkit|sdit|smpit|smait|slbit)(\/|$)/i)?.[1]?.toLowerCase()
+    : undefined;
+  const unitSlug = unitSlugFromHost || unitSlugFromPath;
+  const isUnitSubdomain = Boolean(unitSlugFromHost);
+  const unitSlugs = ['tkit', 'sdit', 'smpit', 'smait', 'slbit'];
 
   const onNavigate = (page: string) => {
+    const normalized = String(page || '').trim();
+    if (unitSlug) {
+      if (normalized === 'main') {
+        window.location.href = `${portalOrigin}/`;
+        return;
+      }
+
+      if (normalized === unitSlug) {
+        router.push(isUnitSubdomain ? '/' : `/${unitSlug}`);
+        return;
+      }
+
+      if (normalized.startsWith(`${unitSlug}/`)) {
+        router.push(isUnitSubdomain ? `/${normalized.slice(`${unitSlug}/`.length)}` : `/${normalized}`);
+        return;
+      }
+
+      if (unitSlugs.includes(normalized) && normalized !== unitSlug) {
+        window.location.href = `${portalOrigin}/${normalized}`;
+        return;
+      }
+    }
+
     const routes: Record<string, string> = {
       'main': '/',
       'about': '/about',
@@ -49,18 +104,24 @@ export const useNavigationMenu = (role: UserRole = 'public') => {
       'admin-gallery': '/admin/gallery',
       'admin-achievement': '/admin/achievement',
       'admin-programs': '/admin/programs',
+      'admin-cms': '/admin/cms',
       'admin-career': '/admin/career',
       'admin-finance': '/admin/finance',
       'admin-attendance': '/admin/attendance',
+      'admin-ppdb': '/admin/ppdb',
       'admin-users': '/admin/users',
       'admin-units': '/admin/units',
     };
     
     const route = routes[page] || `/${page}`;
+    if (unitSlug && !isUnitSubdomain && (route.startsWith('/admin') || route.startsWith('/teacher') || route.startsWith('/student') || route.startsWith('/parent'))) {
+      router.push(`/${unitSlug}${route}`);
+      return;
+    }
     router.push(route);
   };
 
-  const publicMenu = [
+  const publicMenu: NavigationMenuItem[] = [
     { 
       label: 'Beranda', 
       labelEn: 'Home',
@@ -132,7 +193,7 @@ export const useNavigationMenu = (role: UserRole = 'public') => {
     }
   ];
 
-  const studentMenu = [
+  const studentMenu: NavigationMenuItem[] = [
     { label: 'Dashboard', icon: TrendingUp, href: '#', onClick: () => onNavigate('student-dashboard') },
     { label: 'Akademik', icon: BookOpen, href: '#', onClick: () => onNavigate('student-academic') },
     { label: 'Ekskul', icon: Zap, href: '#', onClick: () => onNavigate('student-extracurricular') },
@@ -141,13 +202,13 @@ export const useNavigationMenu = (role: UserRole = 'public') => {
     { label: 'Profile', icon: Users, href: '#', onClick: () => onNavigate('student-profile') }
   ];
 
-  const parentMenu = [
+  const parentMenu: NavigationMenuItem[] = [
     { label: 'Dashboard', icon: TrendingUp, href: '#', onClick: () => onNavigate('parent-dashboard') },
     { label: 'Keuangan', icon: DollarSign, href: '#', onClick: () => onNavigate('parent-finance') },
     { label: 'Profile', icon: Users, href: '#', onClick: () => {} }
   ];
 
-  const teacherMenu = [
+  const teacherMenu: NavigationMenuItem[] = [
     { label: 'Dashboard', icon: TrendingUp, href: '#', onClick: () => onNavigate('teacher-dashboard') },
     { label: 'Jadwal', icon: Calendar, href: '#', onClick: () => onNavigate('teacher-schedule') },
     { label: 'Nilai', icon: Award, href: '#', onClick: () => onNavigate('teacher-grades') },
@@ -156,7 +217,7 @@ export const useNavigationMenu = (role: UserRole = 'public') => {
     { label: 'Profile', icon: Users, href: '#', onClick: () => onNavigate('teacher-profile') }
   ];
 
-  const adminMenu = [
+  const adminMenu: NavigationMenuItem[] = [
     { label: 'Dashboard', icon: TrendingUp, href: '#', onClick: () => onNavigate('admin-dashboard') },
     { label: 'Manajemen Unit', icon: BookOpen, href: '#', onClick: () => onNavigate('admin-units') },
     { label: 'Manajemen User', icon: Users, href: '#', onClick: () => onNavigate('admin-users') },
@@ -168,17 +229,18 @@ export const useNavigationMenu = (role: UserRole = 'public') => {
         { label: 'Berita & Artikel', href: '#', onClick: () => onNavigate('admin-news') },
         { label: 'Galeri', href: '#', onClick: () => onNavigate('admin-gallery') },
         { label: 'Prestasi', href: '#', onClick: () => onNavigate('admin-achievement') },
-        { label: 'Program', href: '#', onClick: () => onNavigate('admin-programs') }
+        { label: 'Program', href: '#', onClick: () => onNavigate('admin-programs') },
+        { label: 'CMS Halaman Unit', href: '#', onClick: () => onNavigate('admin-cms') }
       ]
     },
-    { label: 'PPDB', icon: Calendar, href: '#', onClick: () => {} },
+    { label: 'PPDB', icon: Calendar, href: '#', onClick: () => onNavigate('admin-ppdb') },
     { label: 'Rekrutmen', icon: Briefcase, href: '#', onClick: () => onNavigate('admin-career') },
     { label: 'Keuangan', icon: DollarSign, href: '#', onClick: () => onNavigate('admin-finance') },
     { label: 'Absensi', icon: ClipboardCheck, href: '#', onClick: () => onNavigate('admin-attendance') },
     { label: 'Pengaturan', icon: Settings, href: '#', onClick: () => {} }
   ];
 
-  let menuItems = publicMenu;
+  let menuItems: NavigationMenuItem[] = publicMenu;
   switch (role) {
     case 'student':
       menuItems = studentMenu;
@@ -190,7 +252,9 @@ export const useNavigationMenu = (role: UserRole = 'public') => {
       menuItems = teacherMenu;
       break;
     case 'admin':
-      menuItems = adminMenu;
+      menuItems = unitSlug
+        ? adminMenu.filter((item) => !['Manajemen Unit', 'Manajemen User', 'Keuangan', 'Absensi'].includes(item.label))
+        : adminMenu;
       break;
   }
 

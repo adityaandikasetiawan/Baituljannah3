@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '../../components/layout/Navbar';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
@@ -11,12 +11,37 @@ import { Toaster, toast } from 'sonner';
 export default function LoginPage() {
   const router = useRouter();
   const { menuItems } = useNavigationMenu();
+  const brand = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return { siteName: 'Login - Baituljannah', headlinePrefix: 'Yayasan', headlineAccent: 'Baituljannah' };
+    }
+    const hostname = window.location.hostname.toLowerCase();
+    if (hostname === 'smpitbaituljannah.sch.id' || hostname === 'www.smpitbaituljannah.sch.id') {
+      return { siteName: 'Login - SMPIT Baituljannah', headlinePrefix: 'SMPIT', headlineAccent: 'Baituljannah' };
+    }
+    if (hostname === 'smaitbaituljannah.sch.id' || hostname === 'www.smaitbaituljannah.sch.id') {
+      return { siteName: 'Login - SMAIT Baituljannah', headlinePrefix: 'SMAIT', headlineAccent: 'Baituljannah' };
+    }
+    return { siteName: 'Login - Baituljannah', headlinePrefix: 'Yayasan', headlineAccent: 'Baituljannah' };
+  }, []);
   const [showPassword, setShowPassword] = useState(false);
   const [userType, setUserType] = useState<'admin' | 'teacher' | 'student' | 'parent'>('student');
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+
+  const setCookie = (name: string, value: string) => {
+    if (typeof window === 'undefined') return;
+    const hostname = window.location.hostname;
+    const isHttps = window.location.protocol === 'https:';
+    const parts = [`${encodeURIComponent(name)}=${encodeURIComponent(value)}`, 'path=/', 'SameSite=Lax', 'Max-Age=604800'];
+    if (isHttps) parts.push('Secure');
+    if (hostname === 'baituljannah.sch.id' || hostname.endsWith('.baituljannah.sch.id')) {
+      parts.push('Domain=.baituljannah.sch.id');
+    }
+    document.cookie = parts.join('; ');
+  };
 
   const toRoleCookie = (role: string | undefined, fallback: typeof userType) => {
     const r = String(role || '').toLowerCase();
@@ -37,7 +62,7 @@ export default function LoginPage() {
       const response = await fetch(`${apiBaseUrl}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email, password: formData.password }),
+        body: JSON.stringify({ email: formData.email, password: formData.password, portal: 'main' }),
       });
 
       const data = await response.json().catch(() => null);
@@ -50,7 +75,9 @@ export default function LoginPage() {
 
         const roleFromApi: string | undefined = data.data.user?.role;
         const roleCookie = toRoleCookie(roleFromApi, fallbackRoleCookie);
-        document.cookie = `role=${roleCookie}; path=/; SameSite=Lax`;
+        setCookie('role', roleCookie);
+        setCookie('token', data.data.token);
+        setCookie('portal', 'main');
 
         if (roleFromApi === 'admin') router.push('/admin/dashboard');
         else if (roleFromApi === 'guru') router.push('/teacher/dashboard');
@@ -63,24 +90,10 @@ export default function LoginPage() {
 
       const message = data?.message || 'Login gagal';
       toast.error(message);
+      return;
     } catch (error: any) {
-      toast.error('Tidak bisa terhubung ke server. Menggunakan mode demo.');
-    }
-
-    document.cookie = `role=${fallbackRoleCookie}; path=/; SameSite=Lax`;
-    switch (userType) {
-      case 'admin':
-        router.push('/admin/dashboard');
-        break;
-      case 'teacher':
-        router.push('/teacher/dashboard');
-        break;
-      case 'student':
-        router.push('/student/dashboard');
-        break;
-      case 'parent':
-        router.push('/parent/dashboard');
-        break;
+      toast.error('Tidak bisa terhubung ke server.');
+      return;
     }
   };
 
@@ -119,7 +132,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
       <Toaster position="top-right" richColors />
       <Navbar 
-        siteName="Login - Baituljannah"
+        siteName={brand.siteName}
         accentColor="#1E4AB8"
         menuItems={menuItems}
       />
@@ -143,7 +156,7 @@ export default function LoginPage() {
                     <span className="text-4xl">🕌</span>
                   </div>
                   <h1 className="text-4xl mb-4 font-bold text-gray-800">
-                    Yayasan <span className="text-[#1E4AB8]">Baituljannah</span>
+                    {brand.headlinePrefix} <span className="text-[#1E4AB8]">{brand.headlineAccent}</span>
                   </h1>
                   <p className="text-xl text-gray-600 mb-6">
                     Sistem Manajemen Sekolah Islam Terpadu
@@ -188,7 +201,7 @@ export default function LoginPage() {
                   <span className="text-3xl">🕌</span>
                 </div>
                 <h1 className="text-2xl mb-2 font-bold text-gray-800">
-                  Yayasan <span className="text-[#1E4AB8]">Baituljannah</span>
+                  {brand.headlinePrefix} <span className="text-[#1E4AB8]">{brand.headlineAccent}</span>
                 </h1>
               </div>
 

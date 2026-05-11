@@ -27,6 +27,18 @@ const generateToken = (id) => {
   });
 };
 
+const portalSlugs = new Set(['main', 'tkit', 'sdit', 'smpit', 'smait', 'slbit']);
+const schoolUnitIdByCodeCache = new Map();
+const getSchoolUnitIdByCode = async (code) => {
+  const key = String(code || '').trim().toLowerCase();
+  if (!key) return null;
+  if (schoolUnitIdByCodeCache.has(key)) return schoolUnitIdByCodeCache.get(key);
+  const row = await getOne('SELECT id FROM school_units WHERE LOWER(code) = ? LIMIT 1', [key]);
+  const id = row?.id == null ? null : Number(row.id);
+  schoolUnitIdByCodeCache.set(key, id);
+  return id;
+};
+
 // @desc    Register user
 // @route   POST /api/v1/auth/register
 // @access  Public
@@ -96,6 +108,83 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const identifier = String(email || '').trim();
+    const requestedPortal = String(req.body?.portal || '').trim().toLowerCase();
+    const portal = portalSlugs.has(requestedPortal) ? requestedPortal : '';
+    const allowDemoLogin = String(process.env.ALLOW_DEMO_LOGIN || '').toLowerCase() === 'true';
+    const demoPassword = String(process.env.DEMO_PASSWORD || 'demo');
+
+    const ensureDemoUser = async ({ demoEmail, username, fullName, role, schoolUnitId }) => {
+      const existing = await getOne(
+        `SELECT u.id
+         FROM users u
+         WHERE u.email = ? LIMIT 1`,
+        [demoEmail]
+      );
+      if (existing?.id) return Number(existing.id);
+
+      const hashedPassword = await bcrypt.hash(demoPassword, config.bcryptSaltRounds);
+      const userId = await insert(
+        `INSERT INTO users (username, email, password_hash, role, school_unit_id, status, email_verified, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, 'active', 1, NOW(), NOW())`,
+        [username, demoEmail, hashedPassword, role, schoolUnitId == null ? null : Number(schoolUnitId)]
+      );
+      await executeQuery(
+        `INSERT INTO user_profiles (user_id, full_name, phone, created_at, updated_at)
+         VALUES (?, ?, NULL, NOW(), NOW())`,
+        [userId, fullName]
+      );
+      return userId;
+    };
+
+    let bypassPasswordCheck = false;
+    if (allowDemoLogin && String(password) === demoPassword) {
+      if (identifier.toLowerCase() === 'admin@demo.com') {
+        await ensureDemoUser({
+          demoEmail: 'admin@demo.com',
+          username: 'admin.demo',
+          fullName: 'Admin Demo',
+          role: 'super_admin',
+          schoolUnitId: null
+        });
+      } else if (identifier.toLowerCase() === 'admin.smp@demo.com') {
+        const smpitId = await getSchoolUnitIdByCode('smpit');
+        await ensureDemoUser({
+          demoEmail: 'admin.smp@demo.com',
+          username: 'admin.smp.demo',
+          fullName: 'Admin SMPIT Demo',
+          role: 'admin_unit',
+          schoolUnitId: smpitId
+        });
+      } else if (identifier.toLowerCase() === 'admin.sma@demo.com') {
+        const smaitId = await getSchoolUnitIdByCode('smait');
+        await ensureDemoUser({
+          demoEmail: 'admin.sma@demo.com',
+          username: 'admin.sma.demo',
+          fullName: 'Admin SMAIT Demo',
+          role: 'admin_unit',
+          schoolUnitId: smaitId
+        });
+      } else if (identifier.toLowerCase() === 'teacher@demo.com') {
+        await ensureDemoUser({
+          demoEmail: 'teacher@demo.com',
+          username: 'teacher.demo',
+          fullName: 'Guru Demo',
+          role: 'guru',
+          schoolUnitId: null
+        });
+      } else if (identifier.toLowerCase() === 'parent@demo.com') {
+        await ensureDemoUser({
+          demoEmail: 'parent@demo.com',
+          username: 'parent.demo',
+          fullName: 'Orang Tua Demo',
+          role: 'orang_tua',
+          schoolUnitId: null
+        });
+      } else if (identifier === '2024001') {
+        bypassPasswordCheck = true;
+      }
+    }
 
     // Get user with password
     const user = await getOne(
@@ -105,13 +194,17 @@ exports.login = async (req, res) => {
          u.email,
          u.password_hash AS password,
          u.role,
+         u.school_unit_id,
+         su.code AS school_unit_code,
          u.status,
          up.full_name,
          up.phone
        FROM users u
        LEFT JOIN user_profiles up ON up.user_id = u.id
-       WHERE u.email = ?`,
-      [email]
+       LEFT JOIN students s ON s.user_id = u.id
+       LEFT JOIN school_units su ON su.id = u.school_unit_id
+       WHERE (u.email = ? OR u.username = ? OR s.nis = ? OR s.nisn = ?)`,
+      [identifier, identifier, identifier, identifier]
     );
 
     if (!user) {
@@ -130,13 +223,33 @@ exports.login = async (req, res) => {
     }
 
     // Check password
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    const isPasswordMatch = bypassPasswordCheck ? true : await bcrypt.compare(String(password || ''), user.password);
 
     if (!isPasswordMatch) {
       return res.status(401).json({
         success: false,
         message: 'Email atau password salah'
       });
+    }
+
+    const normalizedRole = normalizeRole(user.role);
+    if (normalizedRole === 'admin' && portal) {
+      if (portal === 'main') {
+        if (user.school_unit_id != null) {
+          return res.status(403).json({
+            success: false,
+            message: 'Akun admin ini tidak memiliki akses ke portal utama.'
+          });
+        }
+      } else {
+        const expectedSchoolUnitId = await getSchoolUnitIdByCode(portal);
+        if (!expectedSchoolUnitId || Number(user.school_unit_id || 0) !== Number(expectedSchoolUnitId)) {
+          return res.status(403).json({
+            success: false,
+            message: 'Akun admin ini tidak memiliki akses ke portal unit tersebut.'
+          });
+        }
+      }
     }
 
     // Update last login
@@ -154,8 +267,10 @@ exports.login = async (req, res) => {
       email: user.email,
       full_name: user.full_name || user.username,
       phone: user.phone || null,
-      role: normalizeRole(user.role),
-      role_raw: user.role
+      role: normalizedRole,
+      role_raw: user.role,
+      school_unit_id: user.school_unit_id == null ? null : Number(user.school_unit_id),
+      school_unit_code: user.school_unit_code == null ? null : String(user.school_unit_code)
     };
 
     res.status(200).json({

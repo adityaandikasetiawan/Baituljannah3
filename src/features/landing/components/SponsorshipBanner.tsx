@@ -1,6 +1,6 @@
 import React from 'react';
 import { Heart, Sparkles, ArrowRight, HandHeart, Trophy } from 'lucide-react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
 
 interface SponsorshipBannerProps {
   onNavigate?: (page: string) => void;

@@ -4,7 +4,7 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const normalizeOrigin = (value) => String(value || '').trim().replace(/\/$/, '');
 
 const frontendUrl = normalizeOrigin(process.env.FRONTEND_URL || 'http://localhost:3000');
-const frontendUrls = (process.env.FRONTEND_URLS || `${frontendUrl},https://baituljannah.sch.id,https://www.baituljannah.sch.id,http://baituljannah.sch.id,http://www.baituljannah.sch.id`)
+const frontendUrls = (process.env.FRONTEND_URLS || `${frontendUrl},https://baituljannah.sch.id,https://www.baituljannah.sch.id,http://baituljannah.sch.id,http://www.baituljannah.sch.id,https://smpitbaituljannah.sch.id,https://www.smpitbaituljannah.sch.id,http://smpitbaituljannah.sch.id,http://www.smpitbaituljannah.sch.id,https://smaitbaituljannah.sch.id,https://www.smaitbaituljannah.sch.id,http://smaitbaituljannah.sch.id,http://www.smaitbaituljannah.sch.id`)
   .split(',')
   .map(normalizeOrigin)
   .filter(Boolean);

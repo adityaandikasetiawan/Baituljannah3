@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { Breadcrumb } from '../../components/layout/Breadcrumb';
@@ -104,10 +105,14 @@ export default function ProgramsPage() {
         {/* Hero Section */}
         <section className="relative py-20 bg-blue-900 text-white overflow-hidden">
           <div className="absolute inset-0 z-0">
-            <img 
-              src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" 
-              alt="Programs Background" 
-              className="w-full h-full object-cover opacity-20"
+            <Image
+              src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80"
+              alt="Programs Background"
+              fill
+              sizes="100vw"
+              className="object-cover opacity-20"
+              priority
+              unoptimized
             />
             <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 to-indigo-900/80"></div>
           </div>
@@ -267,4 +272,3 @@ export default function ProgramsPage() {
     </div>
   );
 }
-

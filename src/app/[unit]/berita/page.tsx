@@ -12,7 +12,20 @@ export default function UnitBeritaPage({ params }: { params: Promise<{ unit: str
   const router = useRouter();
   const { unit: slug } = React.use(params);
   const config = getUnitConfig(slug);
+  const fullName = config?.fullName || '';
   const [activeCategory, setActiveCategory] = React.useState('Semua');
+  const apiBaseUrl = React.useMemo(() => {
+    const base = (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/$/, '');
+    if (typeof window === 'undefined') return base;
+    const hostname = window.location.hostname.toLowerCase();
+    if (hostname === 'smaitbaituljannah.sch.id' || hostname === 'www.smaitbaituljannah.sch.id') {
+      return 'https://baituljannah.sch.id/api/v1';
+    }
+    return base;
+  }, []);
+  const [dbPosts, setDbPosts] = React.useState<
+    { title: string; date: string; category: string; excerpt: string; image: string }[] | null
+  >(null);
   const isAsrama = slug === 'asrama';
   const staffMenuLabel = isAsrama ? 'Musyrif & Musyrifah' : 'Guru & Staff';
   const curriculumMenuLabel = isAsrama ? 'Program' : 'Kurikulum';
@@ -31,11 +44,9 @@ export default function UnitBeritaPage({ params }: { params: Promise<{ unit: str
       ],
     },
     { label: 'Karir', href: '#', onClick: () => router.push('/career') },
-    { label: 'PPDB', href: '#', onClick: () => router.push('/admission') },
+    { label: 'PPDB', href: '#', onClick: () => router.push(`/${slug}/ppdb`) },
     { label: 'Kontak', href: '#', onClick: () => router.push(`/${slug}/kontak`) }
   ];
-
-  if (!config) return null;
 
   const heroByUnit: Record<string, string> = {
     tkit: '/uploads/hero/hero_1769656548631_nnkh2yt4ix.webp',
@@ -47,6 +58,52 @@ export default function UnitBeritaPage({ params }: { params: Promise<{ unit: str
   };
 
   const heroImage = heroByUnit[slug] ?? '/uploads/hero/hero_1769656548631_nnkh2yt4ix.webp';
+
+  React.useEffect(() => {
+    const unitCode = String(slug || '').trim().toUpperCase();
+    if (!unitCode || unitCode === 'ASRAMA') {
+      setDbPosts(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    fetch(`${apiBaseUrl}/news?unit_sekolah=${encodeURIComponent(unitCode)}&limit=100&page=1`, { signal: controller.signal })
+      .then(async (res) => {
+        const json = await res.json();
+        if (!res.ok || !json?.success) throw new Error(json?.message || 'Gagal memuat berita');
+        const rows = Array.isArray(json?.data) ? json.data : [];
+        const mapped = rows
+          .map((row: any) => {
+            const rawTitle = String(row?.title || '').trim();
+            const rawCategory = String(row?.category || '').trim() || 'Lainnya';
+            const rawDate = String(row?.publish_date || row?.created_at || '').trim();
+            const dt = rawDate ? new Date(rawDate) : null;
+            const dateLabel = dt && !Number.isNaN(dt.getTime())
+              ? dt.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+              : 'Jadwal menyusul';
+            const rawContent = String(row?.content || '').trim();
+            const plain = rawContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+            const excerpt = plain.length > 160 ? `${plain.slice(0, 160)}...` : plain;
+            const imageUrl = String(row?.image_url || '').trim() || heroImage;
+            return {
+              title: rawTitle,
+              date: dateLabel,
+              category: rawCategory,
+              excerpt: excerpt || `Update kegiatan, agenda, dan informasi penting seputar ${fullName}.`,
+              image: imageUrl,
+            };
+          })
+          .filter((it: any) => it.title);
+        setDbPosts(mapped);
+      })
+      .catch(() => {
+        setDbPosts(null);
+      });
+
+    return () => controller.abort();
+  }, [apiBaseUrl, fullName, heroImage, slug]);
+
+  if (!config) return null;
 
   const postsByUnit: Record<
     string,
@@ -318,7 +375,7 @@ export default function UnitBeritaPage({ params }: { params: Promise<{ unit: str
     ],
   };
 
-  const posts =
+  const fallbackPosts =
     postsByUnit[slug] ??
     [
       {
@@ -364,6 +421,8 @@ export default function UnitBeritaPage({ params }: { params: Promise<{ unit: str
         image: heroImage,
       },
     ];
+
+  const posts = dbPosts && dbPosts.length ? dbPosts : fallbackPosts;
 
   const categories = Array.from(new Set(posts.map((p) => p.category)));
   const categoryChips = ['Semua', ...categories];
@@ -499,7 +558,7 @@ export default function UnitBeritaPage({ params }: { params: Promise<{ unit: str
               </div>
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
-                  onClick={() => router.push('/admission')}
+                  onClick={() => router.push(`/${slug}/ppdb`)}
                   className="px-8 py-3 rounded-full font-semibold text-white hover:opacity-95 transition-opacity"
                   style={{ backgroundColor: config.accentColor }}
                 >

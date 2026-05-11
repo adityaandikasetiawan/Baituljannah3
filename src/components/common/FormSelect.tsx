@@ -2,6 +2,7 @@ import React from 'react';
 
 interface FormSelectProps {
   label: string;
+  name?: string;
   options: { value: string; label: string }[];
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -12,6 +13,7 @@ interface FormSelectProps {
 
 export const FormSelect: React.FC<FormSelectProps> = ({
   label,
+  name,
   options,
   value,
   onChange,
@@ -26,6 +28,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
       <select
+        name={name}
         value={value}
         onChange={onChange}
         required={required}
