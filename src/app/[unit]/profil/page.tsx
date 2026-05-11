@@ -18,7 +18,12 @@ export default function UnitProfilPage({ params }: { params: Promise<{ unit: str
     const base = (process.env.NEXT_PUBLIC_API_URL || '/api/v1').replace(/\/$/, '');
     if (typeof window === 'undefined') return base;
     const hostname = window.location.hostname.toLowerCase();
-    if (hostname === 'smaitbaituljannah.sch.id' || hostname === 'www.smaitbaituljannah.sch.id') {
+    if (
+      hostname === 'smaitbaituljannah.sch.id' ||
+      hostname === 'www.smaitbaituljannah.sch.id' ||
+      hostname === 'smpitbaituljannah.sch.id' ||
+      hostname === 'www.smpitbaituljannah.sch.id'
+    ) {
       return 'https://baituljannah.sch.id/api/v1';
     }
     return base;
