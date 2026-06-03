@@ -139,7 +139,6 @@ export const useNavigationMenu = (role: UserRole = 'public') => {
         { label: 'Visi dan Misi', labelEn: 'Vision & Mission', href: '#', onClick: () => onNavigate('vision-mission') },
         { label: 'Kurikulum', labelEn: 'Curriculum', href: '#', onClick: () => onNavigate('programs') },
         { label: 'Fasilitas', labelEn: 'Facilities', href: '#', onClick: () => onNavigate('facilities') },
-        { label: 'Kepengurusan', labelEn: 'Management', href: '#', onClick: () => onNavigate('about') }
       ]
     },
     {

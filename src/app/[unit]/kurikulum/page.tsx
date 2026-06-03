@@ -6,7 +6,7 @@ import { Navbar } from '../../../components/layout/Navbar';
 import { Footer } from '../../../components/layout/Footer';
 import { getUnitConfig } from '../../../features/unit/unit-config';
 import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
-import { BookOpen, GraduationCap, CheckCircle, ArrowRight, Heart, Sparkles, Users, Palette, Music, Puzzle, Shapes, Brain, Hand, Leaf } from 'lucide-react';
+import { BookOpen, GraduationCap, CheckCircle, ArrowRight, Heart, Sparkles, Users, Palette, Music, Puzzle, Shapes, Brain, Hand, Leaf, Award, Target, TrendingUp, Star, Zap } from 'lucide-react';
 import Image from 'next/image';
 
 export default function UnitKurikulumPage({ params }: { params: Promise<{ unit: string }> }) {
@@ -95,7 +95,7 @@ export default function UnitKurikulumPage({ params }: { params: Promise<{ unit: 
     }
 
     return {
-      badge: `Kurikulum ${config?.unitName || 'Unit'}`,
+      badge: key === 'smpit' ? 'Six Aspects of Curriculum' : `Kurikulum ${config?.unitName || 'Unit'}`,
       headline: 'Kurikulum terintegrasi untuk tumbuh dan berprestasi',
       intro: 'Integrasi kurikulum nasional dengan pendidikan Islam secara terarah dan aplikatif.',
       approachTitle: 'Komponen Utama',
@@ -152,7 +152,6 @@ export default function UnitKurikulumPage({ params }: { params: Promise<{ unit: 
         { label: 'Galeri', href: '#', onClick: () => router.push(`/${slug}/galeri`) },
       ],
     },
-    { label: 'Karir', href: '#', onClick: () => router.push('/career') },
     { label: 'PPDB', href: '#', onClick: () => router.push(`/${slug}/ppdb`) },
     { label: 'Kontak', href: '#', onClick: () => router.push(`/${slug}/kontak`) }
   ];

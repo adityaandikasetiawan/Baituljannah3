@@ -124,7 +124,7 @@ export default function AboutPage() {
             </div>
             <h1 className="text-5xl lg:text-6xl mb-6">Tentang Baituljannah</h1>
             <p className="text-xl text-white/90 max-w-3xl leading-relaxed">
-              Yayasan pendidikan Islam terpadu yang berkomitmen mencetak generasi Qur'ani yang berakhlak mulia, cerdas, dan berprestasi
+              Lembaga pendidikan Islam terkemuka di Bandar Lampung yang mendedikasikan diri untuk melahirkan generasi unggul berkarakter Islami — <em>Sekolahnya Para Juara</em>
             </p>
           </div>
         </div>
@@ -139,17 +139,28 @@ export default function AboutPage() {
                 <Sparkles className="w-4 h-4" />
                 <span>Sejarah Kami</span>
               </div>
-              <h2 className="text-4xl mb-6 text-gray-900">Perjalanan Yayasan Baituljannah</h2>
+              <h2 className="text-4xl mb-6 text-gray-900">Tentang Kami: Baitul Jannah Islamic School</h2>
               <div className="space-y-4 text-gray-700 leading-relaxed">
                 <p>
-                  <strong className="text-[#1E4AB8]">Yayasan Baituljannah</strong> didirikan pada tahun 2010 dengan visi menjadi lembaga pendidikan Islam terpadu yang unggul dan berkarakter. Berawal dari TKIT dengan 50 siswa, kini telah berkembang menjadi 5 unit pendidikan dengan lebih dari 2000 siswa.
+                  <strong className="text-[#1E4AB8]">Baitul Jannah Islamic School</strong> adalah lembaga pendidikan Islam terkemuka di Bandar Lampung yang mendedikasikan diri untuk melahirkan generasi unggul berkarakter Islami. Mengusung julukan <em>"Sekolahnya Para Juara,"</em> kami memadukan nilai-nilai spiritual keagamaan dengan ekosistem pembelajaran modern berbasis digital.
                 </p>
-                <p>
-                  Dalam perjalanannya, Baituljannah terus berinovasi mengembangkan metode pembelajaran yang mengintegrasikan kurikulum nasional dengan nilai-nilai Islam. Prestasi demi prestasi berhasil diraih oleh siswa-siswa kami di berbagai kompetisi tingkat lokal, nasional, hingga internasional.
-                </p>
-                <p>
-                  Dengan dukungan tenaga pendidik profesional dan fasilitas modern, Baituljannah berkomitmen untuk terus memberikan pendidikan berkualitas yang melahirkan generasi Qur'ani yang siap menghadapi tantangan masa depan.
-                </p>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mt-6 mb-2">Akar Sejarah Kami</h3>
+                  <p>
+                    Perjalanan kami dimulai dari sebuah niat suci dan ketulusan hati Ibunda <strong>Ny. Hj. Darsum</strong> (keluarga besar Alm. Hi. Darsum) yang diwujudkan melalui pembangunan <strong>Masjid Baitul Jannah</strong> pada tahun 2008. Terinspirasi dari semangat ibadah tersebut, Yayasan Baitul Jannah didirikan di bawah pimpinan <strong>Ir. Sugirianto, M.M.</strong>, dan resmi memulai langkah pertamanya di dunia pendidikan dengan membuka <strong>TKIT Baitul Jannah</strong> pada tahun 2009.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mt-6 mb-2">Perkembangan & Kemitraan</h3>
+                  <p>
+                    Sejak resmi dikukuhkan pada <strong>16 September 2011</strong>, Yayasan Baitul Jannah terus bertumbuh pesat. Kini, kami menyediakan layanan pendidikan yang lengkap dan inklusif di bawah satu atap, mulai dari jenjang Playgroup, TKIT, SDIT, SMPIT, SMAIT, hingga SLBIT.
+                  </p>
+                  <p className="mt-3">
+                    Saat ini, kami bangga dan bersyukur telah dipercaya untuk membina lebih dari <strong className="text-[#1E4AB8]">2.000 siswa aktif</strong> dalam lingkungan belajar yang adaptif, kompetitif, dan islami.
+                  </p>
+                </div>
               </div>
 
               <div className="mt-8 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl">
@@ -215,7 +226,6 @@ export default function AboutPage() {
               <Heart className="w-4 h-4" />
               <span>Nilai-Nilai Kami</span>
             </div>
-            <h2 className="text-4xl lg:text-5xl mb-4 text-gray-900">Pilar Pendidikan Kami</h2>
             <p className="text-gray-600 text-lg max-w-3xl mx-auto leading-relaxed">
               Empat pilar utama yang menjadi fondasi dalam setiap aspek pendidikan di Baituljannah
             </p>

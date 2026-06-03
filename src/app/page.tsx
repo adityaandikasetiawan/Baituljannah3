@@ -183,6 +183,12 @@ export default function Home() {
 
   const [achievements, setAchievements] = React.useState(fallbackAchievements);
   const [heroSlides, setHeroSlides] = React.useState(fallbackHeroSlides);
+  const [news, setNews] = React.useState<Array<{image:string;title:string;date:string;category:string;excerpt:string;color:string}>>([]);
+
+  const CATEGORY_COLORS: Record<string,string> = {
+    Prestasi: '#8B5CF6', Kegiatan: '#F97316', Akademik: '#3B82F6',
+    Pengumuman: '#10B981', Event: '#F472B6', Program: '#10B981', Lainnya: '#6B7280',
+  };
 
   const getAccentColor = React.useCallback((category?: string, level?: string) => {
     const key = (category || level || '').toLowerCase();
@@ -200,9 +206,10 @@ export default function Home() {
 
     const load = async () => {
       try {
-        const [slidersRes, achievementsRes] = await Promise.all([
+        const [slidersRes, achievementsRes, newsRes] = await Promise.all([
           fetch(`${apiBaseUrl}/sliders`).then(r => r.ok ? r.json() : null).catch(() => null),
-          fetch(`${apiBaseUrl}/achievements?limit=12`).then(r => r.ok ? r.json() : null).catch(() => null)
+          fetch(`${apiBaseUrl}/achievements?limit=12`).then(r => r.ok ? r.json() : null).catch(() => null),
+          fetch(`${apiBaseUrl}/news?status=published&limit=3&sort=publish_date&order=DESC`).then(r => r.ok ? r.json() : null).catch(() => null)
         ]);
 
         const slidersRows = slidersRes?.success && Array.isArray(slidersRes.data) ? slidersRes.data : null;
@@ -241,13 +248,25 @@ export default function Home() {
 
           setAchievements(combined.slice(0, Math.max(fallbackAchievements.length, mapped.length)));
         }
+
+        // Load news dari API
+        const newsRows = newsRes?.success && Array.isArray(newsRes.data) ? newsRes.data : null;
+        if (!cancelled && newsRows && newsRows.length) {
+          setNews(newsRows.map((row: any) => ({
+            image: row.image_url || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1',
+            title: row.title || '',
+            date: String(row.publish_date || row.created_at || '').split('T')[0],
+            category: row.category || 'Lainnya',
+            excerpt: row.excerpt || String(row.content || '').slice(0, 160) + '...',
+            color: CATEGORY_COLORS[row.category] ?? '#1E4AB8',
+          })));
+        }
       } catch {
         if (!cancelled) {
           setHeroSlides(fallbackHeroSlides);
           setAchievements(fallbackAchievements);
         }
-      }
-    };
+      }    };
 
     load();
     return () => {
@@ -336,63 +355,41 @@ export default function Home() {
     }
   ];
 
-  const news = [
-    {
-      image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=900&q=75',
-      title: 'SMAIT Juara Olimpiade Matematika Nasional 2024',
-      date: '15 November 2024',
-      category: 'Prestasi',
-      excerpt: 'Tim olimpiade SMAIT Baituljannah berhasil meraih medali emas pada kompetisi Olimpiade Matematika tingkat nasional...',
-      color: '#8B5CF6'
-    },
-    {
-      image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=600&q=75',
-      title: 'Launching Program Tahfidz Intensif 2025',
-      date: '10 November 2024',
-      category: 'Program',
-      excerpt: 'Yayasan Baituljannah meluncurkan program tahfidz intensif dengan target hafalan 30 juz untuk siswa berprestasi...',
-      color: '#10B981'
-    },
-    {
-      image: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&w=600&q=75',
-      title: 'Workshop Parenting untuk Orang Tua Siswa',
-      date: '5 November 2024',
-      category: 'Kegiatan',
-      excerpt: 'Kegiatan workshop parenting Islami dengan tema "Mendidik Anak di Era Digital" dihadiri 200+ orang tua...',
-      color: '#F97316'
-    }
-  ];
-
   const whyChooseUs = [
     {
+      icon: Heart,
+      title: 'RELIGIUS',
+      description: 'Menciptakan lingkungan sekolah yang bernuansa islami'
+    },
+    {
       icon: Target,
-      title: 'Visi yang Jelas',
-      description: 'Membentuk generasi Qurani dengan target hafalan dan prestasi akademik yang terukur'
+      title: 'DISIPLIN',
+      description: 'Menanamkan kesadaran untuk menghargai waktu dan menaati seluruh tata tertib sekolah dengan konsisten'
+    },
+    {
+      icon: Lightbulb,
+      title: 'KREATIF',
+      description: 'Mendorong siswa dan tenaga pendidik untuk berpikir out-of-the-box, mampu menemukan solusi unik atas setiap permasalahan'
     },
     {
       icon: Users,
-      title: 'Guru Berkualitas',
-      description: 'Tim pendidik profesional, bersertifikat, dan berpengalaman di bidangnya'
+      title: 'BUDI PEKERTI',
+      description: 'Menjunjung tinggi nilai-nilai sopan santun, saling menghormati, jujur, dan berakhlakul karimah dalam interaksi sehari-hari'
     },
     {
-      icon: Award,
-      title: 'Prestasi Membanggakan',
-      description: 'Ratusan prestasi lokal, nasional, dan internasional di berbagai bidang'
-    },
-    {
-      icon: Heart,
-      title: 'Lingkungan Islami',
-      description: 'Suasana pembelajaran yang kondusif dengan nilai-nilai Islam yang kuat'
-    },
-    {
-      icon: TrendingUp,
-      title: 'Fasilitas Modern',
-      description: 'Lab komputer, perpustakaan digital, dan sarana olahraga yang lengkap'
+      icon: Zap,
+      title: 'INOVATIF',
+      description: 'Selalu terbuka terhadap perkembangan zaman dan teknologi, serta aktif menciptakan pembaruan dalam metode pembelajaran'
     },
     {
       icon: Globe,
-      title: 'Kurikulum Global',
-      description: 'Integrasi kurikulum nasional dengan standar internasional dan nilai Islam'
+      title: 'PEDULI',
+      description: 'Menumbuhkan rasa empati yang tinggi terhadap sesama dan lingkungan sekitar melalui aksi nyata'
+    },
+    {
+      icon: Trophy,
+      title: 'BERPRESTASI',
+      description: 'Memotivasi seluruh siswa untuk menggali potensi terbaik mereka dan bersaing secara sehat, hingga mampu meraih capaian gemilang'
     }
   ];
 
@@ -546,15 +543,15 @@ export default function Home() {
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-6 py-3 bg-[#1E4AB8]/10 rounded-full text-[#1E4AB8] text-sm mb-6">
               <Star className="w-4 h-4" />
-              <span>Keunggulan Kami</span>
+              <span>Budaya Sekolah</span>
             </div>
-            <h2 className="text-4xl lg:text-5xl mb-4">Mengapa Memilih Baituljannah?</h2>
+            <h2 className="text-4xl lg:text-5xl mb-4">RELIABILITAS</h2>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Pendidikan Islam terpadu dengan standar berkualitas tinggi
+              menciptakan budaya sekolah yang positif untuk tumbuh bersama
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {whyChooseUs.map((item, index) => {
               const Icon = item.icon;
               return (

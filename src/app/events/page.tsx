@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { Calendar, Clock, MapPin, Users, Tag, ChevronLeft, ChevronRight, Download, Filter, X, Sparkles, TrendingUp, Calendar as CalendarIcon } from 'lucide-react';
@@ -9,176 +9,38 @@ import { useNavigationMenu } from '../../hooks/useNavigationMenu';
 
 export default function EventsPage() {
   const { onNavigate, menuItems } = useNavigationMenu();
-  const [selectedMonth, setSelectedMonth] = useState(11); // December (0-indexed)
-  const [selectedYear, setSelectedYear] = useState(2024);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [filterCategory, setFilterCategory] = useState<string>('Semua');
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list');
+  const [events, setEvents] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const events = [
-    {
-      id: 1,
-      title: 'Peringatan Maulid Nabi Muhammad SAW',
-      date: '2024-12-15',
-      time: '08:00 - 12:00 WIB',
-      location: 'Aula Utama Baituljannah',
-      category: 'Keagamaan',
-      unit: 'Semua Unit',
-      description: 'Peringatan Maulid Nabi dengan berbagai kegiatan seperti lomba tahfidz, ceramah, dan pentas seni Islami.',
-      image: 'https://images.unsplash.com/photo-1643429096345-9de0d2ab7e7c',
-      capacity: '500 Peserta',
-      status: 'Mendatang',
-      accentColor: '#10B981',
-      agenda: [
-        '08:00 - Pembukaan & Tilawah',
-        '09:00 - Ceramah Sirah Nabawiyah',
-        '10:00 - Lomba Tahfidz',
-        '11:00 - Pentas Seni Islami',
-        '12:00 - Penutupan'
-      ]
-    },
-    {
-      id: 2,
-      title: 'Ujian Akhir Semester Ganjil',
-      date: '2024-12-18',
-      time: '07:30 - 12:00 WIB',
-      location: 'Ruang Kelas Masing-masing',
-      category: 'Akademik',
-      unit: 'SDIT, SMPIT, SMAIT, SLBIT',
-      description: 'Pelaksanaan Ujian Akhir Semester Ganjil Tahun Ajaran 2024/2025.',
-      image: 'https://images.unsplash.com/photo-1660795468878-d9d8d75967b9',
-      capacity: '1500 Siswa',
-      status: 'Mendatang',
-      accentColor: '#3B82F6',
-      agenda: [
-        '07:00 - Persiapan Ruang Ujian',
-        '07:30 - Siswa Masuk Ruangan',
-        '08:00 - Ujian Dimulai',
-        '10:00 - Ujian Selesai',
-        '10:15 - Siswa Keluar Tertib'
-      ]
-    },
-    {
-      id: 3,
-      title: 'Liburan Semester Ganjil',
-      date: '2024-12-23',
-      time: 'All Day',
-      location: '-',
-      category: 'Libur',
-      unit: 'Semua Unit',
-      description: 'Libur semester ganjil untuk siswa. Kegiatan belajar mengajar akan dimulai kembali tanggal 6 Januari 2025.',
-      image: 'https://images.unsplash.com/photo-1595566358869-ddd6f35a964c',
-      capacity: '-',
-      status: 'Mendatang',
-      accentColor: '#F97316',
-      agenda: [
-        'Libur Semester Ganjil',
-        'Kegiatan Mandiri Siswa',
-        'Bimbingan Online (Opsional)'
-      ]
-    },
-    {
-      id: 4,
-      title: 'Tahun Baru 2025',
-      date: '2025-01-01',
-      time: 'All Day',
-      location: '-',
-      category: 'Libur',
-      unit: 'Semua Unit',
-      description: 'Libur Nasional Tahun Baru 2025.',
-      image: 'https://images.unsplash.com/photo-1759922378135-c68df8312190',
-      capacity: '-',
-      status: 'Mendatang',
-      accentColor: '#8B5CF6',
-      agenda: []
-    },
-    {
-      id: 5,
-      title: 'Mulai Semester Genap',
-      date: '2025-01-06',
-      time: '07:00 WIB',
-      location: 'Sekolah',
-      category: 'Akademik',
-      unit: 'Semua Unit',
-      description: 'Kegiatan belajar mengajar semester genap dimulai. Siswa diharapkan hadir tepat waktu.',
-      image: 'https://images.unsplash.com/photo-1643429096345-9de0d2ab7e7c',
-      capacity: '2000 Siswa',
-      status: 'Mendatang',
-      accentColor: '#3B82F6',
-      agenda: [
-        '07:00 - Apel Pagi',
-        '07:30 - Masuk Kelas',
-        '08:00 - KBM Dimulai',
-        '12:00 - Istirahat & Sholat Dhuhur',
-        '15:00 - Pulang'
-      ]
-    },
-    {
-      id: 6,
-      title: 'Wisuda Tahfidz 10 Juz',
-      date: '2025-01-20',
-      time: '08:00 - 12:00 WIB',
-      location: 'Aula Baituljannah',
-      category: 'Keagamaan',
-      unit: 'SDIT, SMPIT',
-      description: 'Wisuda bagi siswa yang telah menyelesaikan hafalan 10 juz Al-Quran.',
-      image: 'https://images.unsplash.com/photo-1643429096345-9de0d2ab7e7c',
-      capacity: '200 Peserta',
-      status: 'Mendatang',
-      accentColor: '#10B981',
-      agenda: [
-        '08:00 - Registrasi & Persiapan',
-        '09:00 - Pembukaan',
-        '09:30 - Sambutan Kepala Sekolah',
-        '10:00 - Penyerahan Sertifikat',
-        '11:00 - Dokumentasi & Ramah Tamah',
-        '12:00 - Selesai'
-      ]
-    },
-    {
-      id: 7,
-      title: 'Olimpiade Sains Sekolah',
-      date: '2025-02-10',
-      time: '08:00 - 15:00 WIB',
-      location: 'Lab & Ruang Kelas',
-      category: 'Kompetisi',
-      unit: 'SMPIT, SMAIT',
-      description: 'Olimpiade Sains tingkat sekolah untuk persiapan OSN. Bidang: Matematika, Fisika, Biologi, Kimia.',
-      image: 'https://images.unsplash.com/photo-1660795468878-d9d8d75967b9',
-      capacity: '150 Peserta',
-      status: 'Mendatang',
-      accentColor: '#F97316',
-      agenda: [
-        '08:00 - Registrasi Peserta',
-        '08:30 - Technical Meeting',
-        '09:00 - Babak Penyisihan',
-        '12:00 - Istirahat & Sholat',
-        '13:00 - Babak Final',
-        '15:00 - Pengumuman & Penyerahan Piala'
-      ]
-    },
-    {
-      id: 8,
-      title: 'Parent Meeting Semester Genap',
-      date: '2025-02-15',
-      time: '09:00 - 12:00 WIB',
-      location: 'Aula & Ruang Kelas',
-      category: 'Rapat',
-      unit: 'Semua Unit',
-      description: 'Pertemuan orang tua dengan wali kelas untuk membahas perkembangan siswa semester genap.',
-      image: 'https://images.unsplash.com/photo-1759922378135-c68df8312190',
-      capacity: '1000 Orang Tua',
-      status: 'Mendatang',
-      accentColor: '#8B5CF6',
-      agenda: [
-        '09:00 - Registrasi',
-        '09:30 - Sambutan Kepala Sekolah',
-        '10:00 - Meeting dengan Wali Kelas',
-        '11:30 - Konsultasi Individual',
-        '12:00 - Selesai'
-      ]
-    }
-  ];
+  const apiBaseUrl = useMemo(() => {
+    const base = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    return base.replace(/\/$/, '');
+  }, []);
+
+  const fallbackEvents = useMemo(() => [
+    { id: 1, title: 'Peringatan Maulid Nabi Muhammad SAW', date: '2025-07-15', time: '08:00 - 12:00 WIB', location: 'Aula Utama Baituljannah', category: 'Keagamaan', unit: 'Semua Unit', description: 'Peringatan Maulid Nabi dengan berbagai kegiatan seperti lomba tahfidz, ceramah, dan pentas seni Islami.', image: 'https://images.unsplash.com/photo-1643429096345-9de0d2ab7e7c', capacity: '500 Peserta', status: 'Mendatang', accentColor: '#10B981', agenda: ['08:00 - Pembukaan & Tilawah', '09:00 - Ceramah', '10:00 - Lomba Tahfidz', '12:00 - Penutupan'] },
+    { id: 2, title: 'Ujian Akhir Semester', date: '2025-11-18', time: '07:30 - 12:00 WIB', location: 'Ruang Kelas', category: 'Akademik', unit: 'Semua Unit', description: 'Pelaksanaan Ujian Akhir Semester.', image: 'https://images.unsplash.com/photo-1660795468878-d9d8d75967b9', capacity: '1500 Siswa', status: 'Mendatang', accentColor: '#3B82F6', agenda: [] },
+  ], []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    fetch(`${apiBaseUrl}/events?limit=100`)
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null)
+      .then(data => {
+        if (cancelled) return;
+        const rows = data?.success && Array.isArray(data.data) && data.data.length > 0 ? data.data : fallbackEvents;
+        setEvents(rows);
+        setIsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [apiBaseUrl, fallbackEvents]);
 
   const categories = ['Semua', 'Akademik', 'Keagamaan', 'Kompetisi', 'Olahraga', 'Rapat', 'Libur'];
 
@@ -219,6 +81,9 @@ export default function EventsPage() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <Navbar 
+        siteName="Baitul Jannah Islamic School"
+        siteTagline="Sekolahnya Para Juara"
+        accentColor="#1E4AB8"
         menuItems={menuItems} 
         activePage="events"
         onNavigate={onNavigate}

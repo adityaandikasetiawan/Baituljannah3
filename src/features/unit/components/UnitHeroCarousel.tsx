@@ -66,7 +66,7 @@ export const UnitHeroCarousel: React.FC<UnitHeroCarouselProps> = ({
         {
           image: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=1920&h=1080&fit=crop', // Group of students studying
           title: `Selamat Datang di ${fullName}`,
-          description: 'Sekolah Menengah Pertama Islam Terpadu yang Menginspirasi dan Berkarakter',
+          description: 'SMPIT Baitul Jannah Islamic School',
           badge: defaultBadge
         },
         {

@@ -120,7 +120,7 @@ export default function SetupPasswordPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <Navbar siteName="Setup Password - Baituljannah" accentColor="#1E4AB8" menuItems={menuItems} />
+      <Navbar siteName="Baitul Jannah Islamic School" siteTagline="Sekolahnya Para Juara" accentColor="#1E4AB8" menuItems={menuItems} />
 
       <div className="container mx-auto py-10 px-4">
         <div className="max-w-2xl mx-auto">

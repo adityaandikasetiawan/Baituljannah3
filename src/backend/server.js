@@ -86,6 +86,11 @@ const achievementsRoutes = require('./routes/achievements');
 const galleryRoutes = require('./routes/gallery');
 const unitPagesRoutes = require('./routes/unit-pages');
 const programsRoutes = require('./routes/programs');
+const teachersRoutes = require('./routes/teachers');
+const eventsRoutes = require('./routes/events');
+const alumniRoutes = require('./routes/alumni');
+const jobsRoutes = require('./routes/jobs');
+const siteSettingsRoutes = require('./routes/site-settings');
 
 app.use(`/api/${config.apiVersion}/auth`, authRoutes);
 app.use(`/api/${config.apiVersion}/news`, newsRoutes);
@@ -99,6 +104,11 @@ app.use(`/api/${config.apiVersion}/achievements`, achievementsRoutes);
 app.use(`/api/${config.apiVersion}/gallery`, galleryRoutes);
 app.use(`/api/${config.apiVersion}/unit-pages`, unitPagesRoutes);
 app.use(`/api/${config.apiVersion}/programs`, programsRoutes);
+app.use(`/api/${config.apiVersion}/teachers`, teachersRoutes);
+app.use(`/api/${config.apiVersion}/events`, eventsRoutes);
+app.use(`/api/${config.apiVersion}/alumni`, alumniRoutes);
+app.use(`/api/${config.apiVersion}/jobs`, jobsRoutes);
+app.use(`/api/${config.apiVersion}/site-settings`, siteSettingsRoutes);
 
 // Welcome route
 app.get('/', (req, res) => {

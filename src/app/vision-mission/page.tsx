@@ -27,21 +27,21 @@ export default function VisionMissionPage() {
   const missions = [
     {
       icon: BookOpen,
-      title: 'Ibadah & Akhlak Islami',
+      title: 'Pembinaan Ibdah dan Akhlak',
       description: 'Mendidik anak mampu beribadah dengan baik, benar, dan berakhlak islami',
       color: '#3B82F6',
       gradient: 'from-blue-500 to-cyan-600'
     },
     {
       icon: Heart,
-      title: 'Jenjang Lebih Tinggi',
+      title: 'Membangun Generasi Unggul',
       description: 'Mempersiapkan anak didik melanjutkan ke jenjang yang lebih tinggi',
       color: '#EF4444',
       gradient: 'from-red-500 to-rose-600'
     },
     {
       icon: Users,
-      title: 'Al-Qur’an',
+      title: 'Membangun Generasi Cinta Al-Quran',
       description: 'Mendidik anak mampu membaca, menulis, dan menghafal Al-Qur’an dengan baik (1–4 juz saat lulus)',
       color: '#10B981',
       gradient: 'from-green-500 to-emerald-600'
@@ -126,22 +126,12 @@ export default function VisionMissionPage() {
             <div className="relative">
               <div className="relative rounded-3xl overflow-hidden shadow-strong">
                 <ImageWithFallback
-                  src={withVersion('/uploads/images/vision-mission/visi-misi.jpg')}
+                  src={withVersion('/uploads/images/visi-misi/ABIGIRI.webp')}
                   alt="Vision Baituljannah"
                   className="w-full h-[500px] object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
                 
-                {/* Overlay Content */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center text-white p-8">
-                    <div className="w-20 h-20 mx-auto mb-6 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                      <Eye className="w-10 h-10" />
-                    </div>
-                    <h3 className="text-2xl mb-2">Visi Kami</h3>
-                    <p className="text-white/90">Menjadi Yang Terdepan</p>
-                  </div>
-                </div>
               </div>
 
               {/* Decorative Elements */}
@@ -259,40 +249,6 @@ export default function VisionMissionPage() {
         </div>
       </section>
 
-      {/* Values Section */}
-      <section className="section-padding bg-gradient-to-br from-blue-50 to-indigo-50">
-        <div className="container-custom">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 rounded-full text-sm mb-6">
-              <Heart className="w-4 h-4" />
-              <span>Core Values</span>
-            </div>
-            <h2 className="text-4xl lg:text-5xl mb-4 text-gray-900">Nilai-Nilai Inti</h2>
-            <p className="text-gray-600 text-lg max-w-3xl mx-auto leading-relaxed">
-              Fondasi nilai yang menjadi pedoman dalam setiap aktivitas dan keputusan kami
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {values.map((value, index) => (
-              <div 
-                key={index}
-                className="group bg-white rounded-2xl p-6 shadow-soft hover:shadow-strong transition-all duration-300"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                    <CheckCircle className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg mb-2 text-gray-900">{value.title}</h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">{value.description}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* CTA Section */}
       <section className="section-padding bg-gradient-to-br from-[#1E4AB8] via-[#2563eb] to-[#8B5CF6] relative overflow-hidden">

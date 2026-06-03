@@ -48,7 +48,6 @@ export default function UnitBeritaPage({ params }: { params: Promise<{ unit: str
         { label: 'Galeri', href: '#', onClick: () => router.push(`/${slug}/galeri`) },
       ],
     },
-    { label: 'Karir', href: '#', onClick: () => router.push('/career') },
     { label: 'PPDB', href: '#', onClick: () => router.push(`/${slug}/ppdb`) },
     { label: 'Kontak', href: '#', onClick: () => router.push(`/${slug}/kontak`) }
   ];

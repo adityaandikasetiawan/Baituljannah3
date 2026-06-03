@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Briefcase, 
@@ -368,32 +368,6 @@ export default function CareerPage() {
           </div>
         </div>
       </div>
-
-      {/* Testimonials */}
-      <div className="py-20 bg-white border-t border-gray-100">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-[#1E3A8A] text-center mb-12">Kata Mereka Tentang Kami</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-gray-50 p-6 rounded-xl relative">
-                <div className="text-[#1E4AB8] text-4xl font-serif absolute top-4 left-4 opacity-20">"</div>
-                <p className="text-gray-600 mb-6 relative z-10 italic">
-                  "Bekerja di Baitul Jannah memberikan pengalaman yang luar biasa. Lingkungannya sangat mendukung untuk berkembang, baik secara profesional maupun spiritual."
-                </p>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full bg-[url('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80')] bg-cover"></div>
-                  <div>
-                    <h4 className="font-bold text-[#1E3A8A]">Ahmad Fauzi</h4>
-                    <p className="text-xs text-gray-500">Guru Matematika, 5 tahun</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <Footer siteName="Baitul Jannah" onNavigate={onNavigate} />
 
       {/* Application Modal */}
       <AnimatePresence>

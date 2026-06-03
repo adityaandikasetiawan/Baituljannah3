@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { BookOpen, GraduationCap, Award, Mail, Phone, Star, X, Search, Filter, Users, TrendingUp, Sparkles } from 'lucide-react';
@@ -12,177 +12,35 @@ export default function TeachersPage() {
   const [filterUnit, setFilterUnit] = useState<string>('Semua');
   const [filterSubject, setFilterSubject] = useState<string>('Semua');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [teachers, setTeachers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const teachers = [
-    {
-      id: 1,
-      name: 'Ustadz Dr. Ahmad Fauzi, M.Pd.I',
-      title: 'Kepala Sekolah SMAIT',
-      unit: 'SMAIT',
-      subject: 'Pendidikan Agama Islam',
-      education: 'S3 Pendidikan Islam - UIN Jakarta',
-      experience: '15 Tahun',
-      specialization: ['Tahfidz', 'Fiqih', 'Akhlak'],
-      achievements: [
-        'Guru Berprestasi Tingkat Nasional 2023',
-        'Pembina Olimpiade Sains Islam',
-        'Penulis Buku "Pendidikan Karakter Islami"'
-      ],
-      email: 'ahmad.fauzi@baituljannah.sch.id',
-      phone: '+62 812-3456-7890',
-      image: 'https://images.unsplash.com/photo-1621982400152-883d350ac611',
-      bio: 'Berpengalaman 15 tahun dalam pendidikan Islam terpadu dengan fokus pada pengembangan karakter dan tahfidz Al-Quran.',
-      philosophy: 'Pendidikan adalah proses membentuk generasi yang berakhlak mulia, cerdas, dan berprestasi.',
-      accentColor: '#8B5CF6'
-    },
-    {
-      id: 2,
-      name: 'Ustadzah Siti Aisyah, S.Pd',
-      title: 'Guru Tahfidz',
-      unit: 'SDIT',
-      subject: 'Tahfidz Al-Quran',
-      education: 'S1 Pendidikan Agama Islam',
-      experience: '10 Tahun',
-      specialization: ['Tahfidz', 'Tajwid', 'Qiroah'],
-      achievements: [
-        'Hafal 30 Juz Al-Quran',
-        'Juara 1 MTQ Tingkat Provinsi',
-        'Pembina Tahfidz Terbaik 2024'
-      ],
-      email: 'siti.aisyah@baituljannah.sch.id',
-      phone: '+62 813-4567-8901',
-      image: 'https://images.unsplash.com/photo-1755050026084-49ae65b94882',
-      bio: 'Hafidz 30 juz dengan pengalaman 10 tahun membimbing santri dalam menghafal Al-Quran.',
-      philosophy: 'Al-Quran adalah cahaya yang menerangi setiap langkah kehidupan.',
-      accentColor: '#3B82F6'
-    },
-    {
-      id: 3,
-      name: 'Ustadz Muhammad Rizki, M.Pd',
-      title: 'Guru Matematika',
-      unit: 'SMPIT',
-      subject: 'Matematika',
-      education: 'S2 Pendidikan Matematika - UNJ',
-      experience: '8 Tahun',
-      specialization: ['Aljabar', 'Geometri', 'Statistika'],
-      achievements: [
-        'Pembina Olimpiade Matematika',
-        'Trainer UCMAS Nasional',
-        'Best Teacher Award 2023'
-      ],
-      email: 'm.rizki@baituljannah.sch.id',
-      phone: '+62 814-5678-9012',
-      image: 'https://images.unsplash.com/flagged/photo-1559475555-b26777ed3ab4',
-      bio: 'Spesialisasi dalam metode pembelajaran matematika yang menyenangkan dan efektif.',
-      philosophy: 'Matematika bukan hanya angka, tapi cara berpikir sistematis dan logis.',
-      accentColor: '#F97316'
-    },
-    {
-      id: 4,
-      name: 'Ustadzah Fatimah Az-Zahra, S.S',
-      title: 'Guru Bahasa Arab',
-      unit: 'SMAIT',
-      subject: 'Bahasa Arab',
-      education: 'S1 Sastra Arab - UI',
-      experience: '7 Tahun',
-      specialization: ['Nahwu', 'Sharaf', 'Muthola\'ah'],
-      achievements: [
-        'Juara Lomba Debat Arab Tingkat Nasional',
-        'Translator Buku Arab-Indonesia',
-        'Guru Teladan 2024'
-      ],
-      email: 'fatimah.azzahra@baituljannah.sch.id',
-      phone: '+62 815-6789-0123',
-      image: 'https://images.unsplash.com/photo-1755050026084-49ae65b94882',
-      bio: 'Lulusan Sastra Arab UI dengan pengalaman mengajar bahasa Arab komunikatif.',
-      philosophy: 'Bahasa Arab adalah kunci memahami Al-Quran dan warisan Islam.',
-      accentColor: '#8B5CF6'
-    },
-    {
-      id: 5,
-      name: 'Ustadz Hasan Basri, M.Pd',
-      title: 'Guru IPA',
-      unit: 'SMPIT',
-      subject: 'IPA (Biologi)',
-      education: 'S2 Pendidikan Biologi - UPI',
-      experience: '9 Tahun',
-      specialization: ['Biologi', 'Lingkungan', 'Kesehatan'],
-      achievements: [
-        'Pembina KIR (Karya Ilmiah Remaja)',
-        'Juara Lomba Inovasi Pembelajaran',
-        'Penulis Modul IPA'
-      ],
-      email: 'hasan.basri@baituljannah.sch.id',
-      phone: '+62 816-7890-1234',
-      image: 'https://images.unsplash.com/photo-1621982400152-883d350ac611',
-      bio: 'Passionate dalam mengajarkan IPA dengan pendekatan saintifik dan eksperimen.',
-      philosophy: 'Sains adalah cara kita memahami kebesaran ciptaan Allah SWT.',
-      accentColor: '#F97316'
-    },
-    {
-      id: 6,
-      name: 'Ustadzah Khadijah, S.Pd',
-      title: 'Guru PAUD',
-      unit: 'TKIT',
-      subject: 'Pendidikan Anak Usia Dini',
-      education: 'S1 Pendidikan Guru PAUD - UNJ',
-      experience: '6 Tahun',
-      specialization: ['Early Learning', 'Character Building', 'Montessori'],
-      achievements: [
-        'Certified Montessori Teacher',
-        'Guru PAUD Berprestasi 2023',
-        'Penulis Buku Aktivitas Anak'
-      ],
-      email: 'khadijah@baituljannah.sch.id',
-      phone: '+62 817-8901-2345',
-      image: 'https://images.unsplash.com/photo-1755050026084-49ae65b94882',
-      bio: 'Spesialis pendidikan anak usia dini dengan metode Montessori dan Islami.',
-      philosophy: 'Anak adalah amanah yang harus dibimbing dengan cinta dan kesabaran.',
-      accentColor: '#10B981'
-    },
-    {
-      id: 7,
-      name: 'Ustadz Abdullah Rahman, M.Pd',
-      title: 'Guru Bahasa Inggris',
-      unit: 'SLBIT',
-      subject: 'Bahasa Inggris',
-      education: 'S2 Pendidikan Bahasa Inggris - UPI',
-      experience: '11 Tahun',
-      specialization: ['TOEFL', 'IELTS', 'Business English'],
-      achievements: [
-        'TOEFL Score 650, IELTS 8.0',
-        'Pembina English Club',
-        'Best Language Teacher 2024'
-      ],
-      email: 'abdullah.rahman@baituljannah.sch.id',
-      phone: '+62 818-9012-3456',
-      image: 'https://images.unsplash.com/photo-1621982400152-883d350ac611',
-      bio: 'Native-like English proficiency dengan pengalaman mengajar TOEFL & IELTS.',
-      philosophy: 'English is a bridge to global opportunities and Islamic da\'wah.',
-      accentColor: '#14B8A6'
-    },
-    {
-      id: 8,
-      name: 'Ustadzah Maryam, S.Pd',
-      title: 'Guru Bahasa Indonesia',
-      unit: 'SDIT',
-      subject: 'Bahasa Indonesia',
-      education: 'S1 Pendidikan Bahasa Indonesia - UNJ',
-      experience: '5 Tahun',
-      specialization: ['Sastra', 'Menulis Kreatif', 'Public Speaking'],
-      achievements: [
-        'Pembina Klub Jurnalistik',
-        'Juara Lomba Guru Kreatif',
-        'Penulis Cerpen Anak'
-      ],
-      email: 'maryam@baituljannah.sch.id',
-      phone: '+62 819-0123-4567',
-      image: 'https://images.unsplash.com/photo-1755050026084-49ae65b94882',
-      bio: 'Passionate dalam mengembangkan literasi dan keterampilan menulis siswa.',
-      philosophy: 'Bahasa adalah jendela pemikiran dan sarana menyampaikan kebaikan.',
-      accentColor: '#3B82F6'
-    }
-  ];
+  const apiBaseUrl = useMemo(() => {
+    const base = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    return base.replace(/\/$/, '');
+  }, []);
+
+  // Fallback data
+  const fallbackTeachers = useMemo(() => [
+    { id: 1, name: 'Ustadz Dr. Ahmad Fauzi, M.Pd.I', title: 'Kepala Sekolah SMAIT', unit: 'SMAIT', subject: 'Pendidikan Agama Islam', education: 'S3 Pendidikan Islam - UIN Jakarta', experience: '15 Tahun', specialization: ['Tahfidz', 'Fiqih', 'Akhlak'], achievements: ['Guru Berprestasi Tingkat Nasional 2023', 'Pembina Olimpiade Sains Islam', 'Penulis Buku "Pendidikan Karakter Islami"'], email: 'ahmad.fauzi@baituljannah.sch.id', phone: '+62 812-3456-7890', image: 'https://images.unsplash.com/photo-1621982400152-883d350ac611', bio: 'Berpengalaman 15 tahun dalam pendidikan Islam terpadu.', philosophy: 'Pendidikan adalah proses membentuk generasi yang berakhlak mulia, cerdas, dan berprestasi.', accentColor: '#8B5CF6' },
+    { id: 2, name: 'Ustadzah Siti Aisyah, S.Pd', title: 'Guru Tahfidz', unit: 'SDIT', subject: 'Tahfidz Al-Quran', education: 'S1 Pendidikan Agama Islam', experience: '10 Tahun', specialization: ['Tahfidz', 'Tajwid', 'Qiroah'], achievements: ['Hafal 30 Juz Al-Quran', 'Juara 1 MTQ Tingkat Provinsi', 'Pembina Tahfidz Terbaik 2024'], email: 'siti.aisyah@baituljannah.sch.id', phone: '+62 813-4567-8901', image: 'https://images.unsplash.com/photo-1755050026084-49ae65b94882', bio: 'Hafidz 30 juz dengan pengalaman 10 tahun membimbing santri.', philosophy: 'Al-Quran adalah cahaya yang menerangi setiap langkah kehidupan.', accentColor: '#3B82F6' },
+    { id: 3, name: 'Ustadz Muhammad Rizki, M.Pd', title: 'Guru Matematika', unit: 'SMPIT', subject: 'Matematika', education: 'S2 Pendidikan Matematika - UNJ', experience: '8 Tahun', specialization: ['Aljabar', 'Geometri', 'Statistika'], achievements: ['Pembina Olimpiade Matematika', 'Trainer UCMAS Nasional', 'Best Teacher Award 2023'], email: 'm.rizki@baituljannah.sch.id', phone: '+62 814-5678-9012', image: 'https://images.unsplash.com/flagged/photo-1559475555-b26777ed3ab4', bio: 'Spesialisasi dalam metode pembelajaran matematika yang menyenangkan.', philosophy: 'Matematika bukan hanya angka, tapi cara berpikir sistematis dan logis.', accentColor: '#F97316' },
+  ], []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    fetch(`${apiBaseUrl}/teachers?limit=100`)
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null)
+      .then(data => {
+        if (cancelled) return;
+        const rows = data?.success && Array.isArray(data.data) && data.data.length > 0 ? data.data : fallbackTeachers;
+        setTeachers(rows);
+        setIsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [apiBaseUrl, fallbackTeachers]);
 
   const stats = [
     { value: '80+', label: 'Guru Bersertifikat', icon: Award },
@@ -374,7 +232,7 @@ export default function TeachersPage() {
 
                   {/* Specializations */}
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {teacher.specialization.slice(0, 3).map((spec, idx) => (
+                    {teacher.specialization.slice(0, 3).map((spec: string, idx: number) => (
                       <span 
                         key={idx}
                         className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-lg"

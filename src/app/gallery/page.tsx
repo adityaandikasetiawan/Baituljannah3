@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { Breadcrumb } from '../../components/layout/Breadcrumb';
@@ -8,149 +8,87 @@ import { Image as ImageIcon, X, Download, Share2, ZoomIn, Calendar, Tag, Eye, Gr
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { useNavigationMenu } from '../../hooks/useNavigationMenu';
 
+interface GalleryItem {
+  id: number;
+  image: string;
+  title: string;
+  category: string;
+  date: string;
+  views: number;
+  description: string;
+  color: string;
+}
+
+const CATEGORY_COLORS: Record<string, string> = {
+  Kegiatan: '#3B82F6',
+  Fasilitas: '#10B981',
+  Event: '#F97316',
+  Pembelajaran: '#F472B6',
+  Lainnya: '#6B7280',
+};
+
 export default function GalleryPage() {
   const { menuItems, onNavigate } = useNavigationMenu();
   const [selectedCategory, setSelectedCategory] = useState('Semua');
-  const [selectedImage, setSelectedImage] = useState<any | null>(null);
+  const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'masonry'>('masonry');
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const apiBaseUrl = useMemo(() => {
+    const base = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    return base.replace(/\/$/, '');
+  }, []);
 
   const breadcrumbItems = [
     { label: 'Beranda', onClick: () => onNavigate('main') },
     { label: 'Galeri' }
   ];
 
-  const categories = [
-    { name: 'Semua', count: 18, color: 'from-gray-500 to-gray-600' },
-    { name: 'Kegiatan', count: 6, color: 'from-blue-500 to-cyan-600' },
-    { name: 'Fasilitas', count: 5, color: 'from-green-500 to-emerald-600' },
-    { name: 'Event', count: 4, color: 'from-orange-500 to-amber-600' },
-    { name: 'Pembelajaran', count: 3, color: 'from-pink-500 to-rose-600' }
-  ];
+  // Fetch galeri dari API
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    fetch(`${apiBaseUrl}/gallery?limit=100`)
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null)
+      .then(data => {
+        if (cancelled) return;
+        const rows = data?.success && Array.isArray(data.data) ? data.data : [];
+        if (rows.length > 0) {
+          setGalleryItems(rows.map((row: any) => ({
+            id: Number(row.id),
+            image: row.image_url || '',
+            title: String(row.title || ''),
+            category: String(row.category || 'Lainnya'),
+            date: String(row.created_at || '').split('T')[0],
+            views: Number(row.views || 0),
+            description: String(row.description || ''),
+            color: CATEGORY_COLORS[row.category] ?? '#6B7280',
+          })));
+        }
+        setIsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [apiBaseUrl]);
 
-  const galleryItems = [
-    {
-      id: 1,
-      image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b',
-      title: 'Upacara Hari Kemerdekaan RI ke-79',
-      category: 'Kegiatan',
-      date: '17 Agustus 2024',
-      views: 856,
-      description: 'Seluruh siswa dan guru mengikuti upacara peringatan hari kemerdekaan dengan khidmat',
-      color: '#3B82F6'
-    },
-    {
-      id: 2,
-      image: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655',
-      title: 'Laboratorium Komputer Modern',
-      category: 'Fasilitas',
-      date: '10 November 2024',
-      views: 642,
-      description: 'Fasilitas lab komputer dengan perangkat terkini untuk pembelajaran IT',
-      color: '#10B981'
-    },
-    {
-      id: 3,
-      image: 'https://images.unsplash.com/photo-1763639700458-38a0fd25335d',
-      title: 'Lomba Olahraga Antar Kelas',
-      category: 'Event',
-      date: '5 November 2024',
-      views: 789,
-      description: 'Kompetisi olahraga yang seru dan penuh sportivitas',
-      color: '#F97316'
-    },
-    {
-      id: 4,
-      image: 'https://images.unsplash.com/photo-1509062522246-3755977927d7',
-      title: 'Pembelajaran Interaktif di Kelas',
-      category: 'Pembelajaran',
-      date: '28 Oktober 2024',
-      views: 567,
-      description: 'Metode pembelajaran aktif dan menyenangkan di kelas',
-      color: '#F472B6'
-    },
-    {
-      id: 5,
-      image: 'https://images.unsplash.com/photo-1761445777166-0d4b6f365f4c',
-      title: 'Science Fair 2024',
-      category: 'Event',
-      date: '25 Oktober 2024',
-      views: 923,
-      description: 'Pameran karya ilmiah siswa yang inovatif dan kreatif',
-      color: '#F97316'
-    },
-    {
-      id: 6,
-      image: 'https://images.unsplash.com/photo-1577896851231-70ef18881754',
-      title: 'Kunjungan Industri ke Perusahaan Teknologi',
-      category: 'Kegiatan',
-      date: '20 Oktober 2024',
-      views: 734,
-      description: 'Siswa SMAIT berkunjung ke perusahaan teknologi terkemuka',
-      color: '#3B82F6'
-    },
-    {
-      id: 7,
-      image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b',
-      title: 'Perpustakaan Digital',
-      category: 'Fasilitas',
-      date: '15 Oktober 2024',
-      views: 512,
-      description: 'Perpustakaan dengan koleksi buku digital dan ruang baca nyaman',
-      color: '#10B981'
-    },
-    {
-      id: 8,
-      image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1',
-      title: 'Workshop Robotika untuk Siswa',
-      category: 'Pembelajaran',
-      date: '12 Oktober 2024',
-      views: 845,
-      description: 'Pelatihan robotika untuk meningkatkan kreativitas siswa',
-      color: '#F472B6'
-    },
-    {
-      id: 9,
-      image: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655',
-      title: 'Gedung Serba Guna',
-      category: 'Fasilitas',
-      date: '5 Oktober 2024',
-      views: 456,
-      description: 'Aula besar untuk berbagai acara dan kegiatan sekolah',
-      color: '#10B981'
-    },
-    {
-      id: 10,
-      image: 'https://images.unsplash.com/photo-1588072432904-8cc8cb7e1256',
-      title: 'Mabit (Malam Bina Iman dan Taqwa)',
-      category: 'Kegiatan',
-      date: '1 Oktober 2024',
-      views: 923,
-      description: 'Kegiatan menginap siswa untuk penguatan spiritual',
-      color: '#3B82F6'
-    },
-    {
-      id: 11,
-      image: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b',
-      title: 'Lapangan Futsal Indoor',
-      category: 'Fasilitas',
-      date: '28 September 2024',
-      views: 678,
-      description: 'Fasilitas olahraga modern untuk aktivitas siswa',
-      color: '#10B981'
-    },
-    {
-      id: 12,
-      image: 'https://images.unsplash.com/photo-1509062522246-3755977927d7',
-      title: 'Perayaan Hari Besar Islam',
-      category: 'Event',
-      date: '20 September 2024',
-      views: 1123,
-      description: 'Peringatan Maulid Nabi Muhammad SAW',
-      color: '#F97316'
-    }
-  ];
+  // Kategori dinamis dari data
+  const categories = useMemo(() => {
+    const colorMap: Record<string, string> = {
+      Semua: 'from-gray-500 to-gray-600',
+      Kegiatan: 'from-blue-500 to-cyan-600',
+      Fasilitas: 'from-green-500 to-emerald-600',
+      Event: 'from-orange-500 to-amber-600',
+      Pembelajaran: 'from-pink-500 to-rose-600',
+    };
+    const counts: Record<string, number> = { Semua: galleryItems.length };
+    galleryItems.forEach(g => { counts[g.category] = (counts[g.category] || 0) + 1; });
+    return Object.entries(counts).map(([name, count]) => ({
+      name, count, color: colorMap[name] ?? 'from-gray-400 to-gray-500',
+    }));
+  }, [galleryItems]);
 
-  const filteredGallery = galleryItems.filter(item => 
+  const filteredGallery = galleryItems.filter(item =>
     selectedCategory === 'Semua' || item.category === selectedCategory
   );
 
@@ -242,81 +180,83 @@ export default function GalleryPage() {
           </div>
         </div>
 
-        {/* Gallery Grid */}
-        <div className={`
-          grid gap-6
-          ${viewMode === 'grid' 
-            ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-            : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}
-        `}>
-          {filteredGallery.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => setSelectedImage(item)}
-              className="group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-            >
-              <div className={`relative overflow-hidden ${viewMode === 'masonry' ? 'aspect-[4/3]' : 'aspect-square'}`}>
-                <ImageWithFallback
-                  src={item.image}
-                  alt={item.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
-                <div className="absolute top-4 right-4 translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 delay-100">
-                  <div className="p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-green-600 transition-colors">
-                    <ZoomIn className="w-5 h-5" />
-                  </div>
-                </div>
-
-                <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                  <div className="flex items-center gap-3 text-white/90 text-sm mb-2">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      {item.date}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Eye className="w-4 h-4" />
-                      {item.views}
-                    </span>
-                  </div>
-                  <h3 className="text-white font-semibold text-lg line-clamp-2">{item.title}</h3>
-                </div>
-              </div>
-
-              {viewMode === 'masonry' && (
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200`}>
-                      {item.category}
-                    </span>
-                  </div>
-                  <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-green-600 transition-colors">
-                    {item.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm line-clamp-2 mb-4">
-                    {item.description}
-                  </p>
-                  <div className="flex items-center text-green-600 text-sm font-medium group-hover:translate-x-1 transition-transform">
-                    Lihat Detail <ArrowRight className="w-4 h-4 ml-1" />
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Empty State */}
-        {filteredGallery.length === 0 && (
-          <div className="text-center py-20">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <ImageIcon className="w-10 h-10 text-gray-400" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Tidak ada foto ditemukan</h3>
-            <p className="text-gray-600">Coba pilih kategori lain atau reset filter</p>
+        {/* Loading */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-24">
+            <div className="w-10 h-10 border-4 border-green-600 border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
+
+        {/* Gallery Grid & Empty State */}
+        {!isLoading && (
+          <>
+            <div className={`
+              grid gap-6
+              ${viewMode === 'grid' 
+                ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+                : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}
+            `}>
+              {filteredGallery.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => setSelectedImage(item)}
+                  className="group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                >
+                  <div className={`relative overflow-hidden ${viewMode === 'masonry' ? 'aspect-[4/3]' : 'aspect-square'}`}>
+                    <ImageWithFallback
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute top-4 right-4 translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 delay-100">
+                      <div className="p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-green-600 transition-colors">
+                        <ZoomIn className="w-5 h-5" />
+                      </div>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                      <div className="flex items-center gap-3 text-white/90 text-sm mb-2">
+                        <span className="flex items-center gap-1"><Calendar className="w-4 h-4" />{item.date}</span>
+                        <span className="flex items-center gap-1"><Eye className="w-4 h-4" />{item.views}</span>
+                      </div>
+                      <h3 className="text-white font-semibold text-lg line-clamp-2">{item.title}</h3>
+                    </div>
+                  </div>
+                  {viewMode === 'masonry' && (
+                    <div className="p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                          {item.category}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-green-600 transition-colors">{item.title}</h3>
+                      <p className="text-gray-600 text-sm line-clamp-2 mb-4">{item.description}</p>
+                      <div className="flex items-center text-green-600 text-sm font-medium group-hover:translate-x-1 transition-transform">
+                        Lihat Detail <ArrowRight className="w-4 h-4 ml-1" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {filteredGallery.length === 0 && (
+              <div className="text-center py-20">
+                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <ImageIcon className="w-10 h-10 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  {galleryItems.length === 0 ? 'Belum ada foto di galeri' : 'Tidak ada foto ditemukan'}
+                </h3>
+                <p className="text-gray-600">
+                  {galleryItems.length === 0 ? 'Tambahkan foto melalui panel admin' : 'Coba pilih kategori lain atau reset filter'}
+                </p>
+              </div>
+            )}
+          </>
+        )}
       </div>
+
 
       {/* Image Modal */}
       {selectedImage && (

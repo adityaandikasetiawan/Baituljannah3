@@ -119,7 +119,6 @@ export default function UnitPpdbPage({ params }: { params: Promise<{ unit: strin
         { label: 'Galeri', href: '#', onClick: () => router.push(`/${slug}/galeri`) },
       ],
     },
-    { label: 'Karir', href: '#', onClick: () => router.push('/career') },
     { label: 'PPDB', href: '#', onClick: () => router.push(`/${slug}/ppdb`) },
     { label: 'Kontak', href: '#', onClick: () => router.push(`/${slug}/kontak`) }
   ];

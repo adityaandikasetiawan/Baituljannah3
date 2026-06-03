@@ -7,7 +7,7 @@ import { UnitHeroCarousel } from './UnitHeroCarousel';
 import { UnitProfileCarousel } from './UnitProfileCarousel';
 import { ProgramCard } from '../../program/components/ProgramCard';
 import { NewsCard } from '../../news/components/NewsCard';
-import { BookOpen, Users, Award, Calendar, MapPin, Phone, Mail, GraduationCap, Clock, DollarSign, Target, TrendingUp, Star, Trophy, CheckCircle, Building, Microscope, Library } from 'lucide-react';
+import { BookOpen, Users, Award, Calendar, MapPin, Phone, Mail, GraduationCap, Clock, DollarSign, Target, TrendingUp, Star, Trophy, CheckCircle, Building, Microscope, Library, Heart } from 'lucide-react';
 import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
 import { useNavigationMenu } from '../../../hooks/useNavigationMenu';
 
@@ -92,7 +92,6 @@ export const UnitSchoolClient: React.FC<UnitSchoolClientProps> = ({
         { label: 'Galeri', href: '#', onClick: () => onNavigate(`${slug}/galeri`) },
       ],
     },
-    { label: 'Karir', href: '#', onClick: () => onNavigate('career') },
     { label: 'PPDB', href: '#', onClick: () => onNavigate('admission') },
     { label: 'Kontak', href: '#', onClick: () => onNavigate(`${slug}/kontak`) }
   ];
@@ -505,283 +504,92 @@ export const UnitSchoolClient: React.FC<UnitSchoolClientProps> = ({
         </div>
       </section>
 
-      {/* Kurikulum Section - NEW */}
-      <section className="section-padding">
-        <div className="container-custom">
-          <div className="text-center mb-12">
-            <div className="inline-block px-4 py-2 rounded-full text-sm mb-4" style={{ backgroundColor: `${accentColor}20`, color: accentColor }}>
-              {isAsrama ? 'Kegiatan' : 'Kurikulum'}
-            </div>
-            <h2 className="mb-4">{isAsrama ? 'Program & Kegiatan' : 'Kurikulum Terintegrasi'}</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              {isAsrama 
-                ? 'Membangun kemandirian dan kedekatan dengan Al-Qur\'an melalui rutinitas harian' 
-                : 'Kombinasi sempurna antara kurikulum nasional dan nilai-nilai Islam'}
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8 mb-12">
-            {/* Kurikulum Nasional / Program Harian */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-8 shadow-soft">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6" style={{ backgroundColor: accentColor }}>
-                <BookOpen className="w-8 h-8 text-white" />
+      {/* Six Aspects Curriculum Section - SMP */}
+      {isSMP && (
+        <section className="section-padding bg-white">
+          <div className="container-custom">
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm mb-6" style={{ backgroundColor: `${accentColor}20`, color: accentColor }}>
+                <BookOpen className="w-4 h-4" />
+                <span>Six Aspects of Curriculum</span>
               </div>
-              <h3 className="text-2xl mb-4">{isAsrama ? 'Program Harian' : 'Kurikulum Nasional'}</h3>
-              <ul className="space-y-3">
-                {isAsrama ? (
-                  <>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} />
-                      <span className="text-gray-700">Shalat berjamaah 5 waktu di masjid</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} />
-                      <span className="text-gray-700">Murojaah dan Ziyadah hafalan Al-Qur'an</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} />
-                      <span className="text-gray-700">Puasa Sunnah Senin & Kamis</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} />
-                      <span className="text-gray-700">Belajar mandiri malam hari (Study Club)</span>
-                    </li>
-                  </>
-                ) : isSMP ? (
-                  <>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} />
-                      <span className="text-gray-700">Kurikulum Merdeka dengan Penguatan Karakter</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} />
-                      <span className="text-gray-700">Pembelajaran Bilingual (Arab & Inggris)</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} />
-                      <span className="text-gray-700">Proyek Penguatan Profil Pelajar Pancasila (P5)</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} />
-                      <span className="text-gray-700">Literasi Digital & Coding Dasar</span>
-                    </li>
-                  </>
-                ) : isSMA ? (
-                  <>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} />
-                      <span className="text-gray-700">Kurikulum Merdeka dengan Sistem SKS</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} />
-                      <span className="text-gray-700">Persiapan Intensif UTBK & Kedinasan</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} />
-                      <span className="text-gray-700">Research & Scientific Writing</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} />
-                      <span className="text-gray-700">Leadership & Entrepreneurship Program</span>
-                    </li>
-                  </>
-                ) : (
-                  <>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} />
-                      <span className="text-gray-700">Kurikulum Merdeka yang adaptif dan inovatif</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} />
-                      <span className="text-gray-700">Pembelajaran berbasis project dan problem solving</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} />
-                      <span className="text-gray-700">STEAM (Science, Technology, Engineering, Arts, Math)</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} />
-                      <span className="text-gray-700">Bahasa Indonesia, Inggris, dan Arab</span>
-                    </li>
-                  </>
-                )}
-              </ul>
+              <h2 className="mb-4">Six Aspects of Curriculum</h2>
+              <p className="text-gray-600 text-lg max-w-3xl mx-auto">
+                Enam aspek kurikulum untuk membentuk siswa yang unggul dalam iman, ilmu, keterampilan, dan teknologi
+              </p>
             </div>
-
-            {/* Kurikulum Islam / Target Asrama */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl p-8 shadow-soft">
-              <div className="w-16 h-16 rounded-2xl bg-green-600 flex items-center justify-center mb-6">
-                <GraduationCap className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-2xl mb-4">{isAsrama ? 'Target Asrama' : 'Kurikulum Islam'}</h3>
-              <ul className="space-y-3">
-                {isAsrama ? (
-                  <>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700">Hafal minimal 5 Juz (untuk program Tahfidz)</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700">Mampu berbahasa Arab dan Inggris aktif</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700">Memiliki kemandirian dan kepemimpinan (Leadership)</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700">Berakhlak mulia dan beradab Islami</span>
-                    </li>
-                  </>
-                ) : isSMP ? (
-                  <>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700">Target Hafalan Minimal 3 Juz (Juz 28, 29, 30)</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700">Tahsin Al-Qur'an Bersertifikat (Metode Utsmani)</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700">Pembelajaran Fiqih Ibadah & Hadits Arba'in</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700">Program Mentoring & Bina Pribadi Islam</span>
-                    </li>
-                  </>
-                ) : isSMA ? (
-                  <>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700">Program Tahfidz Lanjutan & Mutqin</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700">Kajian Tsaqofah Islamiyah & Kitab Kuning Dasar</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700">Pelatihan Khutbah & Public Speaking</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700">Praktik Pengurusan Jenazah & Imam Shalat</span>
-                    </li>
-                  </>
-                ) : (
-                  <>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700">Tahfidz Al-Qur'an dengan target hafalan bertahap</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700">Aqidah, Fiqih, dan Akhlak dalam kehidupan sehari-hari</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700">Hadits dan Sirah Nabawiyah</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700">Praktik ibadah dan pembiasaan adab Islami</span>
-                    </li>
-                  </>
-                )}
-              </ul>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                { title: 'Islamic Studies', description: 'Akidah, ibadah, akhlak, Al-Qur’an, hadis, fiqih, dan pembiasaan harian untuk membentuk karakter Islami.', icon: Heart, gradient: 'from-green-500 to-emerald-500' },
+                { title: 'Academic Excellence', description: 'Penguatan literasi-numerasi, pembelajaran tuntas, dan pembinaan prestasi melalui penilaian yang terukur.', icon: Award, gradient: 'from-orange-500 to-amber-500' },
+                { title: 'Project Based Learning', description: 'Proyek lintas mata pelajaran yang melatih riset, kreativitas, problem solving, dan presentasi karya.', icon: Target, gradient: 'from-indigo-500 to-blue-500' },
+                { title: 'Interpersonal Skill', description: 'Komunikasi efektif, teamwork, kepemimpinan, empati, dan etika melalui pembiasaan dan aktivitas terarah.', icon: Users, gradient: 'from-purple-500 to-indigo-500' },
+                { title: 'Entrepreneur', description: 'Market day, proyek bisnis sederhana, literasi finansial, dan kreativitas produk untuk menumbuhkan mental wirausaha.', icon: TrendingUp, gradient: 'from-amber-500 to-yellow-500' },
+                { title: 'ICT', description: 'Literasi digital, keamanan digital, tools produktivitas, dan pengenalan coding/robotik sesuai jenjang.', icon: Star, gradient: 'from-blue-500 to-cyan-500' },
+              ].map((program, index) => {
+                const Icon = program.icon;
+                return (
+                  <div key={index} className="group relative bg-gradient-to-br from-white to-gray-50 rounded-2xl p-8 shadow-soft hover:shadow-strong transition-all duration-300 transform hover:-translate-y-2 overflow-hidden">
+                    <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${program.gradient} rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500`}></div>
+                    <div className="relative z-10">
+                      <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${program.gradient} flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg`}>
+                        <Icon className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-xl mb-3">{program.title}</h3>
+                      <p className="text-gray-600 leading-relaxed">{program.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
+        </section>
+      )}
 
-          {/* Jadwal Pembelajaran / Kegiatan */}
-          <div className="bg-white rounded-3xl p-8 md:p-12 shadow-strong">
-            <h3 className="text-2xl mb-8 text-center">{isAsrama ? 'Jadwal Kegiatan Asrama' : 'Jadwal Pembelajaran'}</h3>
-            <div className="grid md:grid-cols-2 gap-8">
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <Clock className="w-6 h-6" style={{ color: accentColor }} />
-                  <h4 className="text-lg">{isAsrama ? 'Jadwal Harian' : 'Waktu Belajar'}</h4>
-                </div>
-                <div className="space-y-3 text-gray-600">
-                  {isAsrama ? (
-                    <>
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span>Bangun & Qiyamul Lail</span>
-                        <span className="font-medium">03:30 - 04:30 WIB</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span>Shalat Subuh & Dzikir</span>
-                        <span className="font-medium">04:30 - 05:30 WIB</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span>Sekolah Formal</span>
-                        <span className="font-medium">07:00 - 15:00 WIB</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span>Kegiatan Asrama Sore-Malam</span>
-                        <span className="font-medium">15:30 - 21:30 WIB</span>
-                      </div>
-                    </>
-                  ) : isSMP || isSMA ? (
-                    <>
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span>Senin - Kamis (Full Day)</span>
-                        <span className="font-medium">07:00 - 16:00 WIB</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span>Jumat</span>
-                        <span className="font-medium">07:00 - 15:00 WIB</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span>Sabtu</span>
-                        <span className="font-medium">Ekskul Pilihan / Libur</span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span>Senin - Kamis</span>
-                        <span className="font-medium">07:00 - 14:00 WIB</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span>Jumat</span>
-                        <span className="font-medium">07:00 - 11:00 WIB</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span>Sabtu</span>
-                        <span className="font-medium">Ekstrakurikuler</span>
-                      </div>
-                    </>
-                  )}
+      {/* Kurikulum Section - non-SMP units */}
+      {!isSMP && (
+        <section className="section-padding">
+          <div className="container-custom">
+            <div className="text-center mb-12">
+              <div className="inline-block px-4 py-2 rounded-full text-sm mb-4" style={{ backgroundColor: `${accentColor}20`, color: accentColor }}>
+                {isAsrama ? 'Kegiatan' : 'Kurikulum'}
               </div>
+              <h2 className="mb-4">{isAsrama ? 'Program & Kegiatan' : 'Kurikulum Terintegrasi'}</h2>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                {isAsrama
+                  ? 'Membangun kemandirian dan kedekatan dengan Al-Qur\'an melalui rutinitas harian'
+                  : 'Kombinasi sempurna antara kurikulum nasional dan nilai-nilai Islam'}
+              </p>
             </div>
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <Target className="w-6 h-6" style={{ color: accentColor }} />
-                  <h4 className="text-lg">Fokus Pembelajaran</h4>
+            <div className="grid md:grid-cols-2 gap-8 mb-12">
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-8 shadow-soft">
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6" style={{ backgroundColor: accentColor }}>
+                  <BookOpen className="w-8 h-8 text-white" />
                 </div>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: accentColor }}></div>
-                    <span className="text-gray-700">Character & Leadership Building</span>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: accentColor }}></div>
-                    <span className="text-gray-700">Critical Thinking & Problem Solving</span>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: accentColor }}></div>
-                    <span className="text-gray-700">Collaboration & Communication</span>
-                  </div>
+                <h3 className="text-2xl mb-4">{isAsrama ? 'Program Harian' : 'Kurikulum Nasional'}</h3>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} /><span className="text-gray-700">Kurikulum Merdeka yang adaptif dan inovatif</span></li>
+                  <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} /><span className="text-gray-700">Pembelajaran berbasis project dan problem solving</span></li>
+                  <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} /><span className="text-gray-700">STEAM (Science, Technology, Engineering, Arts, Math)</span></li>
+                  <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: accentColor }} /><span className="text-gray-700">Bahasa Indonesia, Inggris, dan Arab</span></li>
+                </ul>
+              </div>
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl p-8 shadow-soft">
+                <div className="w-16 h-16 rounded-2xl bg-green-600 flex items-center justify-center mb-6">
+                  <GraduationCap className="w-8 h-8 text-white" />
                 </div>
+                <h3 className="text-2xl mb-4">{isAsrama ? 'Target Asrama' : 'Kurikulum Islam'}</h3>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" /><span className="text-gray-700">Tahfidz Al-Qur\'an dengan target hafalan bertahap</span></li>
+                  <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" /><span className="text-gray-700">Aqidah, Fiqih, dan Akhlak dalam kehidupan sehari-hari</span></li>
+                  <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" /><span className="text-gray-700">Hadits dan Sirah Nabawiyah</span></li>
+                  <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 mt-1 text-green-600 flex-shrink-0" /><span className="text-gray-700">Praktik ibadah dan pembiasaan adab Islami</span></li>
+                </ul>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Facilities Section - NEW */}
       <section className="section-padding bg-gradient-to-br from-gray-50 to-blue-50">
@@ -819,6 +627,59 @@ export const UnitSchoolClient: React.FC<UnitSchoolClientProps> = ({
           </div>
         </div>
       </section>
+
+      {/* Achievement Banner - SMP */}
+      {isSMP && (
+        <section className="py-20 bg-gradient-to-br from-gray-900 to-blue-900 text-white overflow-hidden relative">
+          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cubes.png')" }}></div>
+          <div className="container-custom relative z-10">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full mb-6" style={{ backgroundColor: `${accentColor}30` }}>
+                <Trophy className="w-4 h-4" style={{ color: accentColor }} />
+                <span className="text-white text-sm">Prestasi Siswa</span>
+              </div>
+              <h2 className="text-4xl lg:text-5xl mb-6 font-bold text-white">Murid Berprestasi</h2>
+              <p className="text-xl text-blue-100 max-w-2xl mx-auto">
+                Bukti nyata keberhasilan pendidikan di SMPIT Baituljannah melalui pencapaian gemilang para siswa
+              </p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {[
+                { name: 'M. Husein Haekal', achievement: 'Juara 1 Cerdas Cermat', competition: 'SAHABAYA CUP 2025', image: '/uploads/achievement/achievement_1769996411538_dig650xbr3b.webp', color: '#1E4AB8' },
+                { name: 'Zalika Tsabita Az-Zahra', achievement: 'Juara 3 Pencak Silat', competition: 'SAHABAYA CUP 2025', image: '/uploads/achievement/achievement_1770259138348_pcj36zz54xh.webp', color: '#F97316' },
+                { name: 'Dhoffa Adzellia Khaerani', achievement: 'Juara 2 Pidato B. Inggris', competition: 'SAHABAYA CUP 2025', image: '/uploads/achievement/achievement_1770259163513_vakbjibn58j.webp', color: '#10B981' },
+                { name: 'Ahmad Fadhil Rahman', achievement: 'Juara 1 Matematika', competition: 'Kompetisi Sains Nasional 2025', image: '/uploads/achievement/achievement_1770259176223_998ib4a3t76.webp', color: '#8B5CF6' },
+              ].map((student, index) => (
+                <div key={index} className="group relative rounded-2xl overflow-hidden aspect-[3/4] bg-white/10">
+                  <ImageWithFallback
+                    src={student.image}
+                    alt={student.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <div className="inline-block px-2 py-1 rounded-full text-xs font-bold text-white mb-2" style={{ backgroundColor: student.color }}>
+                      {student.achievement}
+                    </div>
+                    <h4 className="text-white font-semibold text-sm">{student.name}</h4>
+                    <p className="text-white/70 text-xs">{student.competition}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="text-center mt-10">
+              <button
+                onClick={() => onNavigate('achievement')}
+                className="bg-white px-8 py-3 rounded-full font-semibold transition-colors inline-flex items-center gap-2 hover:bg-gray-100"
+                style={{ color: accentColor }}
+              >
+                <span>Lihat Semua Prestasi</span>
+                <Trophy className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       <Footer
         logo={unitLogo}

@@ -102,8 +102,16 @@ export default function UnitProfilPage({ params }: { params: Promise<{ unit: str
       headline: 'Pendidikan Islam terpadu untuk tumbuh dan berprestasi',
       intro:
         'Kami mengintegrasikan kurikulum nasional dan nilai-nilai Islam melalui pembelajaran yang aktif, terukur, dan berorientasi karakter.',
-      vision: 'Menjadi unit pendidikan Islam terpadu unggul yang melahirkan generasi beriman, berakhlak, dan berprestasi.',
-      missions: [
+      vision: slug === 'smpit'
+        ? 'Mewujudkan Generasi yang soleh dan unggul dalam ilmu pengetahuan dan teknologi'
+        : 'Menjadi unit pendidikan Islam terpadu unggul yang melahirkan generasi beriman, berakhlak, dan berprestasi.',
+      missions: slug === 'smpit' ? [
+        'Mewujudkan pendidikan yang berlandaskan prinsip ajaran Islam.',
+        'Menyediakan pendidikan berkualitas yang mengutamakan penguasaan ilmu pengetahuan dengan mengembangkan keterampilan kritis, kreatif, dan inovatif untuk membentuk generasi yang unggul dan berkarakter.',
+        'Menumbuhkan potensi individu siswa melalui pendidikan yang mengedepankan pengembangan minat, bakat, dan prestasi.',
+        'Mengembangkan teknologi informasi dan komunikasi dalam sistem pembelajaran untuk mempersiapkan keterampilan digital peserta didik agar siap bersaing di masa depan.',
+        'Menciptakan lingkungan belajar yang kondusif, nyaman dan islami bagi seluruh stakeholder.',
+      ] : [
         'Menguatkan karakter Islami melalui pembiasaan ibadah dan adab.',
         'Menyelenggarakan pembelajaran berkualitas dan berpusat pada peserta didik.',
         'Mengembangkan bakat-minat melalui program pengayaan dan kegiatan variatif.',
@@ -139,7 +147,6 @@ export default function UnitProfilPage({ params }: { params: Promise<{ unit: str
         { label: 'Galeri', href: '#', onClick: () => router.push(`/${slug}/galeri`) },
       ],
     },
-    { label: 'Karir', href: '#', onClick: () => router.push('/career') },
     { label: 'PPDB', href: '#', onClick: () => router.push(`/${slug}/ppdb`) },
     { label: 'Kontak', href: '#', onClick: () => router.push(`/${slug}/kontak`) }
   ];

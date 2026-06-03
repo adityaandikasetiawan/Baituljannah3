@@ -151,20 +151,22 @@ export const Navbar: React.FC<NavbarProps> = ({ logo, siteName = 'Baituljannah',
   };
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
+    <nav className="bg-white sticky top-0 z-50" style={{ boxShadow: '0 1px 0 0 #e5e7eb' }}>
+      {/* Garis emas bawah */}
+      <div className="h-[3px] w-full" style={{ background: 'linear-gradient(90deg, #b8960c 0%, #f5e27a 40%, #d4af37 70%, #8b6914 100%)' }} />
       <div className="container-custom px-4 md:px-8">
-        <div className="flex justify-between items-center py-4">
+        <div className="flex justify-between items-center py-3 md:py-4">
           {/* Logo and Site Name */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center flex-shrink-0">
               {didLogoError ? (
-                <span className="text-xl md:text-2xl">🕌</span>
+                <span className="text-2xl md:text-3xl">🕌</span>
               ) : (
                 <Image
                   src={resolvedLogoSrc}
                   alt={displaySiteName}
-                  width={48}
-                  height={48}
+                  width={56}
+                  height={56}
                   className="w-full h-full object-contain"
                   unoptimized
                   onError={() => setDidLogoError(true)}
@@ -172,8 +174,20 @@ export const Navbar: React.FC<NavbarProps> = ({ logo, siteName = 'Baituljannah',
               )}
             </div>
             <div>
-              <h1 ref={siteNameRef} className="text-base md:text-xl truncate max-w-[150px] sm:max-w-none" style={{ color: accentColor }}>{displaySiteName}</h1>
-              <p ref={siteTaglineRef} className="text-xs text-gray-500 hidden sm:block" style={{ letterSpacing: `${taglineLetterSpacingPx}px` }}>{displaySiteTagline}</p>
+              <h1
+                ref={siteNameRef}
+                className="text-lg md:text-2xl font-bold leading-tight truncate max-w-[180px] sm:max-w-none"
+                style={{ color: accentColor }}
+              >
+                {displaySiteName}
+              </h1>
+              <p
+                ref={siteTaglineRef}
+                className="text-[10px] md:text-xs text-gray-400 hidden sm:block tracking-[0.2em] font-medium mt-0.5"
+                style={{ letterSpacing: `${Math.max(taglineLetterSpacingPx, 3)}px` }}
+              >
+                {displaySiteTagline}
+              </p>
             </div>
           </div>
 

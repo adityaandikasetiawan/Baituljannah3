@@ -77,7 +77,7 @@ export default function UnitLoginPage({
     };
   }, [unitLabel, unitSlug]);
   const { menuItems } = useNavigationMenu();
-  const isAdminOnlyUnit = unitSlug === 'smpit' || unitSlug === 'smait';
+  const isAdminOnlyUnit = unitSlug === 'smait';
   const [showPassword, setShowPassword] = useState(false);
   const [userType, setUserType] = useState<'admin' | 'teacher' | 'student' | 'parent'>('student');
   const [formData, setFormData] = useState({
